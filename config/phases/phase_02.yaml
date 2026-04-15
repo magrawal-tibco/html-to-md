@@ -1,0 +1,9 @@
+# Phase 1 — example phase (replace with actual product sitemap URLs)
+# Each entry is a product-level sitemapindex URL from the master sitemap.
+# All versions under each product are discovered automatically.
+name: "Phase 2 - POC 2"
+products:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mongodb.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-rendezvous-network-service.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-pdf.xml
+

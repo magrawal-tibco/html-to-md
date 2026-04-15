@@ -1,0 +1,27 @@
+# Downloaded HTML + images — large, regenerable
+cache/
+
+# Converted Markdown output — regenerable from cache
+output/
+
+# Per-run logs and SQLite progress DB
+logs/
+
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+sample BE html output/

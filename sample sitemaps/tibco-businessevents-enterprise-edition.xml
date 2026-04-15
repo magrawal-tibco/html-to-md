@@ -1,0 +1,23 @@
+<?xml version='1.0'?>
+<sitemapindex xmlns='http://www.sitemaps.org/schemas/sitemap/0.9' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:coveo='http://www.coveo.com/schemas/metadata'>
+    <sitemap>
+        <loc>https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-2-2.xml</loc>
+        <lastmod>2026-01-03</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-0.xml</loc>
+        <lastmod>2026-01-03</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-1.xml</loc>
+        <lastmod>2026-01-03</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-2.xml</loc>
+        <lastmod>2026-01-03</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-4-0.xml</loc>
+        <lastmod>2026-01-03</lastmod>
+    </sitemap>
+</sitemapindex>

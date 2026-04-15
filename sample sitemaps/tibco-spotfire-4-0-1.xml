@@ -1,0 +1,120 @@
+<?xml version='1.0'?>
+<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd' xmlns:video='http://www.google.com/schemas/sitemap-video/1.1/sitemap-video.xsd' xmlns:coveo='http://www.coveo.com/schemas/metadata'>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_spotclient_4.0.1_relnotes.htm</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>Release Notes</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotClient_4.0.1_EnglishManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>User's Manual English</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotDeploy_4.0.1_DeployAdminManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>Deployment and Administration Manual</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotClient_4.0.1_OnCitrixManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>Running TIBCO Spotfire on Citrix XenApp</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotLangPk_4.0.1_DeployLanguagePackManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>Deploying and Using a Language Pack</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotClient_4.0.1_ChineseManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>User's Manual Chinese</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotClient_4.0.1_FrenchManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>User's Manual French</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotClient_4.0.1_GermanManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>User's Manual German</d_name>
+        </coveo:metadata>
+    </url>
+    <url>
+        <loc>https://docs.tibco.com/pub/spotfire/4.0.1-february-2012/TIB_SpotClient_4.0.1_JapaneseManual.pdf</loc>
+        <lastmod>2016-01-14</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+        <coveo:metadata>
+            <name>TIBCO Spotfire®</name>
+            <productversion>4.0.1</productversion>
+            <access_level>Public</access_level>
+            <parent_product>TIBCO Spotfire® Professional</parent_product>
+            <d_name>User's Manual Japanese</d_name>
+        </coveo:metadata>
+    </url>
+</urlset>

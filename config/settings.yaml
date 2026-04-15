@@ -1,0 +1,86 @@
+base_url: "https://docs.tibco.com"
+output_dir: "output"
+cache_dir: "cache"
+manifests_dir: "manifests"
+logs_dir: "logs"
+
+http:
+  concurrency: 20
+  delay_seconds: 0.5
+  max_retries: 3
+  backoff_factor: 2
+  timeout_connect: 10
+  timeout_read: 30
+  user_agent: "tibco-docs-converter/1.0"
+
+# Selectors tried in order — first match wins
+# 1. MadCap Flare WebHelp2 output
+# 2. DITA WebHelp Responsive output (GUID-based filenames)
+content_selectors:
+  - "div[role='main']#mc-main-content"
+  - "div#center article"
+  - "article"
+
+# Shell pages — frameset/navigation entry points with no topic content
+skip_filenames:
+  - Default.htm
+  - Default_CSH.htm
+  - Home.htm
+  - index.htm
+  - index.html
+  - index_CSH.htm
+  - suitehelp_topic_list.html
+
+# URL path segments that indicate non-topic content — filtered in Step 1
+skip_path_segments:
+  - /api/javadoc/
+  - /_globalpages/
+  - /MicroContent/
+  - /_templates/
+  - /Skins/
+  - /Resources/
+  - /functions/
+
+# Filename regex patterns to skip — matched against the bare filename (case-insensitive)
+# GUID-based filenames are SDL Trisoft / DITA WebHelp Responsive output, not MadCap Flare
+skip_filename_patterns:
+  - "^GUID-[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\\.html?$"
+
+# Only these extensions are treated as HTML topics
+html_extensions:
+  - .htm
+  - .html
+
+# BeautifulSoup selectors for chrome elements to strip before conversion
+chrome_selectors:
+  - p.MCWebHelpFramesetLink
+  - div#prdnm
+  - div.toolbar
+  - div.breadcrumbs
+  - div.MCMiniTocBox_0
+  - div#feedback-survey
+  - p.Copyright
+  - noscript
+  # MadCap code-snippet copy button and caption (javascript:void chrome)
+  - a.codeSnippetCopyButton
+  - div.codeSnippetCaption
+  # MadCap "Related Topics" navigation link (javascript:void chrome)
+  - a.MCHelpControl-Related
+
+# Image src prefixes to skip when downloading images
+image_skip_prefixes:
+  - Skins/
+  - Resources/Scripts/
+  - Resources/Stylesheets/
+
+tables:
+  # Block-level tags inside a cell that force Tier 3 (raw HTML passthrough)
+  passthrough_block_tags:
+    - ul
+    - ol
+    - pre
+    - blockquote
+    - h1
+    - h2
+    - h3
+    - table

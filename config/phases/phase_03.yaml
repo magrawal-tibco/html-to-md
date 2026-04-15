@@ -1,0 +1,7 @@
+# Phase 1 — example phase (replace with actual product sitemap URLs)
+# Each entry is a product-level sitemapindex URL from the master sitemap.
+# All versions under each product are discovered automatically.
+name: "Phase 3 - POC 3"
+products:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition.xml
