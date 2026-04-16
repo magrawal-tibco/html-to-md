@@ -53,6 +53,7 @@ def run_step(
     dry_run: bool,
     force_rerun: bool,
     force_refresh: bool,
+    ignore_registry: bool,
 ) -> tuple[int, float]:
     """Run a single pipeline step as a subprocess. Returns (exit_code, duration_seconds)."""
     cmd = [sys.executable, script, f"--phase={phase}", f"--config={config}"]
@@ -63,6 +64,9 @@ def run_step(
     # --force-refresh is only used by Step 2
     if force_refresh and "02_download" in script:
         cmd.append("--force-refresh")
+    # --ignore-registry is only used by Step 1
+    if ignore_registry and "01_build_manifest" in script:
+        cmd.append("--ignore-registry")
 
     print(f"\n{'='*60}")
     print(f"  Step {step_num}: {label}")
@@ -148,6 +152,8 @@ def main():
                         help="Re-process URLs already marked done in checkpoint DB")
     parser.add_argument("--force-refresh", action="store_true",
                         help="Re-download cached files (Step 2 only)")
+    parser.add_argument("--ignore-registry", action="store_true",
+                        help="Include versions already in converted_versions.json (Step 1 only)")
     args = parser.parse_args()
 
     settings  = load_settings(args.config)
@@ -168,6 +174,7 @@ def main():
             step_num, script, label,
             args.phase, args.config,
             args.dry_run, args.force_rerun, args.force_refresh,
+            args.ignore_registry,
         )
         steps_run.append((step_num, script, label, exit_code, elapsed))
 

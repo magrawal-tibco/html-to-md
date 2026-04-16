@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.lib.preprocessor import run_all as run_preprocessor
 from scripts.lib.reporter import Reporter
+from scripts.lib.version_registry import record_converted_versions
 
 
 def load_settings(config_path: str) -> dict:
@@ -330,8 +331,31 @@ def main():
     reporter.info(f"=== Step 3: Convert | phase={args.phase} dry_run={args.dry_run} force_rerun={force_rerun} ===")
     reporter.info(f"Manifest: {len(manifest)} entries")
 
+    # Track conversion errors per version so only fully-successful versions are registered
+    version_errors: dict[str, int] = {}
+    for entry in manifest:
+        vs = entry.get("version_sitemap", "")
+        if vs and vs not in version_errors:
+            version_errors[vs] = 0
+
     for entry in tqdm(manifest, desc="Converting"):
-        convert_entry(entry, settings, cache_dir, output_dir, reporter, args.dry_run, force_rerun)
+        ok = convert_entry(entry, settings, cache_dir, output_dir, reporter, args.dry_run, force_rerun)
+        if not ok:
+            vs = entry.get("version_sitemap", "")
+            if vs:
+                version_errors[vs] += 1
+
+    # Write successfully completed versions to the registry
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    newly_registered = record_converted_versions(
+        manifest, version_errors, args.phase, manifests_dir, dry_run=args.dry_run
+    )
+    if newly_registered:
+        reporter.info(f"Version registry updated: {len(newly_registered)} version(s) marked as converted")
+        for vs in newly_registered:
+            reporter.info(f"  + {vs}")
+    else:
+        reporter.info("Version registry: no new versions registered (errors present or dry run)")
 
     report = reporter.finish()
     return 0 if report["error_count"] == 0 else 1

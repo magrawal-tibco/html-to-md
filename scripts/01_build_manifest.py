@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.lib.reporter import Reporter
 from scripts.lib.sitemap_parser import build_http_client, iter_product_versions
+from scripts.lib.version_registry import load_registry
 
 
 def load_settings(config_path: str) -> dict:
@@ -121,13 +122,16 @@ def _is_dita_version(entries: list, patterns: list[str]) -> bool:
     return False
 
 
-def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: bool) -> tuple[list[dict], list[dict]]:
+def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: bool,
+                   ignore_registry: bool = False) -> tuple[list[dict], list[dict]]:
     """
     Crawl all product sitemaps in the phase and return (manifest, dita_versions).
 
     manifest      — accepted MadCap pages, drives steps 2-6
     dita_versions — version sitemaps whose pages were entirely skipped as non-madcap-dita;
                     written to manifests/dita_versions_<phase>.json for future DITA processing
+
+    ignore_registry — if True, include versions already in converted_versions.json
     """
     delay = settings.get("http", {}).get("delay_seconds", 0.5)
     client = build_http_client(settings)
@@ -135,6 +139,13 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
     dita_versions: list[dict] = []
 
     dita_patterns = settings.get("skip_filename_patterns", [])
+
+    # Load the version registry to skip already-converted versions
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    registry = {} if ignore_registry else load_registry(manifests_dir)
+    if registry and not ignore_registry:
+        reporter.info(f"Version registry loaded: {len(registry)} previously converted version(s) will be skipped")
+        reporter.info("  (use --ignore-registry to include them anyway)")
 
     # Track alias.xml URLs per version to avoid duplicates
     seen_alias: dict[str, str] = {}  # version_sitemap_url → alias_xml_url
@@ -148,6 +159,18 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
             for version_url, entries in iter_product_versions(client, product_url):
                 reporter.info(f"    Version sitemap: {version_url} ({len(entries)} raw entries)")
                 reporter.count("versions_found")
+
+                # Registry check: skip versions that were already fully converted
+                if version_url in registry:
+                    rec = registry[version_url]
+                    reporter.info(
+                        f"      -> SKIPPED (already converted on {rec.get('converted_at', '?')}, "
+                        f"phase={rec.get('phase', '?')}, {rec.get('page_count', '?')} pages)"
+                    )
+                    reporter.count("skipped_already_converted", len(entries))
+                    reporter.count("versions_skipped_registry")
+                    time.sleep(delay)
+                    continue
 
                 # Version-level DITA check: one GUID file means the whole version is non-MadCap
                 if dita_patterns and entries and _is_dita_version(entries, dita_patterns):
@@ -209,9 +232,11 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
 
 def main():
     parser = argparse.ArgumentParser(description="Step 1: Build sitemap manifest")
-    parser.add_argument("--phase",   required=True, help="Phase name, e.g. phase_01")
-    parser.add_argument("--config",  default="config/settings.yaml")
-    parser.add_argument("--dry-run", action="store_true", help="Parse sitemaps but do not write manifest")
+    parser.add_argument("--phase",            required=True, help="Phase name, e.g. phase_01")
+    parser.add_argument("--config",           default="config/settings.yaml")
+    parser.add_argument("--dry-run",          action="store_true", help="Parse sitemaps but do not write manifest")
+    parser.add_argument("--ignore-registry",  action="store_true",
+                        help="Include versions already in converted_versions.json instead of skipping them")
     args = parser.parse_args()
 
     settings = load_settings(args.config)
@@ -223,9 +248,13 @@ def main():
     run_dir  = logs_dir / args.phase / datetime.now().strftime("%Y%m%d-%H%M%S")
     reporter = Reporter(run_dir, "01_manifest", dry_run=args.dry_run)
 
-    reporter.info(f"=== Step 1: Build Manifest | phase={args.phase} dry_run={args.dry_run} ===")
+    reporter.info(f"=== Step 1: Build Manifest | phase={args.phase} dry_run={args.dry_run} "
+                  f"ignore_registry={args.ignore_registry} ===")
 
-    manifest, dita_versions = build_manifest(phase, settings, reporter, args.dry_run)
+    manifest, dita_versions = build_manifest(
+        phase, settings, reporter, args.dry_run,
+        ignore_registry=args.ignore_registry,
+    )
 
     reporter.info(f"Manifest complete: {len(manifest)} pages across "
                   f"{reporter._counts.get('versions_found', 0)} versions")
