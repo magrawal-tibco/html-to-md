@@ -111,19 +111,42 @@ def _extract_zip(
     html_root: str,
 ) -> tuple[bool, str, int]:
     """
-    Extract all ZIP members under cache_dir/html_root.
+    Extract all ZIP members to cache_dir/<version_root>/ where version_root is
+    two levels above html_root (stripping the trailing doc/html/).
+
+    TIBCO ZIPs wrap everything in one top-level product folder
+    (e.g. tibco-foo-1-2-3/) and then mirror the full URL path from the version
+    root downward (doc/html/..., pdf/..., etc.). We strip the product folder
+    and extract relative to the version root so paths match url_to_cache_path().
+
     Returns (success, reason_on_failure, file_count).
     """
     if not zipfile.is_zipfile(zip_path):
         return False, "corrupt_zip", 0
 
+    # extract_base = pub/foo/1.0/doc  (html_root = pub/foo/1.0/doc/html/)
+    # TIBCO ZIPs contain paths starting with html/... so they land correctly
+    # at cache/<extract_base>/html/... = cache/pub/foo/1.0/doc/html/...
+    extract_base = Path(html_root.rstrip("/")).parent
+
     file_count = 0
     try:
         with zipfile.ZipFile(zip_path, "r") as zf:
+            # Detect and strip a common top-level directory wrapper.
+            top_dirs = {
+                m.filename.replace("\\", "/").split("/")[0]
+                for m in zf.infolist()
+                if "/" in m.filename.replace("\\", "/")
+            }
+            strip_prefix = (top_dirs.pop() + "/") if len(top_dirs) == 1 else ""
+
             for member in zf.infolist():
-                if member.is_dir():
+                rel = member.filename.replace("\\", "/")
+                if strip_prefix and rel.startswith(strip_prefix):
+                    rel = rel[len(strip_prefix):]
+                if not rel or rel.endswith("/"):
                     continue
-                dest = cache_dir / html_root.rstrip("/") / member.filename
+                dest = cache_dir / extract_base / rel
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 with zf.open(member) as src, open(dest, "wb") as dst:
                     shutil.copyfileobj(src, dst)
@@ -222,9 +245,15 @@ def process_versions(
                 reporter.count("zip_dry_run")
                 continue
 
-            # Download
-            reporter.info(f"    Downloading: {zip_url}")
-            ok, fail_reason = _download_zip(client, zip_url, zip_path, reporter)
+            # Reuse cached ZIP if already downloaded and valid
+            if zip_path.exists() and zipfile.is_zipfile(zip_path):
+                reporter.info(f"    Reusing cached ZIP: {zip_path}")
+                reporter.count("zip_cached")
+                ok, fail_reason = True, ""
+            else:
+                # Download
+                reporter.info(f"    Downloading: {zip_url}")
+                ok, fail_reason = _download_zip(client, zip_url, zip_path, reporter)
             if not ok:
                 reporter.info(f"    -> Download failed: {fail_reason}")
                 zip_missing[version_sitemap] = {
@@ -254,7 +283,7 @@ def process_versions(
                 time.sleep(delay)
                 continue
 
-            reporter.info(f"    Extracted {file_count} files to {cache_dir / html_root}")
+            reporter.info(f"    Extracted {file_count} files to {cache_dir / html_root.rstrip('/')}")
             reporter.count("zip_extracted")
 
             if not store_zip:

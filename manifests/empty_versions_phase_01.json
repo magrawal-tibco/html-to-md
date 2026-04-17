@@ -1,0 +1,51 @@
+[
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-1-0-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql.xml",
+    "product_name": "TIBCO Spotfire® Connector for PostgreSQL",
+    "product_version": "1.0.0",
+    "raw_page_count": 2
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-3-0-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql.xml",
+    "product_name": "TIBCO Spotfire® Connector for PostgreSQL",
+    "product_version": "3.0.0",
+    "raw_page_count": 2
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-3-1-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql.xml",
+    "product_name": "TIBCO Spotfire® Connector for PostgreSQL",
+    "product_version": "3.1.0",
+    "raw_page_count": 2
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-1-0-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml",
+    "product_name": "TIBCO Spotfire® Connector for SAP BW",
+    "product_version": "1.0.0",
+    "raw_page_count": 2
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-2-0-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml",
+    "product_name": "TIBCO Spotfire® Connector for SAP BW",
+    "product_version": "2.0.0",
+    "raw_page_count": 2
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-3-0-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml",
+    "product_name": "TIBCO Spotfire® Connector for SAP BW",
+    "product_version": "3.0.0",
+    "raw_page_count": 13
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-3-1-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml",
+    "product_name": "TIBCO Spotfire® Connector for SAP BW",
+    "product_version": "3.1.0",
+    "raw_page_count": 13
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-gridserver-manager-7-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/dsp_gridserver/7.2.0/tibco-datasynapse-gridserver-manager-7-2-0_documentation.zip",
+    "html_root": "pub/dsp_gridserver/7.2.0/doc/html/",
+    "extracted_at": "2026-04-17T21:00:56",
+    "file_count": 1552
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.0.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0_documentation.zip",
+    "html_root": "emp/ds-highperf-comp-cloud/2.0.0/doc/html/",
+    "extracted_at": "2026-04-17T21:00:57",
+    "file_count": 290
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.1.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0_documentation.zip",
+    "html_root": "emp/ds-highperf-comp-cloud/2.1.0/doc/html/",
+    "extracted_at": "2026-04-17T21:00:58",
+    "file_count": 313
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-gridserver-logviewer-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/dsp-logv/1.0.0/tibco-datasynapse-gridserver-logviewer-1-0-0_documentation.zip",
+    "html_root": "pub/dsp-logv/1.0.0/doc/html/",
+    "extracted_at": "2026-04-17T21:00:59",
+    "file_count": 345
+  }
+}
