@@ -31,22 +31,26 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.lib.reporter import Reporter
 
 
-LOG_COLUMNS = [
-    "phase",
-    "run_date",
-    "product_name",
-    "product_version",
-    "doc_name",
-    "status",
-    "version_sitemap",
-    "public_url",
-    "topics_in_sitemap",
-    "topics_converted",
-    "csh_id_count",
-    "pdf_count",
-    "zip_status",
-    "toc_source",
-]
+# Maps internal dict key → CSV column header (human-readable)
+COLUMN_HEADERS: dict[str, str] = {
+    "phase":             "Phase",
+    "run_date":          "Run Date",
+    "product_name":      "Product Name",
+    "product_version":   "Version",
+    "doc_name":          "Document Name",
+    "status":            "Status",
+    "version_sitemap":   "Version Sitemap URL",
+    "public_url":        "Public URL",
+    "topics_in_sitemap": "Topics in Sitemap",
+    "topics_converted":  "Topics Converted",
+    "csh_id_count":      "CSH ID Count",
+    "pdf_count":         "PDFs Found",
+    "zip_status":        "ZIP Status",
+    "toc_source":        "TOC Source",
+}
+
+LOG_COLUMNS     = list(COLUMN_HEADERS.keys())       # internal key order
+DISPLAY_HEADERS = list(COLUMN_HEADERS.values())     # friendly header order
 
 
 # ---------------------------------------------------------------------------
@@ -204,11 +208,16 @@ def collect_records(phase: str, settings: dict, run_date: str) -> list[dict]:
 def _write_csv(path: Path, records: list[dict], append: bool = False):
     mode = "a" if append else "w"
     write_header = not (append and path.exists() and path.stat().st_size > 0)
+    # Remap internal keys to display headers for each row
+    display_rows = [
+        {COLUMN_HEADERS[k]: v for k, v in rec.items() if k in COLUMN_HEADERS}
+        for rec in records
+    ]
     with open(path, mode, newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=LOG_COLUMNS, extrasaction="ignore")
+        w = csv.DictWriter(f, fieldnames=DISPLAY_HEADERS, extrasaction="ignore")
         if write_header:
             w.writeheader()
-        w.writerows(records)
+        w.writerows(display_rows)
 
 
 # ---------------------------------------------------------------------------
