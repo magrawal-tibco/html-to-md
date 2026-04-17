@@ -169,49 +169,46 @@ def _norm(path_str: str) -> str:
     return path_str.replace("\\", "/")
 
 
-def toc_node_to_nav(node: dict, output_dir: Path) -> dict | None:
+def toc_node_to_nav(node: dict, docs_dir: Path, strip_prefix: str = "") -> dict | None:
     """
     Recursively convert a _toc.json tree node to a MkDocs nav entry.
+    strip_prefix is removed from file paths before writing to nav (when docs_dir is
+    narrowed to a specific version directory rather than the full output root).
     Returns None if the node has no file and no valid children.
     """
     title = node.get("title", "Untitled")
     file_raw = node.get("file")
     children = node.get("children", [])
 
-    # Build child nav entries first
     child_nav = []
     for child in children:
-        entry = toc_node_to_nav(child, output_dir)
+        entry = toc_node_to_nav(child, docs_dir, strip_prefix)
         if entry is not None:
             child_nav.append(entry)
 
     if file_raw:
         file_path = _norm(file_raw)
-        # Verify the file exists on disk
-        if not (output_dir / file_path).exists():
-            # Still include children if any
-            if child_nav:
-                return {title: child_nav}
-            return None
+        nav_path = file_path[len(strip_prefix):] if strip_prefix and file_path.startswith(strip_prefix) else file_path
+        if not (docs_dir / nav_path).exists():
+            return {title: child_nav} if child_nav else None
         if child_nav:
-            # Page + children: include the page as first child
-            return {title: [{title: file_path}] + child_nav}
-        else:
-            return {title: file_path}
+            return {title: [{title: nav_path}] + child_nav}
+        return {title: nav_path}
     else:
-        # Section-only node (no file)
-        if child_nav:
-            return {title: child_nav}
-        return None
+        return {title: child_nav} if child_nav else None
 
 
-def build_nav_from_tocs(toc_files: list[Path], output_dir: Path) -> list[dict]:
+def build_nav_from_tocs(
+    toc_files: list[Path], output_dir: Path, strip_prefix: str = ""
+) -> list[dict]:
     """
     Read each _toc.json and build the top-level MkDocs nav list.
-    Each version appears as a top-level nav group labelled by its version string.
+    strip_prefix is stripped from all file paths (used when docs_dir is a version subdir).
     """
     nav = []
-    missing_files = 0
+    docs_dir = output_dir  # files are verified relative to docs_dir = output_dir / strip_prefix
+    if strip_prefix:
+        docs_dir = output_dir / strip_prefix.rstrip("/")
 
     for toc_path in toc_files:
         try:
@@ -226,26 +223,24 @@ def build_nav_from_tocs(toc_files: list[Path], output_dir: Path) -> list[dict]:
 
         version_nav = []
         for node in tree:
-            entry = toc_node_to_nav(node, output_dir)
+            entry = toc_node_to_nav(node, docs_dir, strip_prefix)
             if entry is not None:
                 version_nav.append(entry)
 
-        # Append orphan pages as a flat section at the bottom
         if orphans:
             orphan_entries = []
             for orphan in orphans:
                 orphan_title = orphan.get("title", Path(orphan.get("file", "?")).stem)
                 orphan_file = _norm(orphan.get("file", ""))
-                if orphan_file and (output_dir / orphan_file).exists():
+                if strip_prefix and orphan_file.startswith(strip_prefix):
+                    orphan_file = orphan_file[len(strip_prefix):]
+                if orphan_file and (docs_dir / orphan_file).exists():
                     orphan_entries.append({orphan_title: orphan_file})
             if orphan_entries:
                 version_nav.append({"Orphaned Pages": orphan_entries})
 
         if version_nav:
             nav.append({version_label: version_nav})
-
-    if missing_files:
-        print(f"  NOTE: {missing_files} nav entries skipped (file not found on disk)")
 
     return nav
 
@@ -463,9 +458,41 @@ def main() -> int:
     toc_files = discover_toc_files(output_dir, args.product, args.version)
     print(f"\n  Found {len(toc_files)} _toc.json file(s)")
 
-    # 2. Build nav
+    # 2. Determine docs_dir: narrow to version root when only one version is selected.
+    #    This prevents MkDocs from copying the entire output/ tree into site/.
+    strip_prefix = ""
+    effective_docs_dir = output_dir
+
     if toc_files:
-        nav = build_nav_from_tocs(toc_files, output_dir)
+        roots = []
+        for tp in toc_files:
+            try:
+                root = _norm(json.loads(tp.read_text(encoding="utf-8")).get("root", ""))
+                if root:
+                    roots.append(root if root.endswith("/") else root + "/")
+            except Exception:
+                pass
+        unique_roots = list(dict.fromkeys(roots))  # preserve order, deduplicate
+
+        if len(unique_roots) == 1:
+            # Single version: point docs_dir straight at the version root
+            strip_prefix = unique_roots[0]
+            effective_docs_dir = output_dir / strip_prefix.rstrip("/")
+            print(f"  Focused docs_dir: {effective_docs_dir}")
+        elif unique_roots:
+            # Multiple versions: find deepest common prefix to avoid copying sibling products
+            common = unique_roots[0]
+            for r in unique_roots[1:]:
+                while not r.startswith(common):
+                    common = common.rsplit("/", 2)[0] + "/"
+            if common and common != "/":
+                strip_prefix = common
+                effective_docs_dir = output_dir / strip_prefix.rstrip("/")
+                print(f"  Focused docs_dir: {effective_docs_dir}")
+
+    # 3. Build nav
+    if toc_files:
+        nav = build_nav_from_tocs(toc_files, output_dir, strip_prefix)
     else:
         nav = build_nav_from_filesystem(output_dir, args.product, args.version)
 
@@ -475,24 +502,24 @@ def main() -> int:
 
     print(f"  Nav entries: {len(nav)} top-level group(s)")
 
-    # 3. Write generated files
+    # 4. Write generated files
     preview_dir.mkdir(parents=True, exist_ok=True)
     hooks_dir = preview_dir / "hooks"
 
     hook_path = write_hooks_script(hooks_dir)
     print(f"  Hook written: {hook_path}")
 
-    config_path = write_mkdocs_yml(preview_dir, output_dir, nav)
+    config_path = write_mkdocs_yml(preview_dir, effective_docs_dir, nav)
     print(f"  Config written: {config_path}")
 
-    # 4. Warn about large corpus
+    # 5. Warn about large corpus
     if not args.product and len(toc_files) > 10:
         print(
             f"\n  NOTE: {len(toc_files)} product versions included. "
             "Use --product to filter for faster startup.",
         )
 
-    # 5. Run mkdocs
+    # 6. Run mkdocs
     if mode == "serve":
         print(f"\n  Starting server at http://127.0.0.1:{args.port}/")
         print("  Press Ctrl+C to stop.\n")
