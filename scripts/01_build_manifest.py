@@ -102,8 +102,9 @@ def infer_alias_xml_url(loc: str) -> str:
     marker = "/doc/html/"
     idx = path.find(marker)
     if idx == -1:
-        # Fallback: use the directory two levels up from the file
-        html_root = str(Path(path).parent.parent)
+        # Fallback: use the directory two levels up from the file.
+        # Use as_posix() + trailing slash to match the marker-found format.
+        html_root = Path(path).parent.parent.as_posix() + "/"
     else:
         html_root = path[: idx + len(marker)]
     base = f"{parsed.scheme}://{parsed.netloc}"

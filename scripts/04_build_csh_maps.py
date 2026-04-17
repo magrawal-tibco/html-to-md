@@ -149,7 +149,7 @@ def process_version(
     # alias.xml Link is relative to the /doc/html/ root of the version
     link_to_csh: dict[str, list[dict]] = {}
     for m in maps:
-        norm_link = m["link"].replace("\\", "/").lstrip("./")
+        norm_link = m["link"].replace("\\", "/").lstrip("./").split("#")[0]
         if norm_link not in link_to_csh:
             link_to_csh[norm_link] = []
         link_to_csh[norm_link].append({"name": m["name"], "resolved_id": m["resolved_id"]})
@@ -158,24 +158,22 @@ def process_version(
     csh_map: dict[str, dict] = {}
     for m in maps:
         if m["resolved_id"] is not None:
+            link_no_frag = m["link"].replace("\\", "/").split("#")[0]
             csh_map[str(m["resolved_id"])] = {
                 "name": m["name"],
-                "file": Path(m["link"].replace("\\", "/")).with_suffix(".md").as_posix(),
+                "file": Path(link_no_frag).with_suffix(".md").as_posix(),
             }
 
-    # Determine output root for this version from the first entry's output_path
-    # e.g. pub/foo/1.0/doc/html/Admin/file.md → pub/foo/1.0/doc/html/
     if not version_entries:
         return
-    # Normalise to forward slashes for cross-platform path matching
-    sample_output = version_entries[0]["output_path"].replace("\\", "/")
-    # Find /doc/html/ segment
-    marker = "/doc/html/"
-    idx = sample_output.find(marker)
-    if idx != -1:
-        version_html_root = sample_output[: idx + len(marker)]
-    else:
-        version_html_root = str(Path(sample_output).parent).replace("\\", "/") + "/"
+
+    # Derive the version HTML root from alias_xml_url — more reliable than
+    # scanning output_path for "/doc/html/" which fails for non-standard paths
+    # like /doc/adadb/html/ (e.g. TIBCO ActiveMatrix Adapter for Database).
+    # alias_xml_url: .../pub/foo/1.0/doc/html/Data/Alias.xml
+    # → version_html_root: pub/foo/1.0/doc/html/
+    alias_url_path = urlparse(alias_xml_url).path.lstrip("/")
+    version_html_root = Path(alias_url_path).parent.parent.as_posix() + "/"
 
     csh_map_path = output_dir / version_html_root / "csh_map.json"
 
@@ -194,9 +192,9 @@ def process_version(
             continue
 
         # Normalise output_path relative to version_html_root to match alias link
-        rel_to_html = entry["output_path"][len(version_html_root):]
-        # Convert .md → .htm for lookup
-        rel_htm = str(Path(rel_to_html).with_suffix(".htm"))
+        rel_to_html = entry["output_path"].replace("\\", "/")[len(version_html_root):]
+        # Convert .md → .htm for lookup (forward slashes to match link_to_csh keys)
+        rel_htm = Path(rel_to_html).with_suffix(".htm").as_posix()
 
         matched = link_to_csh.get(rel_htm) or link_to_csh.get(rel_htm.lower())
         if not matched:

@@ -1,0 +1,16 @@
+[
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database-8-4-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database.xml",
+    "page_count": 208,
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Database",
+    "product_version": "8.4.0"
+  },
+  {
+    "version_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database-8-5-0.xml",
+    "product_sitemap": "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database.xml",
+    "page_count": 196,
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Database",
+    "product_version": "8.5.0"
+  }
+]
