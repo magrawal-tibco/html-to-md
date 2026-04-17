@@ -141,13 +141,13 @@ def _is_dita_version(entries: list, patterns: list[str]) -> bool:
 
 
 def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: bool,
-                   ignore_registry: bool = False) -> tuple[list[dict], list[dict]]:
+                   ignore_registry: bool = False) -> tuple[list[dict], list[dict], list[dict]]:
     """
-    Crawl all product sitemaps in the phase and return (manifest, dita_versions).
+    Crawl all product sitemaps in the phase and return (manifest, dita_versions, empty_versions).
 
-    manifest      — accepted MadCap pages, drives steps 2-6
-    dita_versions — version sitemaps whose pages were entirely skipped as non-madcap-dita;
-                    written to manifests/dita_versions_<phase>.json for future DITA processing
+    manifest       — accepted MadCap pages, drives steps 2-6
+    dita_versions  — version sitemaps skipped as non-madcap-dita (GUID filenames)
+    empty_versions — version sitemaps with entries but zero accepted HTML pages
 
     ignore_registry — if True, include versions already in converted_versions.json
     """
@@ -155,6 +155,7 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
     client = build_http_client(settings)
     manifest: list[dict] = []
     dita_versions: list[dict] = []
+    empty_versions: list[dict] = []
 
     dita_patterns = settings.get("skip_filename_patterns", [])
 
@@ -239,6 +240,15 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                     reporter.count("pages_included")
 
                 reporter.info(f"      -> {len(version_manifest)} HTML pages accepted")
+                if not version_manifest and entries:
+                    empty_versions.append({
+                        "version_sitemap":  version_url,
+                        "product_sitemap":  product_url,
+                        "product_name":     entries[0].product_name,
+                        "product_version":  entries[0].product_version,
+                        "raw_page_count":   len(entries),
+                    })
+                    reporter.count("versions_empty")
                 manifest.extend(version_manifest)
                 time.sleep(delay)
 
@@ -312,6 +322,15 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                 reporter.count("pages_included")
 
             reporter.info(f"      -> {len(version_manifest)} HTML pages accepted")
+            if not version_manifest and entries:
+                empty_versions.append({
+                    "version_sitemap":  fetched_url,
+                    "product_sitemap":  None,
+                    "product_name":     entries[0].product_name,
+                    "product_version":  entries[0].product_version,
+                    "raw_page_count":   len(entries),
+                })
+                reporter.count("versions_empty")
             manifest.extend(version_manifest)
             time.sleep(delay)
 
@@ -319,7 +338,7 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
             reporter.fail(version_url, str(exc), step="01_build_manifest")
             reporter.count("version_errors")
 
-    return manifest, dita_versions
+    return manifest, dita_versions, empty_versions
 
 
 def main():
@@ -343,7 +362,7 @@ def main():
     reporter.info(f"=== Step 1: Build Manifest | phase={args.phase} dry_run={args.dry_run} "
                   f"ignore_registry={args.ignore_registry} ===")
 
-    manifest, dita_versions = build_manifest(
+    manifest, dita_versions, empty_versions = build_manifest(
         phase, settings, reporter, args.dry_run,
         ignore_registry=args.ignore_registry,
     )
@@ -352,6 +371,8 @@ def main():
                   f"{reporter._counts.get('versions_found', 0)} versions")
     if dita_versions:
         reporter.info(f"DITA versions detected: {len(dita_versions)} version(s) with only GUID-based pages")
+    if empty_versions:
+        reporter.info(f"Empty versions: {len(empty_versions)} version(s) with no accepted HTML pages")
 
     if not args.dry_run:
         manifests_dir = Path(settings.get("manifests_dir", "manifests"))
@@ -371,6 +392,13 @@ def main():
                 encoding="utf-8",
             )
             reporter.info(f"DITA versions written to {dita_path}")
+
+        empty_path = manifests_dir / f"empty_versions_{args.phase}.json"
+        empty_path.write_text(
+            json.dumps(empty_versions, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        reporter.info(f"Empty versions written to {empty_path}")
     else:
         reporter.info("Dry run — manifest not written")
 

@@ -42,6 +42,7 @@ STEPS = [
     (4,    4.0, "scripts/04_build_csh_maps.py",   "Build CSH Maps"),
     (5,    5.0, "scripts/05_postprocess.py",       "Postprocess Links + Tokens"),
     (6,    6.0, "scripts/06_build_toc.py",         "Build TOC JSON"),
+    (7,    7.0, "scripts/07_generate_report.py",  "Generate Report"),
 ]
 
 
@@ -148,9 +149,9 @@ def main():
     parser.add_argument("--config",       default="config/settings.yaml",
                         help="Path to settings.yaml")
     parser.add_argument("--from-step",    type=int, default=1, metavar="N",
-                        help="Start from step N (1-6, default: 1)")
-    parser.add_argument("--to-step",      type=int, default=6, metavar="N",
-                        help="Stop after step N (1-6, default: 6)")
+                        help="Start from step N (1-7, default: 1)")
+    parser.add_argument("--to-step",      type=int, default=7, metavar="N",
+                        help="Stop after step N (1-7, default: 7)")
     parser.add_argument("--dry-run",      action="store_true",
                         help="Parse and plan but write no files")
     parser.add_argument("--force-rerun",  action="store_true",
