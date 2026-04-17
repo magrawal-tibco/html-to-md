@@ -84,3 +84,9 @@ tables:
     - h2
     - h3
     - table
+
+zip:
+  enabled: true
+  store_zip: true          # Keep .zip after extraction (set false to save disk space)
+  zip_cache_dir: "cache/zip"
+  min_free_gb: 20          # Skip a version if free disk space drops below this threshold

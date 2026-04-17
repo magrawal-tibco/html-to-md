@@ -30,13 +30,18 @@ if sys.stderr.encoding and sys.stderr.encoding.lower() != "utf-8":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
+# Each step: (display_id, sort_key, script, label)
+# sort_key is a float so "2a" (1.5) slots between 1 and 2 without renumbering.
+# --from-step / --to-step use integer step numbers; 2a is always included when
+# the range spans both 1 and 2 (sort_key 1.5 falls between them automatically).
 STEPS = [
-    (1, "scripts/01_build_manifest.py", "Build Manifest"),
-    (2, "scripts/02_download.py",       "Download HTML + Images + alias.xml"),
-    (3, "scripts/03_convert.py",        "Convert HTML → Markdown"),
-    (4, "scripts/04_build_csh_maps.py", "Build CSH Maps"),
-    (5, "scripts/05_postprocess.py",    "Postprocess Links + Tokens"),
-    (6, "scripts/06_build_toc.py",      "Build TOC JSON"),
+    (1,    1.0, "scripts/01_build_manifest.py",   "Build Manifest"),
+    ("2a", 1.5, "scripts/02a_download_zip.py",    "Download ZIPs + Extract"),
+    (2,    2.0, "scripts/02_download.py",          "Download HTML + Images + alias.xml"),
+    (3,    3.0, "scripts/03_convert.py",           "Convert HTML → Markdown"),
+    (4,    4.0, "scripts/04_build_csh_maps.py",   "Build CSH Maps"),
+    (5,    5.0, "scripts/05_postprocess.py",       "Postprocess Links + Tokens"),
+    (6,    6.0, "scripts/06_build_toc.py",         "Build TOC JSON"),
 ]
 
 
@@ -45,7 +50,7 @@ def load_settings(config_path: str) -> dict:
 
 
 def run_step(
-    step_num: int,
+    display_id,
     script: str,
     label: str,
     phase: str,
@@ -62,14 +67,14 @@ def run_step(
     if force_rerun:
         cmd.append("--force-rerun")
     # --force-refresh is only used by Step 2
-    if force_refresh and "02_download" in script:
+    if force_refresh and "02_download.py" in script:
         cmd.append("--force-refresh")
     # --ignore-registry is only used by Step 1
     if ignore_registry and "01_build_manifest" in script:
         cmd.append("--ignore-registry")
 
     print(f"\n{'='*60}")
-    print(f"  Step {step_num}: {label}")
+    print(f"  Step {display_id}: {label}")
     print(f"  Command: {' '.join(cmd)}")
     print(f"{'='*60}")
 
@@ -80,7 +85,7 @@ def run_step(
     elapsed = round(time.time() - start, 1)
 
     status = "OK" if result.returncode == 0 else f"FAILED (exit {result.returncode})"
-    print(f"\n  Step {step_num} {status} in {elapsed}s")
+    print(f"\n  Step {display_id} {status} in {elapsed}s")
     return result.returncode, elapsed
 
 
@@ -166,21 +171,22 @@ def main():
     print(f"  Config:    {args.config}")
 
     steps_run = []
-    for step_num, script, label in STEPS:
-        if step_num < args.from_step or step_num > args.to_step:
+    for display_id, sort_key, script, label in STEPS:
+        if sort_key < args.from_step or sort_key > args.to_step:
             continue
 
         exit_code, elapsed = run_step(
-            step_num, script, label,
+            display_id, script, label,
             args.phase, args.config,
             args.dry_run, args.force_rerun, args.force_refresh,
             args.ignore_registry,
         )
-        steps_run.append((step_num, script, label, exit_code, elapsed))
+        steps_run.append((display_id, script, label, exit_code, elapsed))
 
         if exit_code != 0:
-            print(f"\nStep {step_num} failed — stopping pipeline.")
-            print(f"To resume from this step: python run.py --phase {args.phase} --from-step {step_num}")
+            resume_step = int(sort_key) if sort_key == int(sort_key) else display_id
+            print(f"\nStep {display_id} failed — stopping pipeline.")
+            print(f"To resume from this step: python run.py --phase {args.phase} --from-step {resume_step}")
             break
 
     print_summary(args.phase, steps_run, logs_dir, args.dry_run)

@@ -47,6 +47,18 @@ def load_manifest(phase: str, settings: dict) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_zip_registry(phase: str, settings: dict) -> set[str]:
+    """Return the set of version_sitemap keys already covered by ZIP extraction."""
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    path = manifests_dir / f"zip_registry_{phase}.json"
+    if not path.exists():
+        return set()
+    try:
+        return set(json.loads(path.read_text(encoding="utf-8")).keys())
+    except Exception:
+        return set()
+
+
 def url_to_cache_path(loc: str, cache_dir: Path) -> Path:
     """Map a URL to its local cache path."""
     path = urlparse(loc).path.lstrip("/")
@@ -122,6 +134,7 @@ async def download_phase(
     reporter: Reporter,
     dry_run: bool,
     force_refresh: bool,
+    zip_versions: set[str] | None = None,
 ):
     http_cfg      = settings.get("http", {})
     cache_dir     = Path(settings.get("cache_dir", "cache"))
@@ -137,11 +150,19 @@ async def download_phase(
     )
     skip_prefixes = settings.get("image_skip_prefixes", [])
 
+    if zip_versions is None:
+        zip_versions = set()
+
+    if zip_versions:
+        reporter.info(f"{len(zip_versions)} version(s) already covered by ZIP — skipping their pages/aliases")
+
     semaphore = asyncio.Semaphore(concurrency)
 
-    # Collect alias.xml URLs — one per version (deduplicated)
+    # Collect alias.xml URLs — one per version (deduplicated), skip zip-covered versions
     alias_urls: dict[str, str] = {}  # alias_xml_url → version_sitemap (for dedup)
     for entry in manifest:
+        if entry.get("version_sitemap", "") in zip_versions:
+            continue
         au = entry.get("alias_xml_url")
         if au and au not in alias_urls:
             alias_urls[au] = entry.get("version_sitemap", "")
@@ -159,6 +180,9 @@ async def download_phase(
             url  = entry["url"]
             dest = url_to_cache_path(url, cache_dir)
             async with semaphore:
+                if entry.get("version_sitemap", "") in zip_versions:
+                    reporter.count("pages_zip_extracted")
+                    return
                 if dest.exists() and not force_refresh:
                     reporter.count("pages_cached")
                     return
@@ -233,7 +257,11 @@ def main():
                   f"dry_run={args.dry_run} force_refresh={args.force_refresh} ===")
     reporter.info(f"Manifest: {len(manifest)} entries")
 
-    asyncio.run(download_phase(manifest, settings, reporter, args.dry_run, args.force_refresh))
+    zip_versions = load_zip_registry(args.phase, settings)
+    if zip_versions:
+        reporter.info(f"ZIP registry: {len(zip_versions)} version(s) already extracted — will skip their downloads")
+
+    asyncio.run(download_phase(manifest, settings, reporter, args.dry_run, args.force_refresh, zip_versions))
 
     report = reporter.finish()
     return 0 if report["error_count"] == 0 else 1

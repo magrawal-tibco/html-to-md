@@ -147,6 +147,27 @@ def iter_product_versions(
             raise RuntimeError(f"Failed to fetch version sitemap {version_url}: {exc}") from exc
 
 
+def iter_version_entries(
+    client: httpx.Client,
+    version_sitemap_url: str,
+) -> tuple[str, list[UrlEntry]]:
+    """
+    Directly parse a Level 3 version urlset and return (version_sitemap_url, [UrlEntry]).
+    Used when a specific version URL is listed under 'versions:' in the phase YAML,
+    bypassing Level 2 product sitemapindex discovery.
+    """
+    root = _fetch_xml(client, version_sitemap_url)
+    if _is_sitemapindex(root):
+        # Caller passed an L2 sitemapindex by mistake — parse the first version under it
+        version_urls = _get_locs(root, "sitemap")
+        if not version_urls:
+            return version_sitemap_url, []
+        root = _fetch_xml(client, version_urls[0])
+        version_sitemap_url = version_urls[0]
+    entries = _parse_urlset(root)
+    return version_sitemap_url, entries
+
+
 def build_http_client(settings: dict) -> httpx.Client:
     """Create a synchronous httpx client from settings."""
     http = settings.get("http", {})

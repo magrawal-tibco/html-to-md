@@ -24,6 +24,7 @@ from tqdm import tqdm
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.lib.reporter import Reporter
+from scripts.lib.toc_parser import build_toc_tree_from_js
 
 
 def load_settings(config_path: str) -> dict:
@@ -103,16 +104,55 @@ def insert_into_tree(tree: dict, segments: list[str], page_entry: dict):
         insert_into_tree(child, rest, page_entry)
 
 
+def _version_label_from_entries(version_entries: list[dict], output_dir: Path) -> str:
+    """Read product name + version from the first available .md frontmatter."""
+    for entry in version_entries:
+        md_path = output_dir / entry["output_path"]
+        if md_path.exists():
+            fm = read_frontmatter(md_path)
+            name    = fm.get("product_name", "")
+            version = fm.get("product_version", "")
+            label   = f"{name} {version}".strip()
+            if label:
+                return label
+    return ""
+
+
 def build_version_toc(
     version_entries: list[dict],
     output_dir: Path,
     version_root: str,
     reporter: Reporter,
+    cache_dir: Path | None = None,
 ) -> dict:
     """
     Build TOC tree for one product version.
+    Prefers authoritative MadCap TOC JS files from cache when available;
+    falls back to breadcrumb reconstruction.
     Returns the toc dict (not yet written to disk).
     """
+    # Prefer TOC JS files extracted from the documentation ZIP
+    if cache_dir is not None:
+        toc_js_dir = cache_dir / version_root.rstrip("/") / "Data" / "Tocs"
+        if toc_js_dir.exists() and any(toc_js_dir.glob("*.js")):
+            try:
+                tree, orphan_paths = build_toc_tree_from_js(
+                    toc_js_dir, version_root, version_entries
+                )
+                version_label = _version_label_from_entries(version_entries, output_dir)
+                reporter.count("toc_entries", len(version_entries) - len(orphan_paths))
+                reporter.count("toc_orphans", len(orphan_paths))
+                reporter.count("toc_from_js")
+                return {
+                    "version":  version_label,
+                    "root":     version_root,
+                    "tree":     tree,
+                    "_orphans": orphan_paths,
+                    "_source":  "toc_js",
+                }
+            except Exception as exc:
+                reporter.warning(f"TOC JS parse failed for {version_root}: {exc} — falling back to breadcrumbs")
+
     tree_root = {"title": "root", "file": None, "children": []}
     orphans   = []
     no_toc    = 0
@@ -175,21 +215,14 @@ def build_version_toc(
 
     reporter.count("toc_entries", len(version_entries) - no_toc)
     reporter.count("toc_orphans", len(orphans))
-
-    # Determine version label from first entry's frontmatter
-    version_label = ""
-    if version_entries:
-        md_path = output_dir / version_entries[0]["output_path"]
-        fm = read_frontmatter(md_path)
-        product_name    = fm.get("product_name", "")
-        product_version = fm.get("product_version", "")
-        version_label   = f"{product_name} {product_version}".strip()
+    reporter.count("toc_from_breadcrumbs")
 
     return {
-        "version":  version_label,
+        "version":  _version_label_from_entries(version_entries, output_dir),
         "root":     version_root,
         "tree":     tree_root["children"],
         "_orphans": orphans,
+        "_source":  "breadcrumbs",
     }
 
 
@@ -213,6 +246,7 @@ def main():
     settings   = load_settings(args.config)
     manifest   = load_manifest(args.phase, settings)
     output_dir = Path(settings.get("output_dir", "output"))
+    cache_dir  = Path(settings.get("cache_dir", "cache"))
 
     from datetime import datetime
     logs_dir = Path(settings.get("logs_dir", "logs"))
@@ -225,7 +259,7 @@ def main():
     reporter.info(f"Building TOC for {len(versions)} version(s)")
 
     for version_root, entries in tqdm(versions.items(), desc="Versions"):
-        toc = build_version_toc(entries, output_dir, version_root, reporter)
+        toc = build_version_toc(entries, output_dir, version_root, reporter, cache_dir)
 
         toc_path = output_dir / version_root / "_toc.json"
 

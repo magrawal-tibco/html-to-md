@@ -24,7 +24,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.lib.reporter import Reporter
-from scripts.lib.sitemap_parser import build_http_client, iter_product_versions
+from scripts.lib.sitemap_parser import build_http_client, iter_product_versions, iter_version_entries
 from scripts.lib.version_registry import load_registry
 
 
@@ -109,6 +109,23 @@ def infer_alias_xml_url(loc: str) -> str:
         html_root = path[: idx + len(marker)]
     base = f"{parsed.scheme}://{parsed.netloc}"
     return f"{base}{html_root}Data/Alias.xml"
+
+
+def infer_zip_url(loc: str, version_sitemap: str, product_version: str) -> str:
+    """
+    Derive the documentation ZIP URL for a version.
+    Pattern: https://docs.tibco.com/pub/{pub_slug}/{version}/{l2_slug}-{version_dashes}_documentation.zip
+
+    e.g. url=".../pub/dsp_gridserver/7.2.0/...", version_sitemap="...tibco-datasynapse-gridserver-manager-7-2-0.xml"
+      →  https://docs.tibco.com/pub/dsp_gridserver/7.2.0/tibco-datasynapse-gridserver-manager-7-2-0_documentation.zip
+    """
+    parsed         = urlparse(loc)
+    pub_slug       = parsed.path.split("/")[2]            # e.g. "dsp_gridserver"
+    version_dashes = product_version.replace(".", "-")    # e.g. "7-2-0"
+    v_stem         = Path(urlparse(version_sitemap).path).stem  # "tibco-...-7-2-0"
+    l2_slug        = v_stem.removesuffix("-" + version_dashes)  # "tibco-..."
+    base           = f"{parsed.scheme}://{parsed.netloc}"
+    return f"{base}/pub/{pub_slug}/{product_version}/{l2_slug}-{version_dashes}_documentation.zip"
 
 
 def _is_dita_version(entries: list, patterns: list[str]) -> bool:
@@ -216,6 +233,7 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                         "access_level":    entry.access_level,
                         "version_sitemap": version_url,
                         "alias_xml_url":   alias_xml_url,
+                        "zip_url":         infer_zip_url(entry.loc, version_url, entry.product_version),
                     }
                     version_manifest.append(manifest_entry)
                     reporter.count("pages_included")
@@ -227,6 +245,79 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
         except Exception as exc:
             reporter.fail(product_url, str(exc), step="01_build_manifest")
             reporter.count("product_errors")
+
+    # Process version-level sitemaps (L3 URLs listed directly under 'versions:' in phase YAML)
+    version_direct = phase.get("versions", [])
+    if version_direct:
+        reporter.info(f"Processing {len(version_direct)} directly specified version sitemap(s)")
+    for version_url in version_direct:
+        reporter.info(f"  Version: {version_url}")
+        try:
+            fetched_url, entries = iter_version_entries(client, version_url)
+            reporter.info(f"    {fetched_url} ({len(entries)} raw entries)")
+            reporter.count("versions_found")
+
+            if fetched_url in registry:
+                rec = registry[fetched_url]
+                reporter.info(
+                    f"      -> SKIPPED (already converted on {rec.get('converted_at', '?')}, "
+                    f"phase={rec.get('phase', '?')}, {rec.get('page_count', '?')} pages)"
+                )
+                reporter.count("skipped_already_converted", len(entries))
+                reporter.count("versions_skipped_registry")
+                time.sleep(delay)
+                continue
+
+            if dita_patterns and entries and _is_dita_version(entries, dita_patterns):
+                dita_versions.append({
+                    "version_sitemap":  fetched_url,
+                    "product_sitemap":  None,
+                    "page_count":       len(entries),
+                    "product_name":     entries[0].product_name if entries else "",
+                    "product_version":  entries[0].product_version if entries else "",
+                })
+                reporter.count("dita_versions_found")
+                reporter.count("skipped_non-madcap-dita", len(entries))
+                reporter.info(f"      -> DITA version — logged to dita_versions")
+                time.sleep(delay)
+                continue
+
+            version_manifest = []
+            alias_xml_url = None
+
+            for entry in entries:
+                skip, reason = should_skip_url(entry.loc, settings)
+                if skip:
+                    reporter.skip(entry.loc, reason)
+                    reporter.count(f"skipped_{reason.split(':')[0]}")
+                    continue
+
+                output_path = url_to_output_path(entry.loc)
+
+                if alias_xml_url is None:
+                    alias_xml_url = infer_alias_xml_url(entry.loc)
+
+                version_manifest.append({
+                    "url":             entry.loc,
+                    "lastmod":         entry.lastmod,
+                    "output_path":     output_path,
+                    "product_name":    entry.product_name,
+                    "product_version": entry.product_version,
+                    "doc_name":        entry.doc_name,
+                    "access_level":    entry.access_level,
+                    "version_sitemap": fetched_url,
+                    "alias_xml_url":   alias_xml_url,
+                    "zip_url":         infer_zip_url(entry.loc, fetched_url, entry.product_version),
+                })
+                reporter.count("pages_included")
+
+            reporter.info(f"      -> {len(version_manifest)} HTML pages accepted")
+            manifest.extend(version_manifest)
+            time.sleep(delay)
+
+        except Exception as exc:
+            reporter.fail(version_url, str(exc), step="01_build_manifest")
+            reporter.count("version_errors")
 
     return manifest, dita_versions
 
