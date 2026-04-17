@@ -60,6 +60,7 @@ def run_step(
     force_rerun: bool,
     force_refresh: bool,
     ignore_registry: bool,
+    total_seconds: float | None = None,
 ) -> tuple[int, float]:
     """Run a single pipeline step as a subprocess. Returns (exit_code, duration_seconds)."""
     cmd = [sys.executable, script, f"--phase={phase}", f"--config={config}"]
@@ -73,6 +74,9 @@ def run_step(
     # --ignore-registry is only used by Step 1
     if ignore_registry and "01_build_manifest" in script:
         cmd.append("--ignore-registry")
+    # --total-seconds is only used by Step 7
+    if total_seconds is not None and "07_generate_report" in script:
+        cmd.append(f"--total-seconds={total_seconds:.1f}")
 
     print(f"\n{'='*60}")
     print(f"  Step {display_id}: {label}")
@@ -172,6 +176,7 @@ def main():
     print(f"  Config:    {args.config}")
 
     steps_run = []
+    accumulated_seconds = 0.0
     for display_id, sort_key, script, label in STEPS:
         if sort_key < args.from_step or sort_key > args.to_step:
             continue
@@ -181,7 +186,9 @@ def main():
             args.phase, args.config,
             args.dry_run, args.force_rerun, args.force_refresh,
             args.ignore_registry,
+            total_seconds=accumulated_seconds if "07_generate_report" in script else None,
         )
+        accumulated_seconds += elapsed
         steps_run.append((display_id, script, label, exit_code, elapsed))
 
         if exit_code != 0:

@@ -1,8 +1,8 @@
-Phase,Run Date,Product Name,Version,Document Name,Status,Version Sitemap URL,Public URL,Topics in Sitemap,Topics Converted,CSH ID Count,PDFs Found,ZIP Status,TOC Source
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for PostgreSQL,1.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-1-0-0.xml,,2,0,0,0,na,none
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for PostgreSQL,3.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-3-0-0.xml,,2,0,0,0,na,none
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for PostgreSQL,3.1.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-3-1-0.xml,,2,0,0,0,na,none
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for SAP BW,1.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-1-0-0.xml,,2,0,0,0,na,none
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for SAP BW,2.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-2-0-0.xml,,2,0,0,0,na,none
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for SAP BW,3.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-3-0-0.xml,,13,0,0,0,na,none
-phase_01,2026-04-17T19:31:58,TIBCO Spotfire® Connector for SAP BW,3.1.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-3-1-0.xml,,13,0,0,0,na,none
+Phase,Run Date,Product Name,Version,Document Name,Status,Version Sitemap URL,Public URL,Topics in Sitemap,Topics Converted,CSH ID Count,PDFs Found,ZIP Status,TOC Source,Phase Total Time (s)
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for PostgreSQL,1.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-1-0-0.xml,,2,0,0,0,na,none,12.3
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for PostgreSQL,3.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-3-0-0.xml,,2,0,0,0,na,none,12.3
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for PostgreSQL,3.1.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql-3-1-0.xml,,2,0,0,0,na,none,12.3
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for SAP BW,1.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-1-0-0.xml,,2,0,0,0,na,none,12.3
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for SAP BW,2.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-2-0-0.xml,,2,0,0,0,na,none,12.3
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for SAP BW,3.0.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-3-0-0.xml,,13,0,0,0,na,none,12.3
+phase_01,2026-04-17T19:35:55,TIBCO Spotfire® Connector for SAP BW,3.1.0,,no_html,https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw-3-1-0.xml,,13,0,0,0,na,none,12.3

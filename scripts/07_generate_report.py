@@ -47,6 +47,7 @@ COLUMN_HEADERS: dict[str, str] = {
     "pdf_count":         "PDFs Found",
     "zip_status":        "ZIP Status",
     "toc_source":        "TOC Source",
+    "phase_total_seconds": "Phase Total Time (s)",
 }
 
 LOG_COLUMNS     = list(COLUMN_HEADERS.keys())       # internal key order
@@ -118,7 +119,7 @@ def _toc_source(output_dir: Path, html_root: str) -> str:
 # Record collection
 # ---------------------------------------------------------------------------
 
-def collect_records(phase: str, settings: dict, run_date: str) -> list[dict]:
+def collect_records(phase: str, settings: dict, run_date: str, total_seconds: float = 0.0) -> list[dict]:
     manifests_dir = Path(settings.get("manifests_dir", "manifests"))
     output_dir    = Path(settings.get("output_dir",   "output"))
     cache_dir     = Path(settings.get("cache_dir",    "cache"))
@@ -144,58 +145,61 @@ def collect_records(phase: str, settings: dict, run_date: str) -> list[dict]:
         zip_status = ("extracted" if vs in zip_registry else
                       "missing"   if vs in zip_missing  else "na")
         records.append({
-            "phase":             phase,
-            "run_date":          run_date,
-            "product_name":      rep.get("product_name", ""),
-            "product_version":   rep.get("product_version", ""),
-            "doc_name":          rep.get("doc_name", ""),
-            "status":            "madcap",
-            "version_sitemap":   vs,
-            "public_url":        public_url,
-            "topics_in_sitemap": len(entries),
-            "topics_converted":  _count_md(output_dir, html_root),
-            "csh_id_count":      _count_csh_ids(output_dir, html_root),
-            "pdf_count":         _count_pdfs(cache_dir, html_root),
-            "zip_status":        zip_status,
-            "toc_source":        _toc_source(output_dir, html_root),
+            "phase":               phase,
+            "run_date":            run_date,
+            "product_name":        rep.get("product_name", ""),
+            "product_version":     rep.get("product_version", ""),
+            "doc_name":            rep.get("doc_name", ""),
+            "status":              "madcap",
+            "version_sitemap":     vs,
+            "public_url":          public_url,
+            "topics_in_sitemap":   len(entries),
+            "topics_converted":    _count_md(output_dir, html_root),
+            "csh_id_count":        _count_csh_ids(output_dir, html_root),
+            "pdf_count":           _count_pdfs(cache_dir, html_root),
+            "zip_status":          zip_status,
+            "toc_source":          _toc_source(output_dir, html_root),
+            "phase_total_seconds": total_seconds,
         })
 
     # ── DITA versions ────────────────────────────────────────────────────────
     for v in dita_versions:
         records.append({
-            "phase":             phase,
-            "run_date":          run_date,
-            "product_name":      v.get("product_name", ""),
-            "product_version":   v.get("product_version", ""),
-            "doc_name":          "",
-            "status":            "dita",
-            "version_sitemap":   v.get("version_sitemap", ""),
-            "public_url":        "",
-            "topics_in_sitemap": v.get("page_count", 0),
-            "topics_converted":  0,
-            "csh_id_count":      0,
-            "pdf_count":         0,
-            "zip_status":        "na",
-            "toc_source":        "none",
+            "phase":               phase,
+            "run_date":            run_date,
+            "product_name":        v.get("product_name", ""),
+            "product_version":     v.get("product_version", ""),
+            "doc_name":            "",
+            "status":              "dita",
+            "version_sitemap":     v.get("version_sitemap", ""),
+            "public_url":          "",
+            "topics_in_sitemap":   v.get("page_count", 0),
+            "topics_converted":    0,
+            "csh_id_count":        0,
+            "pdf_count":           0,
+            "zip_status":          "na",
+            "toc_source":          "none",
+            "phase_total_seconds": total_seconds,
         })
 
     # ── Empty versions (no HTML) ─────────────────────────────────────────────
     for v in empty_versions:
         records.append({
-            "phase":             phase,
-            "run_date":          run_date,
-            "product_name":      v.get("product_name", ""),
-            "product_version":   v.get("product_version", ""),
-            "doc_name":          "",
-            "status":            "no_html",
-            "version_sitemap":   v.get("version_sitemap", ""),
-            "public_url":        "",
-            "topics_in_sitemap": v.get("raw_page_count", 0),
-            "topics_converted":  0,
-            "csh_id_count":      0,
-            "pdf_count":         0,
-            "zip_status":        "na",
-            "toc_source":        "none",
+            "phase":               phase,
+            "run_date":            run_date,
+            "product_name":        v.get("product_name", ""),
+            "product_version":     v.get("product_version", ""),
+            "doc_name":            "",
+            "status":              "no_html",
+            "version_sitemap":     v.get("version_sitemap", ""),
+            "public_url":          "",
+            "topics_in_sitemap":   v.get("raw_page_count", 0),
+            "topics_converted":    0,
+            "csh_id_count":        0,
+            "pdf_count":           0,
+            "zip_status":          "na",
+            "toc_source":          "none",
+            "phase_total_seconds": total_seconds,
         })
 
     return records
@@ -226,10 +230,12 @@ def _write_csv(path: Path, records: list[dict], append: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="Step 7: Generate conversion report")
-    parser.add_argument("--phase",       required=True)
-    parser.add_argument("--config",      default="config/settings.yaml")
-    parser.add_argument("--dry-run",     action="store_true")
-    parser.add_argument("--force-rerun", action="store_true")  # orchestrator compat
+    parser.add_argument("--phase",          required=True)
+    parser.add_argument("--config",         default="config/settings.yaml")
+    parser.add_argument("--dry-run",        action="store_true")
+    parser.add_argument("--force-rerun",    action="store_true")  # orchestrator compat
+    parser.add_argument("--total-seconds",  type=float, default=0.0,
+                        help="Total pipeline elapsed time in seconds (passed by run.py)")
     args = parser.parse_args()
 
     settings = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
@@ -241,7 +247,7 @@ def main():
 
     reporter.info(f"=== Step 7: Generate Report | phase={args.phase} dry_run={args.dry_run} ===")
 
-    records = collect_records(args.phase, settings, run_date)
+    records = collect_records(args.phase, settings, run_date, args.total_seconds)
     reporter.info(f"Collected {len(records)} version record(s)")
 
     by_status: dict[str, int] = {}
