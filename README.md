@@ -4,7 +4,7 @@ A Python pipeline that converts TIBCO product documentation (~2000 product versi
 
 ## Overview
 
-The pipeline downloads documentation HTML, runs a series of BeautifulSoup preprocessing transforms to clean up MadCap-specific markup, then converts to GitHub-Flavored Markdown using [markdownify](https://github.com/matthewwithanm/python-markdownify). Each Markdown file includes YAML frontmatter with metadata (title, TOC path, product version, context-sensitive help IDs).
+The pipeline downloads documentation HTML (or full documentation ZIPs where available), runs a series of BeautifulSoup preprocessing transforms to clean up MadCap-specific markup, then converts to GitHub-Flavored Markdown using [markdownify](https://github.com/matthewwithanm/python-markdownify). Each Markdown file includes YAML frontmatter with metadata (title, TOC path, product version, context-sensitive help IDs).
 
 ## Requirements
 
@@ -41,66 +41,98 @@ python scripts/03_convert.py --phase phase_01
 
 ```
 html-to-md/
-├── run.py                        # Orchestrator (--phase, --from-step, --to-step, --dry-run)
+├── run.py                          # Orchestrator (--phase, --from-step, --to-step, --dry-run)
 ├── requirements.txt
 ├── config/
-│   ├── settings.yaml             # All tunable settings
+│   ├── settings.yaml               # All tunable settings
 │   └── phases/
-│       ├── phase_01.yaml         # L2 product sitemap URLs for phase 1
-│       ├── phase_02.yaml
-│       └── phase_03.yaml
+│       ├── phase_template.yaml     # Annotated template — copy to create a new phase
+│       ├── phase_01.yaml           # L2 product or L3 version sitemap URLs
+│       └── phase_02.yaml
 ├── scripts/
-│   ├── 01_build_manifest.py      # Sitemap crawl → manifests/manifest_<phase>.json
-│   ├── 02_download.py            # HTML + images + alias.xml → cache/
-│   ├── 03_convert.py             # HTML → Markdown with preprocessor transforms
-│   ├── 04_build_csh_maps.py      # alias.xml → csh_map.json + frontmatter injection
-│   ├── 05_postprocess.py         # Rewrite .htm links → .md, strip variable tokens
-│   ├── 06_build_toc.py           # Reconstruct TOC from toc_path breadcrumbs → _toc.json
+│   ├── 01_build_manifest.py        # Sitemap crawl → manifests/manifest_<phase>.json
+│   ├── 02a_download_zip.py         # Download + extract per-version documentation ZIPs
+│   ├── 02_download.py              # HTML + images + alias.xml → cache/ (fallback)
+│   ├── 03_convert.py               # HTML → Markdown with preprocessor transforms
+│   ├── 04_build_csh_maps.py        # alias.xml → csh_map.json + frontmatter injection
+│   ├── 05_postprocess.py           # Rewrite .htm links → .md, strip variable tokens
+│   ├── 06_build_toc.py             # Build _toc.json (prefers ZIP TOC JS, falls back to breadcrumbs)
+│   ├── 07_generate_report.py       # Write phase_report.csv and update conversion_log.csv
+│   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
 │   └── lib/
-│       ├── sitemap_parser.py     # 3-level sitemap crawl
-│       ├── preprocessor.py       # 13 BeautifulSoup transform passes
-│       ├── table_classifier.py   # Tier 1/2/3 table classification
-│       └── reporter.py           # Structured logging + JSON report writing
-├── manifests/                    # Generated JSON manifests — committed to git
-├── cache/                        # Downloaded HTML + images — gitignored
-├── output/                       # Converted Markdown files — gitignored
-└── logs/                         # Per-run logs and reports — gitignored
+│       ├── sitemap_parser.py       # 3-level sitemap crawl functions
+│       ├── toc_parser.py           # MadCap WebHelp2 TOC JS parsing (shared by steps 6 + compare_toc)
+│       ├── preprocessor.py         # 13 BeautifulSoup transform passes
+│       ├── table_classifier.py     # Tier 1/2/3 table classification
+│       └── reporter.py             # Structured logging + JSON report writing
+├── manifests/                      # Generated JSON manifests — committed to git
+│   └── conversion_log.csv          # Persistent cross-phase conversion log
+├── cache/                          # Downloaded HTML + images — gitignored
+├── output/                         # Converted Markdown files — gitignored
+└── logs/                           # Per-run logs and reports — gitignored
 ```
 
 ## Pipeline Steps
 
 | Step | Script | Input | Output |
 |------|--------|-------|--------|
-| 1 | `01_build_manifest.py` | Phase YAML | `manifests/manifest_<phase>.json` |
-| 2 | `02_download.py` | Manifest JSON | `cache/` — HTML, images, alias.xml |
+| 1 | `01_build_manifest.py` | Phase YAML | `manifests/manifest_<phase>.json`, `dita_versions_<phase>.json`, `empty_versions_<phase>.json` |
+| 2a | `02a_download_zip.py` | Manifest JSON | `cache/` — full ZIP extracted; `zip_registry_<phase>.json`, `zip_missing_<phase>.json` |
+| 2 | `02_download.py` | Manifest + zip_registry | `cache/` — HTML, images, alias.xml (skips versions covered by ZIP) |
 | 3 | `03_convert.py` | Manifest + cache/ | `output/**/*.md` + images |
-| 4 | `04_build_csh_maps.py` | cache/ alias.xml files | `output/.../csh_map.json` + updated frontmatter |
+| 4 | `04_build_csh_maps.py` | cache/ alias.xml | `output/.../csh_map.json` + updated frontmatter |
 | 5 | `05_postprocess.py` | output/**/*.md | Updated .md files (in-place) |
-| 6 | `06_build_toc.py` | output/**/*.md frontmatter | `output/.../_toc.json` per version |
+| 6 | `06_build_toc.py` | cache/ TOC JS + output/**/*.md | `output/.../_toc.json` per version |
+| 7 | `07_generate_report.py` | All manifests + output/ | `logs/.../phase_report.csv`, `manifests/conversion_log.csv` |
 
-Step 5 (`05_postprocess.py`) must be run after Step 3 — it rewrites `.htm` cross-reference links to `.md` and strips MadCap variable tokens from TOC paths.
+### ZIP-first download (Step 2a)
+
+TIBCO publishes a documentation ZIP per product version at a predictable URL. Step 2a downloads and extracts these ZIPs, which provides:
+
+- **Authoritative TOC** — `Data/Tocs/*.js` files give exact hierarchy and page order (Step 6 prefers these over breadcrumb reconstruction)
+- **Efficiency** — one request per version instead of hundreds of individual page requests
+- **Completeness** — all HTML pages, images, and PDFs in one download
+
+Versions where the ZIP is missing or fails are written to `zip_missing_<phase>.json` and fall back to individual page downloading in Step 2.
+
+ZIP settings in `config/settings.yaml`:
+
+```yaml
+zip:
+  enabled: true
+  store_zip: true        # Keep .zip after extraction (false = delete to save disk space)
+  zip_cache_dir: "cache/zip"
+  min_free_gb: 20        # Skip version if free disk space drops below this
+```
 
 ## Phase Files
 
-Phase files (`config/phases/<name>.yaml`) list product-level (L2) sitemap URLs. All version sitemaps under each product are discovered automatically.
+Phase files (`config/phases/<name>.yaml`) define which products or versions to process. Copy `config/phases/phase_template.yaml` to create a new phase.
+
+Two keys are supported and can be combined:
 
 ```yaml
-name: "Phase 1 - POC"
+name: "Phase 3 — BusinessEvents"
+
+# L2 product sitemaps — all versions discovered automatically
 products:
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql.xml
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition.xml
+
+# L3 version sitemaps — target a specific version directly
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-4-0.xml
 ```
 
-To run a subset for testing, create a minimal manifest JSON directly:
+| Key | Level | Discovers |
+|-----|-------|-----------|
+| `products:` | L2 product sitemapindex | All versions under the product automatically |
+| `versions:` | L3 version urlset | Exactly the specified version |
 
-```python
-import json
-from pathlib import Path
-manifest = json.loads(Path('manifests/manifest_phase_03.json').read_text(encoding='utf-8'))
-subset = [e for e in manifest if 'businessevents-enterprise/6.4.0' in e['url']]
-Path('manifests/manifest_be640.json').write_text(json.dumps(subset, indent=2), encoding='utf-8')
-# then: python run.py --phase be640 --from-step 3
-```
+Sitemap URL patterns:
+- **L2:** `https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml`
+- **L3:** `https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml`
+
+The master sitemap at `https://docs.tibco.com/sitemap.xml` lists all L2 URLs.
 
 ## Sitemap Hierarchy
 
@@ -111,6 +143,23 @@ https://docs.tibco.com/sitemap.xml                              (master sitemapi
 ```
 
 L3 urlsets use the `coveo:` namespace extension for metadata (product name, version, doc name).
+
+## TOC Reconstruction (Step 6)
+
+Step 6 builds `_toc.json` per version using the best available source:
+
+1. **MadCap TOC JS** (authoritative) — uses `Data/Tocs/*.js` files from the extracted ZIP when present. These give exact hierarchy depth and page order as authored.
+2. **Breadcrumbs** (fallback) — reconstructs the tree from `data-mc-toc-path` attributes in each page's `<html>` tag. Accurate for page membership but flattens deep hierarchies.
+
+The `_toc.json` includes a `"_source"` field (`"toc_js"` or `"breadcrumbs"`) indicating which method was used.
+
+To compare a reconstructed `_toc.json` against the authoritative MadCap TOC JS:
+
+```bash
+python scripts/compare_toc.py \
+  --toc-js-dir "path/to/Data/Tocs" \
+  --toc-json   "output/pub/product/version/doc/html/_toc.json"
+```
 
 ## Preprocessor Transforms
 
@@ -176,6 +225,41 @@ https://docs.tibco.com/pub/businessevents-enterprise/6.4.0/doc/html/Admin/file.h
 
 Images are copied alongside their referencing Markdown file.
 
+## Reporting (Step 7)
+
+Step 7 runs automatically at the end of every phase and writes:
+
+- **`logs/<phase>/<timestamp>/phase_report.csv`** — snapshot of all versions processed in this run
+- **`manifests/conversion_log.csv`** — persistent log appended every run, one row per version
+
+### Conversion Log Columns
+
+| Column | Description |
+|--------|-------------|
+| Phase | Phase name |
+| Run Date | ISO timestamp of the run |
+| Product Name | From coveo:metadata |
+| Version | Product version string |
+| Document Name | Doc set name from coveo:metadata |
+| Status | `madcap` / `dita` / `no_html` |
+| Version Sitemap URL | L3 sitemap URL |
+| Public URL | `https://docs.tibco.com/pub/<slug>/<version>/` |
+| Topics in Sitemap | Raw page count from sitemap |
+| Topics Converted | Actual `.md` files written to output/ |
+| CSH ID Count | Number of context-sensitive help ID mappings |
+| PDFs Found | PDF files found in cache for this version |
+| ZIP Status | `extracted` / `missing` / `na` |
+| TOC Source | `toc_js` (authoritative) / `breadcrumbs` (fallback) / `none` |
+| Phase Total Time (s) | Total elapsed seconds for the full pipeline run |
+
+### Version Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `madcap` | MadCap Flare WebHelp2 output — converted successfully |
+| `dita` | SDL Trisoft / DITA WebHelp output (GUID filenames) — skipped, future phase |
+| `no_html` | Sitemap had entries but none were accepted HTML pages (PDFs, ZIPs, etc.) |
+
 ## Configuration
 
 All settings are in `config/settings.yaml`:
@@ -191,6 +275,12 @@ http:
   max_retries: 3
   timeout_connect: 10
   timeout_read: 30
+
+zip:
+  enabled: true
+  store_zip: true
+  zip_cache_dir: "cache/zip"
+  min_free_gb: 20
 
 content_selectors:
   - "div[role='main']#mc-main-content"   # MadCap Flare WebHelp2
@@ -215,20 +305,23 @@ tables:
 
 ## Logging & Reports
 
-Each run creates a timestamped folder under `logs/<phase>/<YYYYMMDD-HHMMSS>/`:
+Each step writes to its own timestamped folder under `logs/<phase>/`:
 
 ```
-run.log              # Full verbose log
-errors.log           # Errors only
-skipped.log          # Filtered URLs with reason
-01_manifest.json     # Step 1 stats
-02_download.json     # Step 2 stats
-03_convert.json      # Step 3 stats
-...
-summary.json         # Full rollup across all steps
+logs/<phase>/<YYYYMMDD-HHMMSS>/
+  run.log              # Full verbose log
+  errors.log           # Errors only
+  skipped.log          # Filtered URLs with reason code
+  01_manifest.json     # Step 1 counts and errors
+  02a_zip.json         # Step 2a counts (ZIP downloads)
+  02_download.json     # Step 2 counts
+  03_convert.json      # Step 3 counts
+  04_csh.json          # Step 4 counts
+  05_postprocess.json  # Step 5 counts
+  06_toc.json          # Step 6 counts
+  07_report.json       # Step 7 counts
+  phase_report.csv     # Per-version report for this run
 ```
-
-Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-completed URLs unless `--force-rerun` is passed.
 
 ## Known Source Variations
 
@@ -236,7 +329,8 @@ Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-co
 |---------|-----------|----------|
 | BusinessWorks | `AutoNumber_p_*` table classes as fake lists | `fake_list_tables` transform |
 | BusinessEvents 6.4.0 | DITA task/concept/reference structure | `task_sections` + `definition_lists` transforms |
-| SDL Trisoft / DITA products | GUID-based filenames (`GUID-xxx.html`) | Filtered in Step 1 as `non-madcap-dita` |
+| SDL Trisoft / DITA products | GUID-based filenames (`GUID-xxx.html`) | Filtered in Step 1 as `dita`; written to `dita_versions_<phase>.json` |
 | Javadoc products | `/api/javadoc/` path segment | Filtered in Step 1 as `non-madcap-html` |
 | All products | MadCap variable tokens in TOC path (`[%=System.LinkedHeader%]`) | Stripped in Step 5 |
 | All products | Empty or 404 `alias.xml` | Handled silently (not an error) |
+| All products | ZIP unavailable (HTTP 404) | Logged to `zip_missing_<phase>.json`; Step 2 falls back to web crawl |
