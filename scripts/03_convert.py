@@ -49,6 +49,35 @@ def load_manifest(phase: str, settings: dict) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_dita_versions(phase: str, settings: dict) -> set[str]:
+    """
+    Return the set of version_sitemap URLs that are DITA format (file_dita or sdl_dita).
+    Checks zip_registry first (most accurate post-extraction detection), then manifest entries.
+    These versions are skipped by the MadCap converter and handled by scripts/dita/ instead.
+    """
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    dita_vs: set[str] = set()
+
+    # Primary: zip_registry has format detected post-extraction
+    reg_path = manifests_dir / f"zip_registry_{phase}.json"
+    if reg_path.exists():
+        registry = json.loads(reg_path.read_text(encoding="utf-8"))
+        for vs, rec in registry.items():
+            if rec.get("format") in ("file_dita", "sdl_dita"):
+                dita_vs.add(vs)
+
+    # Fallback: manifest entries with version_format=sdl_dita (set in Step 1)
+    manifest_path = manifests_dir / f"manifest_{phase}.json"
+    if manifest_path.exists():
+        for entry in json.loads(manifest_path.read_text(encoding="utf-8")):
+            if entry.get("version_format") == "sdl_dita":
+                vs = entry.get("version_sitemap", "")
+                if vs:
+                    dita_vs.add(vs)
+
+    return dita_vs
+
+
 def url_to_cache_path(loc: str, cache_dir: Path) -> Path:
     path = urlparse(loc).path.lstrip("/")
     return cache_dir / path
@@ -331,17 +360,25 @@ def main():
     reporter.info(f"=== Step 3: Convert | phase={args.phase} dry_run={args.dry_run} force_rerun={force_rerun} ===")
     reporter.info(f"Manifest: {len(manifest)} entries")
 
+    # DITA versions (file_dita, sdl_dita) are handled by scripts/dita/ — skip here
+    dita_versions = load_dita_versions(args.phase, settings)
+    if dita_versions:
+        reporter.info(f"Skipping {len(dita_versions)} DITA version(s) — use scripts/dita/run.py for those")
+
     # Track conversion errors per version so only fully-successful versions are registered
     version_errors: dict[str, int] = {}
     for entry in manifest:
         vs = entry.get("version_sitemap", "")
-        if vs and vs not in version_errors:
+        if vs and vs not in version_errors and vs not in dita_versions:
             version_errors[vs] = 0
 
     for entry in tqdm(manifest, desc="Converting"):
+        vs = entry.get("version_sitemap", "")
+        if vs in dita_versions:
+            reporter.count("pages_dita_skipped")
+            continue
         ok = convert_entry(entry, settings, cache_dir, output_dir, reporter, args.dry_run, force_rerun)
         if not ok:
-            vs = entry.get("version_sitemap", "")
             if vs:
                 version_errors[vs] += 1
 

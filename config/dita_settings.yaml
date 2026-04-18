@@ -1,0 +1,78 @@
+output_dir: "output"
+cache_dir: "cache"
+manifests_dir: "manifests"
+logs_dir: "logs"
+
+# ── file_dita (DITA WebHelp Responsive, regular filenames, e.g. Spotfire Server) ──
+
+file_dita:
+  content_selector: "article[role='article']"
+  chrome_selectors:
+    - .header
+    - "#leftbar"
+    - .list-actions
+    - "#newBreadcrumbs"
+    - "#breadcrumbs"
+    - .footer-copyright
+    - .resizeTab
+    - noscript
+    - "nav.related-links"
+
+# ── sdl_dita (SDL Trisoft / DITA WebHelp, GUID filenames, e.g. BW Plugin for MongoDB) ──
+
+sdl_dita:
+  content_selector: "article"
+  chrome_selectors:
+    - ".navbar"
+    - "#leftbar"
+    - "#toolbar"
+    - "#breadcrumbs"
+    - "#copyright"
+    - noscript
+
+# ── Shared settings ────────────────────────────────────────────────────────────
+
+# Topic HTML files to skip during discovery (no DC.type meta tag)
+skip_filenames:
+  - index.html
+  - suitehelp_topic_list.html
+
+skip_filename_patterns:
+  - ".*-homepage\\.html?$"
+  - ".*-homepage\\..+\\.html?$"
+
+# Path segments that indicate non-topic files
+skip_path_segments:
+  - /static/
+  - /pdf/
+
+html_extensions:
+  - .htm
+  - .html
+
+image_skip_prefixes:
+  - static/
+
+tables:
+  passthrough_block_tags:
+    - ul
+    - ol
+    - pre
+    - blockquote
+    - table
+    - h1
+    - h2
+    - h3
+
+# ── Slug generation for sdl_dita GUID renaming ────────────────────────────────
+
+slug:
+  max_length: 50          # Max characters for slug stem (before extension)
+  generic_alt_words:      # Alt text values too generic to use as image filenames
+    - image
+    - figure
+    - diagram
+    - screenshot
+    - picture
+    - img
+    - graphic

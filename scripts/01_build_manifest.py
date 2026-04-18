@@ -145,8 +145,11 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
     """
     Crawl all product sitemaps in the phase and return (manifest, dita_versions, empty_versions).
 
-    manifest       — accepted MadCap pages, drives steps 2-6
-    dita_versions  — version sitemaps skipped as non-madcap-dita (GUID filenames)
+    manifest       — accepted pages (madcap + sdl_dita); each entry has a 'version_format' field.
+                     sdl_dita versions use GUID-based filenames (SDL Trisoft output).
+                     file_dita versions are detected later in Step 2a after ZIP extraction.
+    dita_versions  — always empty (kept for backward compatibility); sdl_dita versions are now
+                     included in manifest with version_format='sdl_dita'
     empty_versions — version sitemaps with entries but zero accepted HTML pages
 
     ignore_registry — if True, include versions already in converted_versions.json
@@ -191,27 +194,24 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                     time.sleep(delay)
                     continue
 
-                # Version-level DITA check: one GUID file means the whole version is non-MadCap
-                if dita_patterns and entries and _is_dita_version(entries, dita_patterns):
-                    first = entries[0]
-                    dita_versions.append({
-                        "version_sitemap":  version_url,
-                        "product_sitemap":  product_url,
-                        "page_count":       len(entries),
-                        "product_name":     first.product_name,
-                        "product_version":  first.product_version,
-                    })
-                    reporter.count("dita_versions_found")
-                    reporter.count("skipped_non-madcap-dita", len(entries))
-                    reporter.info(f"      -> DITA version ({len(entries)} GUID pages) — logged to dita_versions")
-                    time.sleep(delay)
-                    continue
+                # Version-level format detection: GUID filenames → sdl_dita, otherwise → madcap.
+                # file_dita (DITA WebHelp Responsive with regular filenames) is detected later
+                # in Step 2a after ZIP extraction and stored in zip_registry.
+                version_format = "sdl_dita" if (
+                    dita_patterns and entries and _is_dita_version(entries, dita_patterns)
+                ) else "madcap"
+                if version_format == "sdl_dita":
+                    reporter.count("sdl_dita_versions_found")
+                    reporter.info(f"      -> SDL DITA version detected (GUID-based filenames) — included in manifest")
 
                 version_manifest = []
                 alias_xml_url = None
 
                 for entry in entries:
                     skip, reason = should_skip_url(entry.loc, settings)
+                    # sdl_dita pages have GUID filenames by design — don't re-filter by GUID pattern
+                    if skip and version_format == "sdl_dita" and reason == "non-madcap-dita":
+                        skip, reason = False, ""
                     if skip:
                         reporter.skip(entry.loc, reason)
                         reporter.count(f"skipped_{reason.split(':')[0]}")
@@ -235,11 +235,12 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                         "version_sitemap": version_url,
                         "alias_xml_url":   alias_xml_url,
                         "zip_url":         infer_zip_url(entry.loc, version_url, entry.product_version),
+                        "version_format":  version_format,
                     }
                     version_manifest.append(manifest_entry)
                     reporter.count("pages_included")
 
-                reporter.info(f"      -> {len(version_manifest)} HTML pages accepted")
+                reporter.info(f"      -> {len(version_manifest)} HTML pages accepted ({version_format})")
                 if not version_manifest and entries:
                     empty_versions.append({
                         "version_sitemap":  version_url,
@@ -278,25 +279,20 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                 time.sleep(delay)
                 continue
 
-            if dita_patterns and entries and _is_dita_version(entries, dita_patterns):
-                dita_versions.append({
-                    "version_sitemap":  fetched_url,
-                    "product_sitemap":  None,
-                    "page_count":       len(entries),
-                    "product_name":     entries[0].product_name if entries else "",
-                    "product_version":  entries[0].product_version if entries else "",
-                })
-                reporter.count("dita_versions_found")
-                reporter.count("skipped_non-madcap-dita", len(entries))
-                reporter.info(f"      -> DITA version — logged to dita_versions")
-                time.sleep(delay)
-                continue
+            version_format = "sdl_dita" if (
+                dita_patterns and entries and _is_dita_version(entries, dita_patterns)
+            ) else "madcap"
+            if version_format == "sdl_dita":
+                reporter.count("sdl_dita_versions_found")
+                reporter.info(f"      -> SDL DITA version detected (GUID-based filenames) — included in manifest")
 
             version_manifest = []
             alias_xml_url = None
 
             for entry in entries:
                 skip, reason = should_skip_url(entry.loc, settings)
+                if skip and version_format == "sdl_dita" and reason == "non-madcap-dita":
+                    skip, reason = False, ""
                 if skip:
                     reporter.skip(entry.loc, reason)
                     reporter.count(f"skipped_{reason.split(':')[0]}")
@@ -318,10 +314,11 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                     "version_sitemap": fetched_url,
                     "alias_xml_url":   alias_xml_url,
                     "zip_url":         infer_zip_url(entry.loc, fetched_url, entry.product_version),
+                    "version_format":  version_format,
                 })
                 reporter.count("pages_included")
 
-            reporter.info(f"      -> {len(version_manifest)} HTML pages accepted")
+            reporter.info(f"      -> {len(version_manifest)} HTML pages accepted ({version_format})")
             if not version_manifest and entries:
                 empty_versions.append({
                     "version_sitemap":  fetched_url,
@@ -369,8 +366,9 @@ def main():
 
     reporter.info(f"Manifest complete: {len(manifest)} pages across "
                   f"{reporter._counts.get('versions_found', 0)} versions")
-    if dita_versions:
-        reporter.info(f"DITA versions detected: {len(dita_versions)} version(s) with only GUID-based pages")
+    sdl_dita_count = reporter._counts.get("sdl_dita_versions_found", 0)
+    if sdl_dita_count:
+        reporter.info(f"SDL DITA versions: {sdl_dita_count} version(s) included in manifest with version_format=sdl_dita")
     if empty_versions:
         reporter.info(f"Empty versions: {len(empty_versions)} version(s) with no accepted HTML pages")
 

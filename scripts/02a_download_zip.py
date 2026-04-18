@@ -72,9 +72,32 @@ def collect_versions(manifest: list[dict]) -> dict[str, dict]:
 
 
 def is_already_extracted(cache_dir: Path, html_root: str) -> bool:
-    """Return True if the version's Data/Tocs/ directory exists with JS files."""
-    tocs_dir = cache_dir / html_root.rstrip("/") / "Data" / "Tocs"
-    return tocs_dir.exists() and any(tocs_dir.glob("*.js"))
+    """Return True if the version's content has already been extracted from a ZIP."""
+    root = cache_dir / html_root.rstrip("/")
+    # MadCap: Data/Tocs/ with JS files
+    tocs_dir = root / "Data" / "Tocs"
+    if tocs_dir.exists() and any(tocs_dir.glob("*.js")):
+        return True
+    # DITA WebHelp Responsive: static/body.js
+    if (root / "static" / "body.js").exists():
+        return True
+    return False
+
+
+def detect_format(cache_dir: Path, html_root: str) -> str:
+    """
+    Detect the documentation format from the extracted ZIP contents.
+    Returns 'madcap', 'file_dita', 'sdl_dita', or 'unknown'.
+    """
+    root = cache_dir / html_root.rstrip("/")
+    if (root / "static" / "body.js").exists():
+        # DITA WebHelp Responsive — distinguish by whether topic files are GUID-named
+        guid_files = list(root.glob("GUID-*.html"))
+        return "sdl_dita" if guid_files else "file_dita"
+    tocs_dir = root / "Data" / "Tocs"
+    if tocs_dir.exists() and any(tocs_dir.glob("*.js")):
+        return "madcap"
+    return "unknown"
 
 
 def has_enough_disk_space(min_free_gb: float) -> bool:
@@ -212,13 +235,15 @@ def process_versions(
 
             # Skip if already extracted (unless --force-rerun)
             if not force_rerun and is_already_extracted(cache_dir, html_root):
-                reporter.info("    -> Already extracted (Data/Tocs/ present) — skipping")
+                fmt = detect_format(cache_dir, html_root)
+                reporter.info(f"    -> Already extracted (format={fmt}) — skipping")
                 reporter.count("zip_already_extracted")
                 zip_registry[version_sitemap] = {
                     "zip_url":      zip_url,
                     "html_root":    html_root,
                     "extracted_at": "previously",
                     "file_count":   -1,
+                    "format":       fmt,
                 }
                 continue
 
@@ -295,6 +320,7 @@ def process_versions(
                 "html_root":    html_root,
                 "extracted_at": datetime.now().isoformat(timespec="seconds"),
                 "file_count":   file_count,
+                "format":       detect_format(cache_dir, html_root),
             }
             time.sleep(delay)
 
