@@ -132,9 +132,10 @@ def _classify_block(block: dict, body_size: float) -> _BlockType:
         return "h2"
 
     # Bold at body size with short content → H3 (e.g. bolded sub-section label)
+    # Exclude sentences: headings don't end with . ? !
     if bold and size >= body_size - 1:
         all_text = "".join(s["text"] for l in block["lines"] for s in l["spans"]).strip()
-        if len(all_text) < 120:
+        if len(all_text) < 120 and not re.search(r"[.?!]\s*$", all_text):
             return "h3"
 
     return "body"
@@ -147,31 +148,73 @@ def _assemble_block_text(block: dict, skip_leading_glyph: bool = False) -> str:
     Build the text for a block by joining all spans.
     - Skips glyph spans when skip_leading_glyph is True (bullet/h3 blocks)
     - Wraps code-font spans in backticks
+    - Inserts a space at large horizontal gaps (column boundaries in borderless tables)
     - Normalises whitespace
     """
     parts: list[str] = []
     glyph_skipped = not skip_leading_glyph  # if False, skip the first glyph we see
 
+    prev_line_y: float | None = None  # y0 of the previous line in this block
+
     for line in block["lines"]:
+        line_y = line["bbox"][1]
+
+        # Two lines at the same y-position within one block = adjacent table columns
+        # on the same PDF row (PyMuPDF merges them into one block with two "lines").
+        # Different y = genuine text wrap; no separator needed.
+        if prev_line_y is not None and abs(line_y - prev_line_y) < 2.0:
+            if parts and not parts[-1].endswith(" "):
+                parts.append(" ")
+
+        prev_line_y = line_y
+        prev_x1: float | None = None  # x1 of the previous span on this line
+
         for span in line["spans"]:
             text = span["text"]
             t    = text.strip()
+            bbox = span.get("bbox", (0, 0, 0, 0))
+            span_x0, span_x1 = bbox[0], bbox[2]
 
             if not t or t == "\xa0":
                 # Preserve one space for whitespace-only spans inside a line
                 if parts and not parts[-1].endswith(" "):
                     parts.append(" ")
+                prev_x1 = span_x1
                 continue
 
             if _is_glyph_span(span):
                 if not glyph_skipped:
                     glyph_skipped = True  # discard the first glyph
+                prev_x1 = span_x1
                 continue
+
+            # Insert a space at the span boundary when:
+            #   (a) there is a visible horizontal gap (> 0.5 pt) — column/word boundary, OR
+            #   (b) no gap but the previous span ends with an alphanumeric and this span
+            #       starts with an uppercase letter — catches merged column-header pairs
+            #       like "GS-17793"+"The…" or "SOAP API"+"REST API" where PDF layout
+            #       positions the two spans with zero gap.
+            # In well-formed PDFs, mid-word format changes share the same span;
+            # genuinely adjacent spans that touch (gap=0) are rare mid-word.
+            if prev_x1 is not None and parts and not parts[-1].endswith(" ") and not text.startswith(" "):
+                gap = span_x0 - prev_x1
+                last_char  = parts[-1][-1] if parts[-1] else ""
+                first_char = text[0] if text else ""
+                needs_space = (
+                    gap > 0.5
+                    or (gap >= 0 and last_char.isalnum() and first_char.isupper())
+                )
+            else:
+                needs_space = False
+            if needs_space:
+                parts.append(" ")
 
             if _is_code_span(span):
                 parts.append(f"`{t}`")
             else:
                 parts.append(text)
+
+            prev_x1 = span_x1
 
     result = "".join(parts).strip()
     # Collapse multiple internal spaces / newlines
@@ -217,6 +260,33 @@ def calibrate_body_size(doc: fitz.Document) -> float:
     return size_chars.most_common(1)[0][0]
 
 
+# ── Repeated-element detection ────────────────────────────────────────────────
+
+def collect_repeated_h3_texts(doc: fitz.Document, min_pages: int = 2) -> frozenset[str]:
+    """
+    Return the assembled text of bold, short blocks that appear identically on
+    min_pages or more pages across the document.  These are repeating table column
+    header rows (e.g. "Key Summary", "SOAP API REST API") that PDF generators
+    repeat at the top of every continuation page and at the start of each sub-table.
+    They should be suppressed rather than rendered as H3 headings.
+    """
+    from collections import Counter
+    counts: Counter = Counter()
+    for page in doc:
+        seen: set[str] = set()
+        for block in page.get_text("dict")["blocks"]:
+            if block["type"] != 0:
+                continue
+            spans = [s for line in block["lines"] for s in line["spans"]]
+            if not spans or not _is_bold(spans[0]):
+                continue
+            text = _assemble_block_text(block)
+            if 0 < len(text) < 60 and text not in seen:
+                seen.add(text)
+                counts[text] += 1
+    return frozenset(text for text, n in counts.items() if n >= min_pages)
+
+
 # ── Table rendering ───────────────────────────────────────────────────────────
 
 def _render_table(table) -> str:
@@ -257,10 +327,13 @@ def _render_table(table) -> str:
 def _convert_page(
     page: fitz.Page,
     body_size: float,
+    repeated_h3_texts: frozenset[str] = frozenset(),
 ) -> list[str]:
     """
     Convert one PDF page to a list of Markdown line strings.
     Skips running headers and footers by zone (top 8% / bottom 8%).
+    Joins wrapped list-item text back onto the preceding bullet using x-indent tracking.
+    Skips bold blocks whose text appears on 3+ pages (repeated table column headers).
     """
     h           = page.rect.height
     header_line = h * 0.08
@@ -277,8 +350,8 @@ def _convert_page(
                 return True
         return False
 
-    # Build an ordered list of content items: (y_position, markdown_text)
-    items: list[tuple[float, str]] = []
+    # Items: (y, x0, block_type, markdown_text)
+    raw_items: list[tuple[float, float, str, str]] = []
 
     # ── Text blocks ──
     blocks = page.get_text("dict", sort=True)["blocks"]
@@ -286,10 +359,8 @@ def _convert_page(
         if block["type"] != 0:
             continue  # image block
         bbox = block["bbox"]
-        # Skip header/footer zones
         if bbox[3] < header_line or bbox[1] > footer_line:
             continue
-        # Skip table content (rendered separately below)
         if _overlaps_table(bbox):
             continue
 
@@ -302,18 +373,26 @@ def _convert_page(
         if not text:
             continue
 
+        # Suppress bold blocks whose exact text appears on 3+ pages — these are
+        # repeating table column headers ("Key Summary", "SOAP API REST API") that
+        # the PDF renders at the top of each continuation page and before sub-tables.
+        if btype == "h3" and text in repeated_h3_texts:
+            continue
+
         if btype == "h1":
-            items.append((bbox[1], f"# {text}"))
+            md = f"# {text}"
         elif btype == "h2":
-            items.append((bbox[1], f"## {text}"))
+            md = f"## {text}"
         elif btype == "h3":
-            items.append((bbox[1], f"### {text}"))
+            md = f"### {text}"
         elif btype == "bullet":
-            items.append((bbox[1], f"- {text}"))
+            md = f"- {text}"
         elif btype == "sub_bullet":
-            items.append((bbox[1], f"  - {text}"))
-        else:  # body
-            items.append((bbox[1], text))
+            md = f"  - {text}"
+        else:
+            md = text
+
+        raw_items.append((bbox[1], bbox[0], btype, md))
 
     # ── Tables ──
     for table in table_finder.tables:
@@ -322,11 +401,45 @@ def _convert_page(
             continue
         rendered = _render_table(table)
         if rendered:
-            items.append((ty0, rendered))
+            raw_items.append((ty0, table.bbox[0], "table", rendered))
 
-    # Sort all items by Y position and return text lines
-    items.sort(key=lambda x: x[0])
-    return [text for _, text in items]
+    raw_items.sort(key=lambda x: x[0])
+
+    # Estimate page left margin from x0 of body-type blocks.
+    # Continuation text is indented further right than this margin.
+    body_x0s = [x0 for _, x0, bt, _ in raw_items if bt == "body"]
+    page_margin     = min(body_x0s) if body_x0s else 0.0
+    indent_threshold = page_margin + 10.0
+
+    # Y-proximity pass: body blocks at the same vertical position but different X
+    # positions are table cells from adjacent columns — join them with a space.
+    # Threshold: same row if |Δy| < 1.5 × body_size; different column if Δx > body_size.
+    col_merged: list[tuple[float, float, str, str]] = []
+    for item in raw_items:
+        y, x0, btype, md = item
+        if col_merged and btype == "body":
+            prev_y, prev_x0, prev_btype, prev_md = col_merged[-1]
+            if (prev_btype == "body"
+                    and abs(y - prev_y) < body_size * 1.5
+                    and x0 > prev_x0 + body_size):
+                col_merged[-1] = (prev_y, prev_x0, prev_btype, prev_md + " " + md)
+                continue
+        col_merged.append(item)
+
+    # Continuation-joining pass:
+    # Body block immediately following a list item AND indented past the page margin
+    # → wrapped bullet text; append it to the preceding bullet rather than a new line.
+    merged: list[tuple[float, float, str, str]] = []
+    for item in col_merged:
+        y, x0, btype, md = item
+        if merged and btype == "body":
+            prev_y, prev_x0, prev_btype, prev_md = merged[-1]
+            if prev_btype in ("bullet", "sub_bullet") and x0 > indent_threshold:
+                merged[-1] = (prev_y, prev_x0, prev_btype, prev_md + " " + md)
+                continue
+        merged.append(item)
+
+    return [md for _, _, _, md in merged]
 
 
 # ── TOC page detection ────────────────────────────────────────────────────────
@@ -490,6 +603,8 @@ def convert_pdf(
         body_size = calibrate_body_size(doc)
         reporter.count(f"body_size:{body_size}")
 
+        repeated_h3_texts = collect_repeated_h3_texts(doc)
+
         md_lines: list[str] = []
         for page_idx, page in enumerate(doc):
             # Skip cover page (title, logo, version — not body content)
@@ -497,7 +612,7 @@ def convert_pdf(
                 reporter.count("pages_cover_skipped")
                 continue
 
-            page_lines = _convert_page(page, body_size)
+            page_lines = _convert_page(page, body_size, repeated_h3_texts)
 
             # Skip blank pages
             if not page_lines:
