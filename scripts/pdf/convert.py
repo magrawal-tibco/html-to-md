@@ -467,6 +467,108 @@ def _is_toc_page(page_lines: list[str]) -> bool:
     return toc_like / len(non_empty) > 0.6
 
 
+# ── Table row reconstruction ─────────────────────────────────────────────────
+
+_ISSUE_KEY_RE = re.compile(r"^(GS-\d+)\s+(.*)", re.DOTALL)
+
+
+def _fix_table_rows(md_lines: list[str]) -> list[str]:
+    """
+    Post-process assembled markdown lines to reconstruct GFM table rows from body
+    text that was not captured by find_tables():
+
+    1. SOAP-API class-name rows: "com.X com.Y" → "| com.X | com.Y |"
+       (table_type="soap_api" set when "| SOAP API | REST API |" header is seen)
+
+    2. Issue-key rows (GS-NNNNN ...): formatted as "| GS-NNNNN | summary |"
+       - Multi-line summaries are joined into a single cell
+       - "| Key | Summary |" + "| --- | --- |" inserted before the first issue
+         row of any sub-section that lacks a detected table header
+
+    Blank lines inside an active table context are suppressed to avoid breaking
+    GFM rendering (they occur at page boundaries in the source PDF).
+    """
+    result: list[str] = []
+    table_type: str | None = None   # "soap_api" | "key_summary" | None
+    pending_key    = ""             # issue key being accumulated
+    pending_summary = ""            # issue summary (may span multiple source lines)
+
+    def flush_pending() -> None:
+        nonlocal pending_key, pending_summary, table_type
+        if not pending_key:
+            return
+        if table_type != "key_summary":
+            # Add table header for sub-sections that had no detected table
+            if result and result[-1].strip():
+                result.append("")
+            result.append("| Key | Summary |")
+            result.append("| --- | --- |")
+            table_type = "key_summary"
+        summary = re.sub(r"\s+", " ", pending_summary).strip()
+        result.append(f"| {pending_key} | {summary} |")
+        pending_key = ""
+        pending_summary = ""
+
+    for line in md_lines:
+        stripped = line.strip()
+
+        # ── Section heading ──────────────────────────────────────────────────
+        if stripped.startswith("#"):
+            flush_pending()
+            if result and result[-1].strip().startswith("|"):
+                result.append("")
+            table_type = None
+            result.append(line)
+            continue
+
+        # ── Already-rendered GFM table lines ────────────────────────────────
+        if stripped.startswith("|"):
+            flush_pending()
+            if "SOAP API" in stripped or "REST API" in stripped:
+                table_type = "soap_api"
+            elif "Key" in stripped and "Summary" in stripped:
+                table_type = "key_summary"
+            result.append(line)
+            continue
+
+        # ── Blank line ───────────────────────────────────────────────────────
+        if not stripped:
+            if pending_key or table_type is not None:
+                pass  # suppress blank lines inside a table context
+            else:
+                result.append(line)
+            continue
+
+        # ── Issue key row: GS-NNNNN <summary text> ──────────────────────────
+        m = _ISSUE_KEY_RE.match(stripped)
+        if m:
+            flush_pending()
+            pending_key     = m.group(1)
+            pending_summary = m.group(2)
+            continue
+
+        # ── Continuation of a pending issue summary ──────────────────────────
+        if pending_key:
+            pending_summary += " " + stripped
+            continue
+
+        # ── SOAP-API table body rows (two class names separated by a space) ──
+        if table_type == "soap_api" and " " in stripped and not stripped.startswith("-"):
+            col1, col2 = stripped.split(" ", 1)
+            result.append(f"| {col1} | {col2} |")
+            continue
+
+        # ── Regular body text ────────────────────────────────────────────────
+        # Any non-table, non-issue body text resets the table context so we
+        # don't accidentally swallow paragraph text into a table.
+        flush_pending()
+        table_type = None
+        result.append(line)
+
+    flush_pending()
+    return result
+
+
 # ── Markdown cleanup ──────────────────────────────────────────────────────────
 
 def _clean_markdown(text: str) -> str:
@@ -639,7 +741,7 @@ def convert_pdf(
             reporter.fail(str(pdf_path), "No content extracted from PDF")
             return False
 
-        body = _clean_markdown("\n".join(md_lines))
+        body = _clean_markdown("\n".join(_fix_table_rows(md_lines)))
         frontmatter = _build_frontmatter(entry)
         final_content = frontmatter + body
 
