@@ -19,7 +19,8 @@ import json
 import re
 import shutil
 import sys
-from pathlib import Path
+from collections import defaultdict
+from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse
 
 import warnings
@@ -81,6 +82,112 @@ def load_dita_versions(phase: str, settings: dict) -> set[str]:
 def url_to_cache_path(loc: str, cache_dir: Path) -> Path:
     path = urlparse(loc).path.lstrip("/")
     return cache_dir / path
+
+
+def _should_skip(url: str, skip_segments: list, skip_filenames: set,
+                 html_extensions: set, skip_filename_patterns: list) -> bool:
+    parsed   = urlparse(url)
+    path     = parsed.path
+    filename = PurePosixPath(path).name
+    if filename in skip_filenames:
+        return True
+    if PurePosixPath(path).suffix.lower() not in html_extensions:
+        return True
+    for pat in skip_filename_patterns:
+        if re.match(pat, filename, re.IGNORECASE):
+            return True
+    for seg in skip_segments:
+        if seg in path:
+            return True
+    return False
+
+
+def build_cache_driven_entries(manifest: list[dict], cache_dir: Path,
+                               settings: dict) -> list[dict]:
+    """
+    Scan the cache directory for actual HTML files and build a conversion entry
+    list driven by what exists on disk rather than what the sitemap listed.
+
+    Uses manifest for per-URL metadata (toc_path lookup, alias_xml_url, etc.).
+    Falls back to version-level metadata for files present in cache but absent
+    from the manifest (common with ZIP-extracted content).
+
+    DITA files are excluded naturally via skip_filename_patterns (GUID filenames).
+    """
+    base_url         = settings.get("base_url", "https://docs.tibco.com").rstrip("/")
+    skip_segments    = settings.get("skip_path_segments", [])
+    skip_filenames   = set(settings.get("skip_filenames", []))
+    html_extensions  = set(settings.get("html_extensions", [".htm", ".html"]))
+    skip_patterns    = settings.get("skip_filename_patterns", [])
+
+    # Per-URL lookup for manifest metadata
+    url_to_entry: dict[str, dict] = {e["url"]: e for e in manifest}
+
+    # Group manifest entries by version to find each version's cache root
+    version_groups: dict[str, list[dict]] = defaultdict(list)
+    for e in manifest:
+        vs = e.get("version_sitemap", "")
+        if vs:
+            version_groups[vs].append(e)
+
+    # Determine the cache root directory for each version.
+    # Strategy: take the path up to and including the version segment (X.Y.Z).
+    _ver_re = re.compile(r"^\d+\.\d+")
+
+    def _version_cache_root(entries: list[dict]) -> Path | None:
+        url_path = urlparse(entries[0]["url"]).path.lstrip("/")
+        parts    = PurePosixPath(url_path).parts
+        root_parts: list[str] = []
+        for part in parts:
+            root_parts.append(part)
+            if _ver_re.match(part):
+                break
+        if not root_parts:
+            return None
+        return cache_dir.joinpath(*root_parts)
+
+    results: list[dict] = []
+    seen_cache_paths: set[Path] = set()
+
+    for vs, entries in version_groups.items():
+        cache_root = _version_cache_root(entries)
+        if cache_root is None or not cache_root.exists():
+            continue
+
+        # Version-level metadata (same for all files in this version)
+        version_meta = {
+            "product_name":    entries[0].get("product_name", ""),
+            "product_version": entries[0].get("product_version", ""),
+            "doc_name":        entries[0].get("doc_name", ""),
+            "version_sitemap": vs,
+            "alias_xml_url":   entries[0].get("alias_xml_url", ""),
+            "version_format":  entries[0].get("version_format", ""),
+        }
+
+        for html_path in sorted(cache_root.rglob("*")):
+            if not html_path.is_file():
+                continue
+            if html_path.suffix.lower() not in html_extensions:
+                continue
+            if html_path in seen_cache_paths:
+                continue
+            seen_cache_paths.add(html_path)
+
+            rel = html_path.relative_to(cache_dir).as_posix()
+            url = f"{base_url}/{rel}"
+
+            if _should_skip(url, skip_segments, skip_filenames, html_extensions, skip_patterns):
+                continue
+
+            if url in url_to_entry:
+                entry = url_to_entry[url]
+            else:
+                output_path = str(html_path.relative_to(cache_dir).with_suffix(".md"))
+                entry = {"url": url, "output_path": output_path, **version_meta}
+
+            results.append(entry)
+
+    return results
 
 
 def extract_page_metadata(soup: BeautifulSoup, entry: dict) -> dict:
@@ -245,10 +352,11 @@ def convert_entry(
     reporter: Reporter,
     dry_run: bool,
     force_rerun: bool = False,
+    cache_path: Path | None = None,
 ) -> bool:
     """Convert one manifest entry from HTML to Markdown. Returns True on success."""
     url        = entry["url"]
-    cache_path = url_to_cache_path(url, cache_dir)
+    cache_path = cache_path or url_to_cache_path(url, cache_dir)
     out_path   = output_dir / entry["output_path"]
 
     if not cache_path.exists():
@@ -277,9 +385,9 @@ def convert_entry(
                 break
 
         if content is None:
-            reporter.fail(url, "main content div not found")
+            reporter.skip(url, "no MadCap content div — non-topic HTML skipped")
             reporter.count("missing_content_div")
-            return False
+            return True
 
         reporter.count(f"selector:{selector_used}")
 
@@ -344,6 +452,10 @@ def main():
     parser.add_argument("--dry-run",      action="store_true")
     parser.add_argument("--force-rerun",  action="store_true",
                         help="Re-convert pages that are already done")
+    parser.add_argument("--scan-cache",   action="store_true",
+                        help="Drive conversion from cached HTML files on disk rather than "
+                             "sitemap manifest — eliminates 'cached HTML not found' errors "
+                             "when ZIPs contain files not listed in the sitemap")
     args = parser.parse_args()
 
     settings   = load_settings(args.config)
@@ -357,24 +469,38 @@ def main():
     reporter = Reporter(run_dir, "03_convert", dry_run=args.dry_run)
 
     force_rerun = args.force_rerun
-    reporter.info(f"=== Step 3: Convert | phase={args.phase} dry_run={args.dry_run} force_rerun={force_rerun} ===")
-    reporter.info(f"Manifest: {len(manifest)} entries")
 
     # DITA versions (file_dita, sdl_dita) are handled by scripts/dita/ — skip here
     dita_versions = load_dita_versions(args.phase, settings)
     if dita_versions:
         reporter.info(f"Skipping {len(dita_versions)} DITA version(s) — use scripts/dita/run.py for those")
 
+    if args.scan_cache:
+        work_entries = build_cache_driven_entries(manifest, cache_dir, settings)
+        reporter.info(
+            f"=== Step 3: Convert | phase={args.phase} mode=scan-cache "
+            f"dry_run={args.dry_run} force_rerun={force_rerun} ==="
+        )
+        reporter.info(f"Manifest: {len(manifest)} entries | Cache scan: {len(work_entries)} HTML files found")
+    else:
+        work_entries = [e for e in manifest if e.get("version_sitemap", "") not in dita_versions]
+        reporter.info(
+            f"=== Step 3: Convert | phase={args.phase} mode=manifest "
+            f"dry_run={args.dry_run} force_rerun={force_rerun} ==="
+        )
+        reporter.info(f"Manifest: {len(manifest)} entries")
+
     # Track conversion errors per version so only fully-successful versions are registered
     version_errors: dict[str, int] = {}
-    for entry in manifest:
+    for entry in work_entries:
         vs = entry.get("version_sitemap", "")
-        if vs and vs not in version_errors and vs not in dita_versions:
+        if vs and vs not in version_errors:
             version_errors[vs] = 0
 
-    for entry in tqdm(manifest, desc="Converting"):
+    for entry in tqdm(work_entries, desc="Converting"):
         vs = entry.get("version_sitemap", "")
-        if vs in dita_versions:
+        # In manifest mode, DITA skip is applied here (already filtered in scan-cache mode)
+        if not args.scan_cache and vs in dita_versions:
             reporter.count("pages_dita_skipped")
             continue
         ok = convert_entry(entry, settings, cache_dir, output_dir, reporter, args.dry_run, force_rerun)

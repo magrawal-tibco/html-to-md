@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ## Quick Start
 
 ```bash
-# Full pipeline run for a phase
+# Full pipeline run for a phase (includes DITA + PDF sub-pipelines automatically)
 python run.py --phase phase_01
 
 # Resume from step 3 (steps 1–2 already done)
@@ -36,6 +36,74 @@ python run.py --phase phase_03 --from-step 3 --force-rerun
 # Run a single step directly
 python scripts/03_convert.py --phase phase_01
 ```
+
+## Complete Workflow
+
+`run.py` runs the full end-to-end conversion for a phase in three sequential stages:
+
+```
+python run.py --phase <name>
+```
+
+### Stage 1 — Main Pipeline (Steps 1–7)
+
+| Step | Script | What it does |
+|------|--------|-------------|
+| 1 | `01_build_manifest.py` | Crawl sitemap → build manifest JSON |
+| 2a | `02a_download_zip.py` | Download full documentation ZIPs and extract |
+| 2 | `02_download.py` | Download individual HTML pages (fallback for missing ZIPs) |
+| 3 | `03_convert.py` | Convert HTML → Markdown (use `--scan-cache` flag if ZIP path structure differs from sitemap URLs) |
+| 4 | `04_build_csh_maps.py` | Build context-sensitive help maps from alias.xml |
+| 5 | `05_postprocess.py` | Rewrite links, strip variable tokens |
+| 6 | `06_build_toc.py` | Build `_toc.json` per version |
+| 7 | `07_generate_report.py` | Write `phase_report.csv` and update `conversion_log.csv` |
+
+If any step fails, the pipeline stops and prints a resume command.
+
+### Stage 2 — DITA Sub-pipeline (automatic if DITA versions detected)
+
+After Step 7 completes, `run.py` checks `manifests/dita_versions_<phase>.json`. If it is non-empty, the DITA sub-pipeline runs automatically:
+
+```
+scripts/dita/run.py --phase <name>
+```
+
+| Step | Script | What it does |
+|------|--------|-------------|
+| 1 | `01_rename_guids.py` | Rename GUID filenames to human-readable names (sdl_dita only) |
+| 2 | `02_convert.py` | Convert DITA HTML → Markdown |
+| 3 | `03_build_csh_maps.py` | Build CSH maps from head.js |
+| 4 | `04_build_toc.py` | Build TOC from body.js / suitehelp_topic_list.html |
+
+Skip with `--skip-dita` if you want to run the DITA pipeline separately.
+
+### Stage 3 — PDF Release Notes Sub-pipeline (always runs)
+
+After the main pipeline (and DITA if applicable), release notes PDFs are converted:
+
+```
+scripts/pdf/convert.py --phase <name>
+```
+
+- Finds all `*relnotes*.pdf` / `*release-notes*.pdf` files in cache for the phase
+- Extracts text using pymupdf with font-size-based heading detection
+- Skips cover pages, TOC pages, and boilerplate sections
+- Outputs `output/.../doc/pdf/relnotes.md` alongside the HTML conversion
+
+Skip with `--skip-pdf` if you only want HTML conversion.
+
+### CLI flags
+
+| Flag | Applies to | Description |
+|------|-----------|-------------|
+| `--from-step N` | Main pipeline | Start from step N |
+| `--to-step N` | Main pipeline | Stop after step N |
+| `--dry-run` | All stages | Parse and plan but write no files |
+| `--force-rerun` | All stages | Re-process already-done files |
+| `--force-refresh` | Step 2 only | Re-download cached HTML |
+| `--ignore-registry` | Step 1 only | Include already-converted versions |
+| `--skip-dita` | DITA stage | Skip DITA sub-pipeline |
+| `--skip-pdf` | PDF stage | Skip PDF sub-pipeline |
 
 ## Folder Structure
 
@@ -322,6 +390,48 @@ logs/<phase>/<YYYYMMDD-HHMMSS>/
   07_report.json       # Step 7 counts
   phase_report.csv     # Per-version report for this run
 ```
+
+## Uploading Output to Google Drive (Optional)
+
+Output files can be synced to a shared Google Drive using [rclone](https://rclone.org/).
+
+### One-time setup
+
+1. Download rclone from [rclone.org/downloads](https://rclone.org/downloads/)
+2. Configure a Google Drive remote:
+   ```bash
+   rclone config
+   ```
+   Choose: `n` (new remote) → name it `gdrive` → type `drive` → leave Client ID/Secret blank → scope `1` (full access) → auto config `y` (browser OAuth) → confirm.
+
+3. To target a **Shared Drive**, find the drive ID:
+   ```bash
+   rclone backend drives gdrive:
+   ```
+
+### Upload command
+
+```bash
+# Upload to a personal Google Drive folder
+rclone copy output/ gdrive:tibco-docs-md/output --progress
+
+# Upload to a Shared Drive (replace DRIVE_ID with the ID from the list above)
+rclone copy output/ gdrive:tibco-docs-md/output \
+  --drive-team-drive DRIVE_ID \
+  --progress
+```
+
+For the **Technical Communication** shared drive (ID: `0ABuCk67wIMFvUk9PVA`):
+
+```bash
+rclone copy output/ gdrive:tibco-docs-md/output \
+  --drive-team-drive 0ABuCk67wIMFvUk9PVA \
+  --progress
+```
+
+Use `rclone sync` instead of `rclone copy` to mirror exactly (deletes files on Drive that no longer exist locally).
+
+---
 
 ## Known Source Variations
 

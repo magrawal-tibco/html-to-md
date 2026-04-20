@@ -1,4 +1,1116 @@
 {
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-10-0-0.xml": {
+    "product_name": "ibi™ MDM",
+    "product_version": "10.0.0",
+    "doc_name": "",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 8117
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-11-0-0.xml": {
+    "product_name": "ibi™ MDM",
+    "product_version": "11.0.0",
+    "doc_name": "",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 2846
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-add-on-for-global-data-synchronization-4-0-0.xml": {
+    "product_name": "ibi™ MDM Add-on for Global Data Synchronization",
+    "product_version": "4.0.0",
+    "doc_name": "Glossary",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 133
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-studio-6-0-0.xml": {
+    "product_name": "ibi™ MDM Studio",
+    "product_version": "6.0.0",
+    "doc_name": "About Business Studio",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 1807
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-studio-6-1-0.xml": {
+    "product_name": "ibi™ MDM Studio",
+    "product_version": "6.1.0",
+    "doc_name": "About Business Studio",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 927
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-0-0.xml": {
+    "product_name": "ibi™ Patterns - Search",
+    "product_version": "6.0.0",
+    "doc_name": "C NetricsServerInterface ConfidenceQlt Ctor 3edcb923",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 3007
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-1-0.xml": {
+    "product_name": "ibi™ Patterns - Search",
+    "product_version": "6.1.0",
+    "doc_name": "Need For Patterns Data Transfer Tool",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 836
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-1-1.xml": {
+    "product_name": "ibi™ Patterns - Search",
+    "product_version": "6.1.1",
+    "doc_name": "Need For Patterns Data Transfer Tool",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 840
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.0.0",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®#for TIBCO ActiveMatrix BusinessWorks™ 6.x",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 126
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.1.0",
+    "doc_name": "Installation Overview",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 130
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-1-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.1.1",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in\nfor ActiveSpaces®#for TIBCO ActiveMatrix BusinessWorks™ 5.x",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 130
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.2.0",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in\nfor ActiveSpaces® 7.2",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 51
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.2.1",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in\nfor ActiveSpaces® 7.2.1",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 51
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.2.2",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in\nfor ActiveSpaces® 7.2.2",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 50
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.3.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 53
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.3.1",
+    "doc_name": "Setting Up TIBCO BusinessWorks  Container Edition Plug In Runtime",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 56
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "7.3.2",
+    "doc_name": "Setting Up TIBCO BusinessWorks  Container Edition Plug In Runtime",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 56
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "8.0.1",
+    "doc_name": "Installation Overview",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "8.0.2",
+    "doc_name": "Installation Overview",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-3.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "8.0.3",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "8.1.0",
+    "doc_name": "Setting up TIBCO BusinessWorks™ Container Edition Plug-in Runtime",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 59
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
+    "product_version": "8.1.1",
+    "doc_name": "Setting up TIBCO BusinessWorks™ Container Edition Plug-in Runtime",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon Redshift",
+    "product_version": "6.0.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 55
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon Redshift",
+    "product_version": "6.1.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 56
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-5-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon S3",
+    "product_version": "6.5.1",
+    "doc_name": "Getting Started",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 63
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-6-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon S3",
+    "product_version": "6.6.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 59
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon S3",
+    "product_version": "6.7.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon SQS and SNS",
+    "product_version": "6.5.0",
+    "doc_name": "Managing Logs",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 64
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon SQS and SNS",
+    "product_version": "6.5.1",
+    "doc_name": "Managing Logs",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 64
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon SQS and SNS",
+    "product_version": "6.5.2",
+    "doc_name": "Managing Logs",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 64
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-6-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon SQS and SNS",
+    "product_version": "6.6.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_01",
+    "converted_at": "2026-04-19T17:14:01Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
+    "product_version": "6.3.0",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 50
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
+    "product_version": "6.3.1",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 51
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-4-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
+    "product_version": "6.4.0",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 50
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
+    "product_version": "6.5.0",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 50
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
+    "product_version": "6.5.1",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 52
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
+    "product_version": "6.5.2",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 52
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Cassandra",
+    "product_version": "6.3.2",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 46
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Cassandra",
+    "product_version": "6.3.3",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "5.0.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 73
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "5.0.1",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 82
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.0.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 55
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.1.0",
+    "doc_name": "Log Levels",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 57
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-1-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.1.1",
+    "doc_name": "Configuring Kafka Connection for Kafka_ErrorHandlingSample",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.2.0",
+    "doc_name": "Configuring Kafka Connection for Kafka_ErrorHandlingSample",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 64
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.3.0",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 68
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-3-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.3.1",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 68
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-4-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.4.0",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 69
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-4-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.4.1",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 69
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-5-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.5.0",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 69
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-5-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.5.1",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 68
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-5-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.5.2",
+    "doc_name": "Running the Kafka_TransactionSample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 69
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-6-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.6.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 75
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-7-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.7.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 75
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.8.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 75
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.8.1",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 75
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
+    "product_version": "6.8.2",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 91
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-5-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
+    "product_version": "5.0.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 37
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
+    "product_version": "6.0.0",
+    "doc_name": "Installation Modes",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
+    "product_version": "6.1.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 52
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
+    "product_version": "6.2.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 52
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-2-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
+    "product_version": "6.2.1",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 53
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-applicability-statement-2-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Applicability Statement 2",
+    "product_version": "6.0.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Azure Cloud Services (Azure Data Lake Storage Gen2)",
+    "product_version": "6.0.0",
+    "doc_name": "Installation Modes",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 51
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-5-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Big Data",
+    "product_version": "6.5.0",
+    "doc_name": "Installer Overview",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 74
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Big Data",
+    "product_version": "6.6.0",
+    "doc_name": "Installer Overview",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 74
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Big Data",
+    "product_version": "6.6.1",
+    "doc_name": "HDFS Palette",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 75
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for BusinessConnect™",
+    "product_version": "6.0.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 54
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for BusinessConnect™",
+    "product_version": "6.3.0",
+    "doc_name": "ReceiveResponse",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 57
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-3-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for BusinessConnect™",
+    "product_version": "6.3.1",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 56
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-3-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for BusinessConnect™",
+    "product_version": "6.3.2",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 55
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-3-3.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for BusinessConnect™",
+    "product_version": "6.3.3",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 55
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-4-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for BusinessConnect™",
+    "product_version": "6.4.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 55
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-change-data-capture-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Change Data Capture",
+    "product_version": "6.0.0",
+    "doc_name": "Sheet1",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 53
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-change-data-capture-6-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Change Data Capture",
+    "product_version": "6.1.0",
+    "doc_name": "Sheet1",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-change-data-capture-6-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Change Data Capture",
+    "product_version": "6.2.0",
+    "doc_name": "Configuring Databases",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-cics-2-4-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for CICS",
+    "product_version": "2.4.1",
+    "doc_name": "Importing the Sample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 71
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-cics-2-5-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for CICS",
+    "product_version": "2.5.0",
+    "doc_name": "Distribution Media and Contents",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 65
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-confidentiality-6-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Confidentiality",
+    "product_version": "6.1.0",
+    "doc_name": "Installing the Plug-in by Using a Local Update Site or Directory",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 43
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-confidentiality-6-1-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Confidentiality",
+    "product_version": "6.1.1",
+    "doc_name": "Installing the Plug-in by Using a Local Update Site or Directory",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 45
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-data-conversion-4-6-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Data Conversion",
+    "product_version": "4.6.0",
+    "doc_name": "Supported COBOL Clauses and Features",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 110
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-data-conversion-4-7-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Data Conversion",
+    "product_version": "4.7.0",
+    "doc_name": "Supported COBOL Clauses and Features",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 110
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-data-conversion-4-8-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Data Conversion",
+    "product_version": "4.8.0",
+    "doc_name": "Installation Modes and Procedures",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 104
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-data-conversion-4-8-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Data Conversion",
+    "product_version": "4.8.1",
+    "doc_name": "Changes In Functionality",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 119
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ejb-6-1-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for EJB",
+    "product_version": "6.1.0",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for EJB",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 65
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ejb-6-1-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for EJB",
+    "product_version": "6.1.1",
+    "doc_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for EJB",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 65
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-facebook-1-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Facebook",
+    "product_version": "1.2.0",
+    "doc_name": "Generating Extended Authentication Tokens",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 63
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-facebook-1-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Facebook",
+    "product_version": "1.3.0",
+    "doc_name": "Generating Extended Authentication Tokens",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 57
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-facebook-1-4-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Facebook",
+    "product_version": "1.4.0",
+    "doc_name": "Authentication and Authorization Example",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 48
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-facebook-6-4-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Facebook",
+    "product_version": "6.4.0",
+    "doc_name": "Uninstalling the Plug-in by using Eclipse Update Manager",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 65
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-facebook-6-5-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Facebook",
+    "product_version": "6.5.0",
+    "doc_name": "Authentication and Authorization",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 58
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-files-for-unix-and-windows-8-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Files for Unix and Windows",
+    "product_version": "8.2.0",
+    "doc_name": "Migrating Adapter Projects created on \n\t TIBCO ActiveMatrix BusinessWorks™ 5.x to Plug-in Projects",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 108
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-files-for-unix-and-windows-8-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Files for Unix and Windows",
+    "product_version": "8.3.0",
+    "doc_name": "Migrating Adapter Projects created on \n\t TIBCO ActiveMatrix BusinessWorks™ 5.x to Plug-in Projects",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 103
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-google-bigquery-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Google BigQuery",
+    "product_version": "6.0.0",
+    "doc_name": "Adding the Plug-In to TIBCO BusinessWorks™ Container Edition",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 66
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-google-cloud-pub-sub-6-0-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Google Cloud Pub/Sub",
+    "product_version": "6.0.1",
+    "doc_name": "Importing Sample Project",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 49
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-google-cloud-pub-sub-6-0-2.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Google Cloud Pub/Sub",
+    "product_version": "6.0.2",
+    "doc_name": "Installation Modes",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 44
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-google-cloud-storage-6-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Google Cloud Storage",
+    "product_version": "6.0.0",
+    "doc_name": "Changes In Functionality",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 69
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-7-0-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7",
+    "product_version": "7.0.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-7-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7",
+    "product_version": "7.3.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-2-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7 with FHIR",
+    "product_version": "8.2.0",
+    "doc_name": "Uninstallation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 118
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-2-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7 with FHIR",
+    "product_version": "8.2.1",
+    "doc_name": "Uninstallation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 118
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-3-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7 with FHIR",
+    "product_version": "8.3.0",
+    "doc_name": "Uninstallation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 119
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-4-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7 with FHIR",
+    "product_version": "8.4.0",
+    "doc_name": "Uninstallation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 124
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-6-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for HL7 with FHIR",
+    "product_version": "8.6.0",
+    "doc_name": "Installation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T17:30:42Z",
+    "page_count": 139
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-2-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Data Modeling",
+    "product_version": "5.2.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 100
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-2-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Data Modeling",
+    "product_version": "5.2.1",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 100
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-2-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Data Modeling",
+    "product_version": "5.2.2",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 100
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-3-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Data Modeling",
+    "product_version": "5.3.0",
+    "doc_name": "Defining Timeout for a State",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 101
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-4-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Data Modeling",
+    "product_version": "5.4.0",
+    "doc_name": "Defining Timeout for a State",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 101
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-4-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Data Modeling",
+    "product_version": "5.4.1",
+    "doc_name": "Defining Timeout for a State",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 101
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-2-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Decision Manager",
+    "product_version": "5.2.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 98
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-2-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Decision Manager",
+    "product_version": "5.2.1",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 98
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-2-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Decision Manager",
+    "product_version": "5.2.2",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 100
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-3-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Decision Manager",
+    "product_version": "5.3.0",
+    "doc_name": "Adding Decision Table Condition and Action Columns",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 101
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-4-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Decision Manager",
+    "product_version": "5.4.0",
+    "doc_name": "Adding Decision Table Condition and Action Columns",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 101
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-4-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Decision Manager",
+    "product_version": "5.4.1",
+    "doc_name": "Adding Decision Table Condition and Action Columns",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 101
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-2-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Enterprise Edition",
+    "product_version": "6.2.2",
+    "doc_name": "Access Control Files",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 1370
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Enterprise Edition",
+    "product_version": "6.3.0",
+    "doc_name": "Access Control Files",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 1350
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Enterprise Edition",
+    "product_version": "6.3.1",
+    "doc_name": "Access Control Files",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 1356
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Enterprise Edition",
+    "product_version": "6.3.2",
+    "doc_name": "Access Control Files",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 1365
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-4-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Enterprise Edition",
+    "product_version": "6.4.0",
+    "doc_name": "Access Control Files",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 1388
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-2-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Event Stream Processing",
+    "product_version": "5.2.0",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 121
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-2-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Event Stream Processing",
+    "product_version": "5.2.1",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 121
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-2-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Event Stream Processing",
+    "product_version": "5.2.2",
+    "doc_name": "",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 121
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-3-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Event Stream Processing",
+    "product_version": "5.3.0",
+    "doc_name": "Function Documentation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 122
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-4-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Event Stream Processing",
+    "product_version": "5.4.0",
+    "doc_name": "Function Documentation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 122
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-4-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Event Stream Processing",
+    "product_version": "5.4.1",
+    "doc_name": "Function Documentation",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 122
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-5-6-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "5.6.0",
+    "doc_name": "Annotations",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 68
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-5-6-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "5.6.1",
+    "doc_name": "Annotations",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 68
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-0-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.0.0",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-1-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.1.0",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-1-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.1.1",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-1-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.1.2",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-2-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.2.0",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-2-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.2.1",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration-6-2-2.xml": {
+    "product_name": "TIBCO BusinessEvents® Process Orchestration",
+    "product_version": "6.2.2",
+    "doc_name": "Activating Annotation Processing",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 61
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-views-5-5-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Views",
+    "product_version": "5.5.0",
+    "doc_name": "TIBCO BusinessEvents® Views User's Guide",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 208
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-views-5-6-0.xml": {
+    "product_name": "TIBCO BusinessEvents® Views",
+    "product_version": "5.6.0",
+    "doc_name": "TIBCO BusinessEvents® Views User's Guide",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 208
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-views-5-6-1.xml": {
+    "product_name": "TIBCO BusinessEvents® Views",
+    "product_version": "5.6.1",
+    "doc_name": "TIBCO BusinessEvents® Views User's Guide",
+    "phase": "phase_02",
+    "converted_at": "2026-04-19T18:02:21Z",
+    "page_count": 208
+  },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-gridserver-logviewer-1-0-0.xml": {
     "product_name": "TIBCO DataSynapse GridServer® LogViewer",
     "product_version": "1.0.0",
@@ -30,5 +1142,37 @@
     "phase": "phase_04",
     "converted_at": "2026-04-17T15:32:07Z",
     "page_count": 18
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-11-1-0.xml": {
+    "product_name": "TIBCO® MDM",
+    "product_version": "11.1.0",
+    "doc_name": "",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 2841
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-9-3-2.xml": {
+    "product_name": "TIBCO® MDM",
+    "product_version": "9.3.2",
+    "doc_name": "",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 3207
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-studio-6-1-1.xml": {
+    "product_name": "TIBCO® MDM Studio",
+    "product_version": "6.1.1",
+    "doc_name": "About Business Studio",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 1840
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-patterns-6-1-2.xml": {
+    "product_name": "TIBCO® Patterns",
+    "product_version": "6.1.2",
+    "doc_name": "Need For Patterns Data Transfer Tool",
+    "phase": "mdm_patterns",
+    "converted_at": "2026-04-20T18:10:23Z",
+    "page_count": 776
   }
 }

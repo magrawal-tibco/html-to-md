@@ -1,1 +1,163 @@
-{}
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.0.0/tibco-activematrix-businessworks-plug-in-for-activespaces-7-0-0_documentation.zip",
+    "html_root": "pub/bwpluginas/7.0.0/doc/html/",
+    "extracted_at": "2026-04-19T22:42:32",
+    "file_count": 286,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.1.0/tibco-activematrix-businessworks-plug-in-for-activespaces-7-1-0_documentation.zip",
+    "html_root": "pub/bwpluginas/7.1.0/doc/html/",
+    "extracted_at": "2026-04-19T22:42:36",
+    "file_count": 269,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.1.1/tibco-activematrix-businessworks-plug-in-for-activespaces-7-1-1_documentation.zip",
+    "html_root": "pub/bwpluginas/7.1.1/doc/html/",
+    "extracted_at": "2026-04-19T22:42:39",
+    "file_count": 267,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.2.0/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-0_documentation.zip",
+    "html_root": "pub/bwpluginas/7.2.0/doc/html/",
+    "extracted_at": "2026-04-19T22:42:41",
+    "file_count": 104,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/8.0.1/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-1_documentation.zip",
+    "html_root": "pub/bwpluginas/8.0.1/doc/html/",
+    "extracted_at": "2026-04-19T22:42:42",
+    "file_count": 114,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.2.1/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-1_documentation.zip",
+    "html_root": "pub/bwpluginas/7.2.1/doc/html/",
+    "extracted_at": "2026-04-19T22:42:44",
+    "file_count": 103,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/8.0.2/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-2_documentation.zip",
+    "html_root": "pub/bwpluginas/8.0.2/doc/html/",
+    "extracted_at": "2026-04-19T22:42:45",
+    "file_count": 114,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.2.2/tibco-activematrix-businessworks-plug-in-for-activespaces-7-2-2_documentation.zip",
+    "html_root": "pub/bwpluginas/7.2.2/doc/html/",
+    "extracted_at": "2026-04-19T22:42:47",
+    "file_count": 103,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/8.0.3/tibco-activematrix-businessworks-plug-in-for-activespaces-8-0-3_documentation.zip",
+    "html_root": "pub/bwpluginas/8.0.3/doc/html/",
+    "extracted_at": "2026-04-19T22:42:49",
+    "file_count": 400,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.3.0/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-0_documentation.zip",
+    "html_root": "pub/bwpluginas/7.3.0/doc/html/",
+    "extracted_at": "2026-04-19T22:42:52",
+    "file_count": 385,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/8.1.0/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-0_documentation.zip",
+    "html_root": "pub/bwpluginas/8.1.0/doc/html/",
+    "extracted_at": "2026-04-19T22:42:53",
+    "file_count": 398,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.3.1/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-1_documentation.zip",
+    "html_root": "pub/bwpluginas/7.3.1/doc/html/",
+    "extracted_at": "2026-04-19T22:42:56",
+    "file_count": 422,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/8.1.1/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1_documentation.zip",
+    "html_root": "pub/bwpluginas/8.1.1/doc/html/",
+    "extracted_at": "2026-04-19T22:42:58",
+    "file_count": 402,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/7.3.2/tibco-activematrix-businessworks-plug-in-for-activespaces-7-3-2_documentation.zip",
+    "html_root": "pub/bwpluginas/7.3.2/doc/html/",
+    "extracted_at": "2026-04-19T22:43:01",
+    "file_count": 423,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsredshift/6.0.0/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-0-0_documentation.zip",
+    "html_root": "pub/bwpluginawsredshift/6.0.0/doc/html/",
+    "extracted_at": "2026-04-19T22:43:03",
+    "file_count": 379,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsredshift/6.1.0/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0_documentation.zip",
+    "html_root": "pub/bwpluginawsredshift/6.1.0/doc/html/",
+    "extracted_at": "2026-04-19T22:43:06",
+    "file_count": 393,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-5-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawss3/6.5.1/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-5-1_documentation.zip",
+    "html_root": "pub/bwpluginawss3/6.5.1/doc/html/",
+    "extracted_at": "2026-04-19T22:43:07",
+    "file_count": 108,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawss3/6.6.0/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-6-0_documentation.zip",
+    "html_root": "pub/bwpluginawss3/6.6.0/doc/html/",
+    "extracted_at": "2026-04-19T22:43:09",
+    "file_count": 383,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawss3/6.7.0/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0_documentation.zip",
+    "html_root": "pub/bwpluginawss3/6.7.0/doc/html/",
+    "extracted_at": "2026-04-19T22:43:11",
+    "file_count": 392,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsm/6.5.0/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-0_documentation.zip",
+    "html_root": "pub/bwpluginawsm/6.5.0/doc/html/",
+    "extracted_at": "2026-04-19T22:43:12",
+    "file_count": 104,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsm/6.5.1/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-1_documentation.zip",
+    "html_root": "pub/bwpluginawsm/6.5.1/doc/html/",
+    "extracted_at": "2026-04-19T22:43:13",
+    "file_count": 104,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsm/6.5.2/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-5-2_documentation.zip",
+    "html_root": "pub/bwpluginawsm/6.5.2/doc/html/",
+    "extracted_at": "2026-04-19T22:43:14",
+    "file_count": 104,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsm/6.6.0/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns-6-6-0_documentation.zip",
+    "html_root": "pub/bwpluginawsm/6.6.0/doc/html/",
+    "extracted_at": "2026-04-19T22:43:16",
+    "file_count": 378,
+    "format": "madcap"
+  }
+}

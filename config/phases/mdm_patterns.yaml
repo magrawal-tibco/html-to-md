@@ -1,0 +1,40 @@
+# Phase file template — copy and rename to config/phases/phase_XX.yaml
+#
+# A phase defines which products/versions to process in one pipeline run.
+# Two keys are supported and can be combined freely:
+#
+#   products:  — L2 product sitemapindex URLs
+#               All versions under the product are discovered automatically.
+#               Use this to process an entire product's history.
+#
+#   versions:  — L3 version urlset URLs
+#               Targets one specific version directly, bypassing product discovery.
+#               Use this to cherry-pick individual versions or re-run a single version.
+#
+# Sitemap URL patterns:
+#   L2 (product):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
+#   L3 (version):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
+#
+# The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
+
+name: "MDM & Patterns — All MDM & Patterns versions"
+
+# Optional: product-level sitemaps (discovers all versions automatically)
+
+  # - https://docs.tibco.com/ftp_portal/coveo/tibco-<another-product>.xml
+
+# Optional: specific version sitemaps (bypasses product-level discovery)
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-10-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-11-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-add-on-for-global-data-synchronization-4-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-studio-6-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-studio-6-1-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-1-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-1-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-9-3-2.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-11-1-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-studio-6-1-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-patterns-6-1-2.xml
+  

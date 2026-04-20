@@ -3,7 +3,11 @@
 # All versions under each product are discovered automatically.
 name: "Phase 2 - POC 2"
 products:
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mongodb.xml
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-rendezvous-network-service.xml
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-pdf.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-extreme.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-process-orchestration.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-views.xml
 

@@ -1,0 +1,107 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/5.0/tibco-businessevents-data-modeling-5-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-4-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/4.0.1/tibco-businessevents-data-modeling-4-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/5.0.1/tibco-businessevents-data-modeling-5-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-4-0-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/4.0.2/tibco-businessevents-data-modeling-4-0-2_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/5.1.0/tibco-businessevents-data-modeling-5-1-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-5-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/5.1.1/tibco-businessevents-data-modeling-5-1-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-data-modeling-4-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_data_modeling/4.0.0/tibco-businessevents-data-modeling-4-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/5.0.0/tibco-businessevents-decision-manager-5-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-4-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/4.0.1/tibco-businessevents-decision-manager-4-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/5.0.1/tibco-businessevents-decision-manager-5-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-4-0-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/4.0.2/tibco-businessevents-decision-manager-4-0-2_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/5.1.0/tibco-businessevents-decision-manager-5-1-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-5-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/5.1.1/tibco-businessevents-decision-manager-5-1-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-decision-manager-4-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_decision_manager/4.0.0/tibco-businessevents-decision-manager-4-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/5.0/tibco-businessevents-event-stream-processing-5-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-4-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/4.0.1/tibco-businessevents-event-stream-processing-4-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/5.0.1/tibco-businessevents-event-stream-processing-5-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-4-0-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/4.0.2/tibco-businessevents-event-stream-processing-4-0-2_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/5.1.0/tibco-businessevents-event-stream-processing-5-1-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-5-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/5.1.1/tibco-businessevents-event-stream-processing-5-1-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-event-stream-processing-4-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents_event_stream_processing/4.0.0/tibco-businessevents-event-stream-processing-4-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  }
+}

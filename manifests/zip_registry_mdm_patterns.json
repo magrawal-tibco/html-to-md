@@ -1,0 +1,86 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-10-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/mdm/10.0.0/ibi-mdm-10-0-0_documentation.zip",
+    "html_root": "pub/mdm/10.0.0/doc/",
+    "extracted_at": "2026-04-20T17:54:22",
+    "file_count": 16202,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-11-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/mdm/11.0.0/ibi-mdm-11-0-0_documentation.zip",
+    "html_root": "pub/mdm/11.0.0/doc/",
+    "extracted_at": "2026-04-20T17:54:44",
+    "file_count": 7005,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-add-on-for-global-data-synchronization-4-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/cim-gdsn/4.0.0/ibi-mdm-add-on-for-global-data-synchronization-4-0-0_documentation.zip",
+    "html_root": "pub/cim-gdsn/4.0.0/doc/html/",
+    "extracted_at": "2026-04-20T17:54:50",
+    "file_count": 791,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-studio-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bstudio-mdm/6.0.0/ibi-mdm-studio-6-0-0_documentation.zip",
+    "html_root": "pub/bstudio-mdm/6.0.0/doc/html/",
+    "extracted_at": "2026-04-20T17:55:14",
+    "file_count": 8316,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-mdm-studio-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bstudio-mdm/6.1.0/ibi-mdm-studio-6-1-0_documentation.zip",
+    "html_root": "pub/bstudio-mdm/6.1.0/doc/html/",
+    "extracted_at": "2026-04-20T17:55:29",
+    "file_count": 4382,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/tps/6.0.0/ibi-patterns-search-6-0-0_documentation.zip",
+    "html_root": "pub/tps/6.0.0/doc/html/",
+    "extracted_at": "2026-04-20T17:55:41",
+    "file_count": 4489,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/tps/6.1.0/ibi-patterns-search-6-1-0_documentation.zip",
+    "html_root": "pub/tps/6.1.0/doc/html/",
+    "extracted_at": "2026-04-20T17:55:50",
+    "file_count": 1987,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/ibi-patterns-search-6-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/tps/6.1.1/ibi-patterns-search-6-1-1_documentation.zip",
+    "html_root": "pub/tps/6.1.1/doc/html/",
+    "extracted_at": "2026-04-20T17:56:00",
+    "file_count": 2005,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-9-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/mdm/9.3.2/tibco-mdm-9-3-2_documentation.zip",
+    "html_root": "pub/mdm/9.3.2/doc/",
+    "extracted_at": "2026-04-20T17:56:29",
+    "file_count": 7569,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-11-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/mdm/11.1.0/tibco-mdm-11-1-0_documentation.zip",
+    "html_root": "pub/mdm/11.1.0/doc/",
+    "extracted_at": "2026-04-20T17:56:57",
+    "file_count": 7146,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-mdm-studio-6-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bstudio-mdm/6.1.1/tibco-mdm-studio-6-1-1_documentation.zip",
+    "html_root": "pub/bstudio-mdm/6.1.1/doc/html/",
+    "extracted_at": "2026-04-20T17:57:30",
+    "file_count": 8351,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-patterns-6-1-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/tps/6.1.2/tibco-patterns-6-1-2_documentation.zip",
+    "html_root": "pub/tps/6.1.2/doc/html/",
+    "extracted_at": "2026-04-20T17:57:40",
+    "file_count": 1938,
+    "format": "madcap"
+  }
+}

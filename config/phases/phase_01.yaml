@@ -3,5 +3,7 @@
 # All versions under each product are discovered automatically.
 name: "Phase 1 - POC"
 products:
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql.xml
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-redshift.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-s3.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amazon-sqs-and-sns.xml

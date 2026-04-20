@@ -1,0 +1,9 @@
+# Phase 1 — example phase (replace with actual product sitemap URLs)
+# Each entry is a product-level sitemapindex URL from the master sitemap.
+# All versions under each product are discovered automatically.
+name: "Gridserver BU - DataSynapse Gridserver BU Products"
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-gridserver-manager-7-2-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-gridserver-logviewer-1-0-0.xml

@@ -33,7 +33,8 @@ skip_filenames:
 
 # URL path segments that indicate non-topic content — filtered in Step 1
 skip_path_segments:
-  - /api/javadoc/
+  - /javadoc/
+  - /lib/
   - /_globalpages/
   - /MicroContent/
   - /_templates/

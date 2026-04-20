@@ -571,8 +571,26 @@ def _fix_table_rows(md_lines: list[str]) -> list[str]:
 
 # ── Markdown cleanup ──────────────────────────────────────────────────────────
 
+_STRIP_SECTIONS = re.compile(
+    r"^#\s+(TIBCO\s+Documentation\s+and\s+Support\s*Services|Legal\s+and\s+Third[- ]Party\s+Notices)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _remove_boilerplate_sections(text: str) -> str:
+    """Drop global boilerplate sections (Support Services, Legal Notices) and everything after."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if _STRIP_SECTIONS.match(line.strip()):
+            # Drop this heading and everything that follows
+            lines = lines[:i]
+            break
+    return "\n".join(lines)
+
+
 def _clean_markdown(text: str) -> str:
     """Collapse excess blank lines and strip trailing whitespace."""
+    text = _remove_boilerplate_sections(text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = "\n".join(line.rstrip() for line in text.splitlines())
     return text.strip() + "\n"

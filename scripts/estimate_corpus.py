@@ -173,6 +173,7 @@ async def fetch_l3(client: httpx.AsyncClient, l3_url: str,
     product_name = ""
     version      = ""
     doc_names    = set()
+    last_modified = ""
 
     for ns_uri in (_SM_NS, _SM_NS2):
         for url_el in root.iter(f"{{{ns_uri}}}url"):
@@ -180,6 +181,14 @@ async def fetch_l3(client: httpx.AsyncClient, l3_url: str,
             if loc_el is None or not loc_el.text:
                 continue
             loc = loc_el.text.strip()
+
+            # Track max lastmod across ALL urls (not just accepted HTML pages)
+            lastmod_el = url_el.find(f"{{{ns_uri}}}lastmod")
+            if lastmod_el is not None and lastmod_el.text:
+                lm = lastmod_el.text.strip()[:10]  # keep YYYY-MM-DD only
+                if lm > last_modified:
+                    last_modified = lm
+
             if should_skip(loc, skip_segments, skip_filenames, html_extensions, skip_filename_patterns):
                 continue
             page_count += 1
@@ -199,11 +208,12 @@ async def fetch_l3(client: httpx.AsyncClient, l3_url: str,
                             doc_names.add(val)
 
     return {
-        "l3_url":       l3_url,
-        "page_count":   page_count,
-        "product_name": product_name,
-        "version":      version,
-        "doc_names":    sorted(doc_names),
+        "l3_url":        l3_url,
+        "page_count":    page_count,
+        "product_name":  product_name,
+        "version":       version,
+        "doc_names":     sorted(doc_names),
+        "last_modified": last_modified,
     }
 
 
@@ -324,13 +334,18 @@ def print_summary(results: list[dict], out_stem: str):
         prod_pages = sum(v["page_count"] for v in versions)
         print(f"  {product[:50]:<50} {len(versions):>5} {prod_pages:>8,}")
         for v in sorted(versions, key=lambda x: x.get("version", "")):
+            lm   = v.get("last_modified", "")
+            year = lm[:4] if lm else ""
             rows.append({
-                "product_name":  v["product_name"],
-                "version":       v["version"],
-                "l3_url":        v["l3_url"],
-                "page_count":    v["page_count"],
-                "est_images":    int(v["page_count"] * RATE_IMAGES_PER_PAGE),
-                "doc_names":     "; ".join(v["doc_names"]),
+                "product_name":       v["product_name"],
+                "version":            v["version"],
+                "page_count":         v["page_count"],
+                "est_images":         int(v["page_count"] * RATE_IMAGES_PER_PAGE),
+                "doc_names":          "; ".join(v["doc_names"]),
+                "last_modified":      lm,
+                "last_modified_year": year,
+                "current_or_legacy":  "Current" if year >= "2023" else "Legacy",
+                "l3_url":             v["l3_url"],
             })
 
     print(f"  {'-'*50} {'-'*5} {'-'*8}")
@@ -356,7 +371,7 @@ def print_summary(results: list[dict], out_stem: str):
     # Write CSV
     csv_path = f"{out_stem}.csv"
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["product_name", "version", "page_count", "est_images", "doc_names", "l3_url"])
+        w = csv.DictWriter(f, fieldnames=["product_name", "version", "page_count", "est_images", "doc_names", "last_modified", "last_modified_year", "current_or_legacy", "l3_url"])
         w.writeheader()
         w.writerows(rows)
     print(f"  CSV written: {csv_path}")

@@ -144,6 +144,67 @@ def print_summary(
         print(f"  Logs in: {logs_dir / phase}/")
 
 
+def has_dita_versions(phase: str, settings: dict) -> bool:
+    """Return True if the phase manifest contains any DITA versions."""
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    dita_path = manifests_dir / f"dita_versions_{phase}.json"
+    if not dita_path.exists():
+        return False
+    try:
+        data = json.loads(dita_path.read_text(encoding="utf-8"))
+        return bool(data)
+    except Exception:
+        return False
+
+
+def run_dita_pipeline(phase: str, config: str, dry_run: bool, force_rerun: bool) -> tuple[int, float]:
+    """Run the DITA sub-pipeline (scripts/dita/run.py) as a subprocess."""
+    cmd = [sys.executable, "scripts/dita/run.py", "--phase", phase, "--config", config]
+    if dry_run:
+        cmd.append("--dry-run")
+    if force_rerun:
+        cmd.append("--force-rerun")
+
+    print(f"\n{'='*60}")
+    print(f"  DITA Sub-pipeline")
+    print(f"  Command: {' '.join(cmd)}")
+    print(f"{'='*60}")
+
+    start = time.time()
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    result = subprocess.run(cmd, text=True, env=env)
+    elapsed = round(time.time() - start, 1)
+
+    status = "OK" if result.returncode == 0 else f"FAILED (exit {result.returncode})"
+    print(f"\n  DITA sub-pipeline {status} in {elapsed}s")
+    return result.returncode, elapsed
+
+
+def run_pdf_pipeline(phase: str, config: str, dry_run: bool, force_rerun: bool) -> tuple[int, float]:
+    """Run the PDF release notes sub-pipeline (scripts/pdf/convert.py) as a subprocess."""
+    cmd = [sys.executable, "scripts/pdf/convert.py", "--phase", phase, "--config", config]
+    if dry_run:
+        cmd.append("--dry-run")
+    if force_rerun:
+        cmd.append("--force-rerun")
+
+    print(f"\n{'='*60}")
+    print(f"  PDF Release Notes Sub-pipeline")
+    print(f"  Command: {' '.join(cmd)}")
+    print(f"{'='*60}")
+
+    start = time.time()
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    result = subprocess.run(cmd, text=True, env=env)
+    elapsed = round(time.time() - start, 1)
+
+    status = "OK" if result.returncode == 0 else f"FAILED (exit {result.returncode})"
+    print(f"\n  PDF sub-pipeline {status} in {elapsed}s")
+    return result.returncode, elapsed
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="TIBCO Docs HTML→Markdown pipeline orchestrator"
@@ -164,6 +225,10 @@ def main():
                         help="Re-download cached files (Step 2 only)")
     parser.add_argument("--ignore-registry", action="store_true",
                         help="Include versions already in converted_versions.json (Step 1 only)")
+    parser.add_argument("--skip-dita",    action="store_true",
+                        help="Skip the DITA sub-pipeline even if DITA versions are present")
+    parser.add_argument("--skip-pdf",     action="store_true",
+                        help="Skip the PDF release notes sub-pipeline")
     args = parser.parse_args()
 
     settings  = load_settings(args.config)
@@ -175,8 +240,10 @@ def main():
     print(f"  Dry run:   {args.dry_run}")
     print(f"  Config:    {args.config}")
 
+    # ── Main pipeline (steps 1-7) ─────────────────────────────────────────────
     steps_run = []
     accumulated_seconds = 0.0
+    main_ok = True
     for display_id, sort_key, script, label in STEPS:
         if sort_key < args.from_step or sort_key > args.to_step:
             continue
@@ -195,12 +262,36 @@ def main():
             resume_step = int(sort_key) if sort_key == int(sort_key) else display_id
             print(f"\nStep {display_id} failed — stopping pipeline.")
             print(f"To resume from this step: python run.py --phase {args.phase} --from-step {resume_step}")
+            main_ok = False
             break
 
     print_summary(args.phase, steps_run, logs_dir, args.dry_run)
 
-    all_ok = all(exit_code == 0 for _, _, _, exit_code, _ in steps_run)
-    return 0 if all_ok else 1
+    if not main_ok:
+        return 1
+
+    # ── DITA sub-pipeline ─────────────────────────────────────────────────────
+    dita_ok = True
+    if not args.skip_dita and has_dita_versions(args.phase, settings):
+        print(f"\nDITA versions detected — running DITA sub-pipeline...")
+        dita_rc, dita_elapsed = run_dita_pipeline(
+            args.phase, args.config, args.dry_run, args.force_rerun
+        )
+        dita_ok = (dita_rc == 0)
+        if not dita_ok:
+            print(f"\nDITA sub-pipeline failed. PDF sub-pipeline will still run.")
+    elif not args.skip_dita:
+        print(f"\nNo DITA versions found for phase '{args.phase}' — skipping DITA sub-pipeline.")
+
+    # ── PDF release notes sub-pipeline ───────────────────────────────────────
+    pdf_ok = True
+    if not args.skip_pdf:
+        pdf_rc, pdf_elapsed = run_pdf_pipeline(
+            args.phase, args.config, args.dry_run, args.force_rerun
+        )
+        pdf_ok = (pdf_rc == 0)
+
+    return 0 if (dita_ok and pdf_ok) else 1
 
 
 if __name__ == "__main__":
