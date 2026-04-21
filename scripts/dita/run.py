@@ -19,6 +19,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr.encoding and sys.stderr.encoding.lower() != "utf-8":
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 
 def run_step(script: str, args: list[str], step_num: int, step_name: str) -> int:
     cmd = [sys.executable, script] + args

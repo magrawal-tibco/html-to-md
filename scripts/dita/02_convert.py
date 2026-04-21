@@ -128,10 +128,10 @@ def extract_metadata(
     if " - " in title:
         title = title.split(" - ")[0].strip()
 
-    dc_type = soup.find("meta", attrs={"name": "DC.type"})
+    dc_type = soup.find("meta", attrs={"name": lambda v: v and v.lower() == "dc.type"})
     topic_type = dc_type.get("content", "").lower() if dc_type else ""
 
-    dc_id = soup.find("meta", attrs={"name": "DC.identifier"})
+    dc_id = soup.find("meta", attrs={"name": lambda v: v and v.lower() == "dc.identifier"})
     guid = dc_id.get("content", "") if dc_id else ""
 
     description = ""
@@ -293,8 +293,8 @@ def convert_entry(
         html_bytes = cache_path.read_bytes()
         soup = BeautifulSoup(html_bytes, "lxml")
 
-        # Skip shell pages that lack DC.type meta
-        if not soup.find("meta", attrs={"name": "DC.type"}):
+        # Skip shell pages that lack DC.type meta (case-insensitive: DC.type or DC.Type)
+        if not soup.find("meta", attrs={"name": lambda v: v and v.lower() == "dc.type"}):
             reporter.count("pages_skipped_no_dc_type")
             return True
 
