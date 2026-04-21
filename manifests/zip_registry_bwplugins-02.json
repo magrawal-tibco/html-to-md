@@ -1,0 +1,156 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginkafka/6.8.0/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-0_documentation.zip",
+    "html_root": "pub/bwpluginkafka/6.8.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginkafka/6.8.1/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-1_documentation.zip",
+    "html_root": "pub/bwpluginkafka/6.8.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginkafka/6.8.2/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-2_documentation.zip",
+    "html_root": "pub/bwpluginkafka/6.8.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-7-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginkafka/6.7.0/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-7-0_documentation.zip",
+    "html_root": "pub/bwpluginkafka/6.7.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginkafka/5.0.0/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-0_documentation.zip",
+    "html_root": "pub/bwpluginkafka/5.0.0/doc/bwpluginkafka/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginkafka/5.0.1/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-1_documentation.zip",
+    "html_root": "pub/bwpluginkafka/5.0.1/doc/bwpluginkafka/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.3.0/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-0_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.3.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.3.1/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-1_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.3.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.4.0/tibco-activematrix-businessworks-plug-in-for-amqp-6-4-0_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.4.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.5.0/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-0_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.5.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.5.1/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-1_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.5.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.5.2/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.5.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugincassandra/6.3.2/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-2_documentation.zip",
+    "html_root": "pub/bwplugincassandra/6.3.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugincassandra/6.3.3/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3_documentation.zip",
+    "html_root": "pub/bwplugincassandra/6.3.3/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-5-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginap/5.0.0/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-5-0-0_documentation.zip",
+    "html_root": "pub/bwpluginap/5.0.0/doc/bwpluginap/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginap/6.0.0/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-0-0_documentation.zip",
+    "html_root": "pub/bwpluginap/6.0.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginap/6.1.0/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-1-0_documentation.zip",
+    "html_root": "pub/bwpluginap/6.1.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginap/6.2.0/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-2-0_documentation.zip",
+    "html_root": "pub/bwpluginap/6.2.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginacs/6.0.0/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0_documentation.zip",
+    "html_root": "pub/bwpluginacs/6.0.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginbigdata/6.5.0/tibco-activematrix-businessworks-plug-in-for-big-data-6-5-0_documentation.zip",
+    "html_root": "pub/bwpluginbigdata/6.5.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginbigdata/6.6.0/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-0_documentation.zip",
+    "html_root": "pub/bwpluginbigdata/6.6.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginbigdata/6.6.1/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-1_documentation.zip",
+    "html_root": "pub/bwpluginbigdata/6.6.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "sdl_dita"
+  }
+}

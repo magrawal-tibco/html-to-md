@@ -339,80 +339,80 @@
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
     "product_version": "6.3.0",
     "doc_name": "Installation",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 50
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-3-1.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
     "product_version": "6.3.1",
     "doc_name": "Installation",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 51
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-4-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
     "product_version": "6.4.0",
     "doc_name": "Installation",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 50
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
     "product_version": "6.5.0",
     "doc_name": "Installation",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 50
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-1.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
     "product_version": "6.5.1",
     "doc_name": "Installation",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 52
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP",
     "product_version": "6.5.2",
     "doc_name": "Installation",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 52
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-2.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Cassandra",
     "product_version": "6.3.2",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 46
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Cassandra",
     "product_version": "6.3.3",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 47
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
     "product_version": "5.0.0",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 73
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-5-0-1.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
     "product_version": "5.0.1",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 82
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-0-0.xml": {
@@ -515,64 +515,64 @@
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
     "product_version": "6.7.0",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 75
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
     "product_version": "6.8.0",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 75
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-1.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
     "product_version": "6.8.1",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 75
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-kafka-6-8-2.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Kafka",
     "product_version": "6.8.2",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 91
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-5-0-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
     "product_version": "5.0.0",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 37
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-0-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
     "product_version": "6.0.0",
     "doc_name": "Installation Modes",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
-    "page_count": 47
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
+    "page_count": 94
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-1-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
     "product_version": "6.1.0",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 52
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-2-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Pulsar",
     "product_version": "6.2.0",
     "doc_name": "Installation Modes and Procedures",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 52
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-apache-pulsar-6-2-1.xml": {
@@ -595,32 +595,32 @@
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Azure Cloud Services (Azure Data Lake Storage Gen2)",
     "product_version": "6.0.0",
     "doc_name": "Installation Modes",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:33:40Z",
     "page_count": 51
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-5-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Big Data",
     "product_version": "6.5.0",
     "doc_name": "Installer Overview",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:34:10Z",
     "page_count": 74
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Big Data",
     "product_version": "6.6.0",
     "doc_name": "Installer Overview",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:34:10Z",
     "page_count": 74
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-big-data-6-6-1.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Big Data",
     "product_version": "6.6.1",
     "doc_name": "HDFS Palette",
-    "phase": "phase_02",
-    "converted_at": "2026-04-19T17:30:42Z",
+    "phase": "bwplugins-02",
+    "converted_at": "2026-04-21T15:34:10Z",
     "page_count": 75
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-businessconnect-6-0-0.xml": {

@@ -24,19 +24,26 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
 if sys.stderr.encoding and sys.stderr.encoding.lower() != "utf-8":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+# (name, script, supports_force_rerun)
 STEPS = [
-    ("convert",   "scripts/webworks/convert.py",      "Convert HTML to Markdown"),
-    ("toc",       "scripts/webworks/build_toc.py",     "Build TOC JSON"),
-    ("csh",       "scripts/webworks/build_csh_maps.py","Build CSH Maps"),
+    ("convert",   "scripts/webworks/convert.py",       True),
+    ("toc",       "scripts/webworks/build_toc.py",      False),
+    ("csh",       "scripts/webworks/build_csh_maps.py", True),
 ]
+
+LABELS = {
+    "convert": "Convert HTML to Markdown",
+    "toc":     "Build TOC JSON",
+    "csh":     "Build CSH Maps",
+}
 
 
 def run_step(script: str, label: str, phase: str, config: str,
-             dry_run: bool, force_rerun: bool) -> tuple[int, float]:
+             dry_run: bool, force_rerun: bool, supports_force_rerun: bool) -> tuple[int, float]:
     cmd = [sys.executable, script, f"--phase={phase}", f"--config={config}"]
     if dry_run:
         cmd.append("--dry-run")
-    if force_rerun:
+    if force_rerun and supports_force_rerun:
         cmd.append("--force-rerun")
 
     print(f"\n{'='*60}")
@@ -66,10 +73,11 @@ def main():
     print(f"\nWebWorks Sub-pipeline | phase={args.phase}")
 
     all_ok = True
-    for name, script, label in STEPS:
+    for name, script, supports_force_rerun in STEPS:
+        label = LABELS[name]
         rc, elapsed = run_step(
             script, label, args.phase, args.config,
-            args.dry_run, args.force_rerun,
+            args.dry_run, args.force_rerun, supports_force_rerun,
         )
         if rc != 0:
             print(f"\nWebWorks step '{name}' failed — stopping.")

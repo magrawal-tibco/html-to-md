@@ -196,14 +196,17 @@ def run_webworks_pipeline(phase: str, config: str, dry_run: bool, force_rerun: b
 
 
 def has_dita_versions(phase: str, settings: dict) -> bool:
-    """Return True if the phase manifest contains any DITA versions."""
+    """Return True if the phase manifest contains any sdl_dita or file_dita versions."""
     manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    dita_path = manifests_dir / f"dita_versions_{phase}.json"
-    if not dita_path.exists():
+    manifest_path = manifests_dir / f"manifest_{phase}.json"
+    if not manifest_path.exists():
         return False
     try:
-        data = json.loads(dita_path.read_text(encoding="utf-8"))
-        return bool(data)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        return any(
+            e.get("version_format") in ("sdl_dita", "file_dita")
+            for e in manifest
+        )
     except Exception:
         return False
 
