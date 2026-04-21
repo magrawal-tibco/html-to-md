@@ -60,6 +60,7 @@ def run_step(
     force_rerun: bool,
     force_refresh: bool,
     ignore_registry: bool,
+    scan_cache: bool = False,
     total_seconds: float | None = None,
 ) -> tuple[int, float]:
     """Run a single pipeline step as a subprocess. Returns (exit_code, duration_seconds)."""
@@ -74,6 +75,9 @@ def run_step(
     # --ignore-registry is only used by Step 1
     if ignore_registry and "01_build_manifest" in script:
         cmd.append("--ignore-registry")
+    # --scan-cache is only used by Step 3
+    if scan_cache and "03_convert.py" in script:
+        cmd.append("--scan-cache")
     # --total-seconds is only used by Step 7
     if total_seconds is not None and "07_generate_report" in script:
         cmd.append(f"--total-seconds={total_seconds:.1f}")
@@ -142,6 +146,53 @@ def print_summary(
     else:
         print(f"  All steps completed. Output in: output/")
         print(f"  Logs in: {logs_dir / phase}/")
+
+
+def has_webworks_versions(phase: str, settings: dict) -> bool:
+    """Return True if any version-level wwhelp/books.htm exists in cache.
+    Version-level books.htm links to multiple guides (links have >= 2 slashes).
+    Per-guide books.htm links only to its own wwhdata/files.htm."""
+    from bs4 import BeautifulSoup
+    cache_dir = Path(settings.get("cache_dir", "cache"))
+    for books_path in cache_dir.glob("**/wwhelp/books.htm"):
+        try:
+            soup = BeautifulSoup(
+                books_path.read_text(encoding="utf-8", errors="replace"), "html.parser"
+            )
+            links = [
+                a["href"]
+                for div in soup.find_all("div")
+                if (a := div.find("a")) and a.get("href")
+            ]
+            if any(link.count("/") >= 3 for link in links):
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def run_webworks_pipeline(phase: str, config: str, dry_run: bool, force_rerun: bool) -> tuple[int, float]:
+    """Run the WebWorks ePublisher sub-pipeline (scripts/webworks/run.py) as a subprocess."""
+    cmd = [sys.executable, "scripts/webworks/run.py", "--phase", phase, "--config", config]
+    if dry_run:
+        cmd.append("--dry-run")
+    if force_rerun:
+        cmd.append("--force-rerun")
+
+    print(f"\n{'='*60}")
+    print(f"  WebWorks Sub-pipeline")
+    print(f"  Command: {' '.join(cmd)}")
+    print(f"{'='*60}")
+
+    start = time.time()
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    result = subprocess.run(cmd, text=True, env=env)
+    elapsed = round(time.time() - start, 1)
+
+    status = "OK" if result.returncode == 0 else f"FAILED (exit {result.returncode})"
+    print(f"\n  WebWorks sub-pipeline {status} in {elapsed}s")
+    return result.returncode, elapsed
 
 
 def has_dita_versions(phase: str, settings: dict) -> bool:
@@ -225,10 +276,14 @@ def main():
                         help="Re-download cached files (Step 2 only)")
     parser.add_argument("--ignore-registry", action="store_true",
                         help="Include versions already in converted_versions.json (Step 1 only)")
+    parser.add_argument("--scan-cache",    action="store_true",
+                        help="Drive Step 3 from cached files instead of sitemap manifest (use when ZIP paths differ from sitemap URLs)")
     parser.add_argument("--skip-dita",    action="store_true",
                         help="Skip the DITA sub-pipeline even if DITA versions are present")
-    parser.add_argument("--skip-pdf",     action="store_true",
+    parser.add_argument("--skip-pdf",       action="store_true",
                         help="Skip the PDF release notes sub-pipeline")
+    parser.add_argument("--skip-webworks", action="store_true",
+                        help="Skip the WebWorks ePublisher sub-pipeline")
     args = parser.parse_args()
 
     settings  = load_settings(args.config)
@@ -253,6 +308,7 @@ def main():
             args.phase, args.config,
             args.dry_run, args.force_rerun, args.force_refresh,
             args.ignore_registry,
+            scan_cache=args.scan_cache,
             total_seconds=accumulated_seconds if "07_generate_report" in script else None,
         )
         accumulated_seconds += elapsed
@@ -291,7 +347,18 @@ def main():
         )
         pdf_ok = (pdf_rc == 0)
 
-    return 0 if (dita_ok and pdf_ok) else 1
+    # ── WebWorks ePublisher sub-pipeline ─────────────────────────────────────
+    webworks_ok = True
+    if not args.skip_webworks and has_webworks_versions(args.phase, settings):
+        print(f"\nWebWorks versions detected — running WebWorks sub-pipeline...")
+        ww_rc, ww_elapsed = run_webworks_pipeline(
+            args.phase, args.config, args.dry_run, args.force_rerun
+        )
+        webworks_ok = (ww_rc == 0)
+    elif not args.skip_webworks:
+        print(f"\nNo WebWorks versions found for phase '{args.phase}' — skipping WebWorks sub-pipeline.")
+
+    return 0 if (dita_ok and pdf_ok and webworks_ok) else 1
 
 
 if __name__ == "__main__":

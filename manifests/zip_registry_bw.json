@@ -1,0 +1,79 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-14-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/5.14.0/tibco-activematrix-businessworks-5-14-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/5.14.0/doc/html/",
+    "extracted_at": "2026-04-21T11:47:15",
+    "file_count": 3347,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-14-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/5.14.1/tibco-activematrix-businessworks-5-14-1_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/5.14.1/doc/html/",
+    "extracted_at": "2026-04-21T11:47:26",
+    "file_count": 3464,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-15-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/5.15.0/tibco-activematrix-businessworks-5-15-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/5.15.0/doc/html/",
+    "extracted_at": "2026-04-21T11:47:35",
+    "file_count": 3276,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-15-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/5.15.1/tibco-activematrix-businessworks-5-15-1_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/5.15.1/doc/html/",
+    "extracted_at": "2026-04-21T11:47:44",
+    "file_count": 3277,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-16-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/5.16.0/tibco-activematrix-businessworks-5-16-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/5.16.0/doc/html/",
+    "extracted_at": "2026-04-21T11:47:52",
+    "file_count": 3240,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-16-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/5.16.1/tibco-activematrix-businessworks-5-16-1_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/5.16.1/doc/html/",
+    "extracted_at": "2026-04-21T11:48:05",
+    "file_count": 2963,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-10-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/6.10.0/tibco-activematrix-businessworks-6-10-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/6.10.0/doc/html/",
+    "extracted_at": "2026-04-21T11:49:23",
+    "file_count": 27116,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-11-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/6.11.0/tibco-activematrix-businessworks-6-11-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/6.11.0/doc/html/",
+    "extracted_at": "2026-04-21T11:49:56",
+    "file_count": 6565,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-12-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/6.12.0/tibco-activematrix-businessworks-6-12-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/6.12.0/doc/bwce-html/",
+    "extracted_at": "2026-04-21T11:50:45",
+    "file_count": 10583,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-13-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/6.13.0/tibco-activematrix-businessworks-6-13-0_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/6.13.0/doc/bwce-html/",
+    "extracted_at": "2026-04-21T11:51:36",
+    "file_count": 10551,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-9-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix_businessworks/6.9.1/tibco-activematrix-businessworks-6-9-1_documentation.zip",
+    "html_root": "pub/activematrix_businessworks/6.9.1/doc/html/",
+    "extracted_at": "2026-04-21T11:53:01",
+    "file_count": 26875,
+    "format": "madcap"
+  }
+}

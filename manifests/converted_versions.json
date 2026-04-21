@@ -63,6 +63,94 @@
     "converted_at": "2026-04-20T18:10:23Z",
     "page_count": 840
   },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-14-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "5.14.0",
+    "doc_name": "",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 577
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-14-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "5.14.1",
+    "doc_name": "",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 542
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-15-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "5.15.0",
+    "doc_name": "",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 542
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-15-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "5.15.1",
+    "doc_name": "",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 542
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-16-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "5.16.0",
+    "doc_name": "",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 531
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-5-16-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "5.16.1",
+    "doc_name": "Activity Statistics",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 1408
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-10-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "6.10.0",
+    "doc_name": "About REST Services and References",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 1423
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-11-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "6.11.0",
+    "doc_name": "About REST Services and References",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 1195
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-12-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "6.12.0",
+    "doc_name": "About REST Services and References",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 2397
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-13-0.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "6.13.0",
+    "doc_name": "About REST Services and References",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 2397
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-6-9-1.xml": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™",
+    "product_version": "6.9.1",
+    "doc_name": "About REST Services and References",
+    "phase": "bw",
+    "converted_at": "2026-04-21T07:13:16Z",
+    "page_count": 1371
+  },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-activespaces-7-0-0.xml": {
     "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces®",
     "product_version": "7.0.0",

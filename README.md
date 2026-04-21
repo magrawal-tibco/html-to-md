@@ -92,6 +92,26 @@ scripts/pdf/convert.py --phase <name>
 
 Skip with `--skip-pdf` if you only want HTML conversion.
 
+### Stage 4 — WebWorks ePublisher Sub-pipeline (automatic if detected)
+
+After the PDF sub-pipeline, `run.py` checks whether any version in cache contains a `wwhelp/books.htm` file (the signature of WebWorks ePublisher output). If found, the WebWorks sub-pipeline runs automatically:
+
+```
+scripts/webworks/run.py --phase <name>
+```
+
+| Step | Script | What it does |
+|------|--------|-------------|
+| 1 | `convert.py` | Extract `<blockquote>` content, convert WebWorks elements (N1/N2/N3Heading, Bullet_outer, Step_outer, Code) → Markdown |
+| 2 | `build_toc.py` | Parse `wwhdata/xml/toc.xml` per guide → hierarchical `_toc.json` |
+| 3 | `build_csh_maps.py` | Parse `ctx/<guide><id>.htm` JS redirects + `wwhdata/xml/files.xml` → `csh_map.json` + inject `csh_ids` into frontmatter |
+
+**When this applies:** Legacy TIBCO products authored in Adobe FrameMaker and published via WebWorks ePublisher (e.g. ActiveMatrix BusinessWorks 5.x, BusinessEvents Data Modeling). These use XHTML output with numeric filenames (`admin.4.01.htm`) instead of MadCap Flare's HTML5 output.
+
+TOC source is `wwhdata/xml/toc.xml` (hierarchical, authoritative). The `_toc.json` `"_source"` field will be `"webworks_toc_xml"`.
+
+Skip with `--skip-webworks` if you want to run the WebWorks pipeline separately.
+
 ### CLI flags
 
 | Flag | Applies to | Description |
@@ -102,8 +122,10 @@ Skip with `--skip-pdf` if you only want HTML conversion.
 | `--force-rerun` | All stages | Re-process already-done files |
 | `--force-refresh` | Step 2 only | Re-download cached HTML |
 | `--ignore-registry` | Step 1 only | Include already-converted versions |
+| `--scan-cache` | Step 3 only | Drive conversion from cached files instead of sitemap manifest (use when ZIP paths differ from sitemap URLs) |
 | `--skip-dita` | DITA stage | Skip DITA sub-pipeline |
 | `--skip-pdf` | PDF stage | Skip PDF sub-pipeline |
+| `--skip-webworks` | WebWorks stage | Skip WebWorks ePublisher sub-pipeline |
 
 ## Folder Structure
 
@@ -127,6 +149,16 @@ html-to-md/
 │   ├── 06_build_toc.py             # Build _toc.json (prefers ZIP TOC JS, falls back to breadcrumbs)
 │   ├── 07_generate_report.py       # Write phase_report.csv and update conversion_log.csv
 │   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
+│   ├── dita/                       # DITA WebHelp Responsive sub-pipeline
+│   │   └── run.py                  # DITA orchestrator
+│   ├── pdf/
+│   │   └── convert.py              # PDF release notes → Markdown (pymupdf)
+│   ├── webworks/                   # WebWorks ePublisher sub-pipeline (FrameMaker legacy)
+│   │   ├── convert.py              # WebWorks HTML → Markdown
+│   │   ├── build_toc.py            # toc.xml → _toc.json
+│   │   ├── build_csh_maps.py       # ctx/*.htm → csh_map.json
+│   │   ├── run.py                  # WebWorks orchestrator
+│   │   └── utils.py                # Shared discovery + file-reading helpers
 │   └── lib/
 │       ├── sitemap_parser.py       # 3-level sitemap crawl functions
 │       ├── toc_parser.py           # MadCap WebHelp2 TOC JS parsing (shared by steps 6 + compare_toc)
