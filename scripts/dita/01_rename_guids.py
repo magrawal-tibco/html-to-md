@@ -209,6 +209,7 @@ def build_rename_map_for_version(
     settings: dict,
     zip_registry: dict,
     reporter: Reporter,
+    manifest_entry: dict | None = None,
 ) -> dict | None:
     """Build the full rename map for one sdl_dita version."""
     cache_dir = Path(settings.get("cache_dir", "cache"))
@@ -218,6 +219,15 @@ def build_rename_map_for_version(
 
     reg_entry = zip_registry.get(version_sitemap, {})
     html_root_str = reg_entry.get("html_root", "")
+    if not html_root_str and manifest_entry:
+        # Fallback: derive html_root from the manifest output_path (versions not in ZIP registry)
+        output_path = manifest_entry.get("output_path", "")
+        if output_path:
+            html_root_str = str(Path(output_path).parent).replace("\\", "/")
+            reporter.warning(
+                f"html_root not in zip_registry for {version_sitemap} — "
+                f"derived from manifest: {html_root_str}"
+            )
     if not html_root_str:
         reporter.fail(version_sitemap, "html_root not found in zip_registry")
         return None
@@ -317,7 +327,8 @@ def main():
             continue
 
         rename_map = build_rename_map_for_version(
-            version_sitemap, settings, zip_registry, reporter
+            version_sitemap, settings, zip_registry, reporter,
+            manifest_entry=sdl_versions[version_sitemap],
         )
         if rename_map is None:
             reporter.count("versions_failed")

@@ -286,12 +286,18 @@ def process_version(
     rename_map: dict | None,
     reporter: Reporter,
     dry_run: bool,
+    manifest_entry: dict | None = None,
 ) -> None:
     cache_dir  = Path(settings.get("cache_dir", "cache"))
     output_dir = Path(settings.get("output_dir", "output"))
 
     reg_entry = zip_registry.get(version_sitemap, {})
     html_root = reg_entry.get("html_root", "")
+    if not html_root and manifest_entry:
+        output_path = manifest_entry.get("output_path", "")
+        if output_path:
+            html_root = str(Path(output_path).parent).replace("\\", "/")
+            reporter.warning(f"html_root not in zip_registry for {version_sitemap} — derived from manifest")
     if not html_root:
         reporter.fail(version_sitemap, "html_root not in zip_registry")
         return
@@ -391,7 +397,8 @@ def main():
             rename_map = load_guid_rename_map(args.phase, version_sitemap, settings)
 
         process_version(
-            version_sitemap, fmt, settings, zip_registry, rename_map, reporter, args.dry_run
+            version_sitemap, fmt, settings, zip_registry, rename_map, reporter, args.dry_run,
+            manifest_entry=_entry,
         )
 
     report = reporter.finish()

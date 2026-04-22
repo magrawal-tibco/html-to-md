@@ -177,8 +177,13 @@ def process_version(
     cache_dir  = Path(settings.get("cache_dir", "cache"))
     output_dir = Path(settings.get("output_dir", "output"))
 
-    reg_entry    = zip_registry.get(version_sitemap, {})
-    html_root    = reg_entry.get("html_root", "")
+    reg_entry = zip_registry.get(version_sitemap, {})
+    html_root = reg_entry.get("html_root", "")
+    if not html_root:
+        output_path = entry.get("output_path", "")
+        if output_path:
+            html_root = str(Path(output_path).parent).replace("\\", "/")
+            reporter.warning(f"html_root not in zip_registry for {version_sitemap} — derived from manifest")
     if not html_root:
         reporter.fail(version_sitemap, "html_root not in zip_registry")
         return
