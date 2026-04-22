@@ -229,12 +229,12 @@ def build_rename_map_for_version(
 
     topic_list_path = html_root / "suitehelp_topic_list.html"
     if not topic_list_path.exists():
-        reporter.fail(version_sitemap, f"suitehelp_topic_list.html not found: {topic_list_path}")
-        return None
-
-    reporter.info(f"    Parsing topic list: {topic_list_path.name}")
-    guid_to_title, guid_to_ancestors = _parse_topic_list(topic_list_path)
-    reporter.info(f"    Found {len(guid_to_title)} topics in topic list")
+        reporter.warning(f"suitehelp_topic_list.html not found for {version_sitemap} — falling back to <title> tags")
+        guid_to_title, guid_to_ancestors = {}, {}
+    else:
+        reporter.info(f"    Parsing topic list: {topic_list_path.name}")
+        guid_to_title, guid_to_ancestors = _parse_topic_list(topic_list_path)
+        reporter.info(f"    Found {len(guid_to_title)} topics in topic list")
 
     topic_rename = _build_topic_rename_map(html_root, guid_to_title, max_length)
     reporter.info(f"    Topic rename map: {len(topic_rename)} entries")

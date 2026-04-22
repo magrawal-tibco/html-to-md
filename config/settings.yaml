@@ -41,6 +41,7 @@ skip_path_segments:
   - /Skins/
   - /Resources/
   - /functions/
+  - /videos/
 
 # Filename regex patterns to skip — matched against the bare filename (case-insensitive)
 # GUID-based filenames are SDL Trisoft / DITA WebHelp Responsive output, not MadCap Flare
