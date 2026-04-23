@@ -1,0 +1,12 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-dynamics-crm-6-10-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugindynamicscrm/6.10.1/tibco-activematrix-businessworks-plug-in-for-microsoft-dynamics-crm-6-10-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-2-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessworks_plugin_mobile_integration/2.0.0/tibco-activematrix-businessworks-plug-in-for-mobile-integration-2-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  }
+}

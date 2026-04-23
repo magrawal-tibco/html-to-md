@@ -1,0 +1,40 @@
+# Phase file template — copy and rename to config/phases/phase_XX.yaml
+#
+# A phase defines which products/versions to process in one pipeline run.
+# Two keys are supported and can be combined freely:
+#
+#   products:  — L2 product sitemapindex URLs
+#               All versions under the product are discovered automatically.
+#               Use this to process an entire product's history.
+#
+#   versions:  — L3 version urlset URLs
+#               Targets one specific version directly, bypassing product discovery.
+#               Use this to cherry-pick individual versions or re-run a single version.
+#
+# Sitemap URL patterns:
+#   L2 (product):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
+#   L3 (version):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
+#
+# The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
+
+name: "BW Plugins - hl7 with fhir, mdm, mqtt,jd edwards, large xml"
+
+# Optional: product-level sitemaps (discovers all versions automatically)
+
+
+# Optional: specific version sitemaps (bypasses product-level discovery)
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-5-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-6-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibi-mdm-7-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-7-7-3.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-7-8-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-7-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-2.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-jd-edwards-enterpriseone-7-0-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-jd-edwards-enterpriseone-7-1-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-2.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-3.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-4.xml

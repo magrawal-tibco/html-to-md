@@ -1,0 +1,79 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-cics-1-2-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwcp/1.2.1/tibco-activematrix-businessworks-plug-in-for-cics-1-2-1_documentation.zip",
+    "html_root": "pub/bwcp/1.2.1/doc/html/",
+    "extracted_at": "2026-04-21T23:56:56",
+    "file_count": 648,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-cics-1-2-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwcp/1.2.2/tibco-activematrix-businessworks-plug-in-for-cics-1-2-2_documentation.zip",
+    "html_root": "pub/bwcp/1.2.2/doc/html/",
+    "extracted_at": "2026-04-21T23:56:57",
+    "file_count": 648,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-cics-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwcp/1.3.0/tibco-activematrix-businessworks-plug-in-for-cics-1-3-0_documentation.zip",
+    "html_root": "pub/bwcp/1.3.0/doc/html/",
+    "extracted_at": "2026-04-21T23:56:59",
+    "file_count": 1020,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-cics-1-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwcp/1.5.0/tibco-activematrix-businessworks-plug-in-for-cics-1-5-0_documentation.zip",
+    "html_root": "pub/bwcp/1.5.0/doc/html/",
+    "extracted_at": "2026-04-21T23:57:02",
+    "file_count": 1476,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-data-conversion-3-5-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugincopybook/3.5.1/tibco-activematrix-businessworks-plug-in-for-data-conversion-3-5-1_documentation.zip",
+    "html_root": "pub/bwplugincopybook/3.5.1/doc/bwplugincopybook/html/",
+    "extracted_at": "2026-04-21T23:57:04",
+    "file_count": 1024,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-data-conversion-3-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugincopybook/3.6.0/tibco-activematrix-businessworks-plug-in-for-data-conversion-3-6-0_documentation.zip",
+    "html_root": "pub/bwplugincopybook/3.6.0/doc/bwplugincopybook/html/",
+    "extracted_at": "2026-04-21T23:57:06",
+    "file_count": 1482,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database-8-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginadb/8.4.0/tibco-activematrix-businessworks-plug-in-for-database-8-4-0_documentation.zip",
+    "html_root": "pub/bwpluginadb/8.4.0/doc/html/",
+    "extracted_at": "2026-04-21T23:57:11",
+    "file_count": 551,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database-8-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginadb/8.5.0/tibco-activematrix-businessworks-plug-in-for-database-8-5-0_documentation.zip",
+    "html_root": "pub/bwpluginadb/8.5.0/doc/html/",
+    "extracted_at": "2026-04-21T23:57:17",
+    "file_count": 538,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-database-8-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginadb/8.6.0/tibco-activematrix-businessworks-plug-in-for-database-8-6-0_documentation.zip",
+    "html_root": "pub/bwpluginadb/8.6.0/doc/html/",
+    "extracted_at": "2026-04-21T23:57:24",
+    "file_count": 1127,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ejb-5-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginejb/5.4.0/tibco-activematrix-businessworks-plug-in-for-ejb-5-4-0_documentation.zip",
+    "html_root": "pub/bwpluginejb/5.4.0/doc/bwpluginejb/html/",
+    "extracted_at": "2026-04-21T23:57:25",
+    "file_count": 648,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-google-bigquery-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginbigquery/6.1.0/tibco-activematrix-businessworks-plug-in-for-google-bigquery-6-1-0_documentation.zip",
+    "html_root": "pub/bwpluginbigquery/6.1.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}

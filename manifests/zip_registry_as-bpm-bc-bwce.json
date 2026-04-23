@@ -1,0 +1,485 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activespaces-enterprise-edition-4-10-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/as/4.10.0/tibco-activespaces-enterprise-edition-4-10-0_documentation.zip",
+    "html_root": "pub/as/4.10.0/doc/html/",
+    "extracted_at": "2026-04-22T23:50:15",
+    "file_count": 1179,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activespaces-enterprise-edition-4-10-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/as/4.10.1/tibco-activespaces-enterprise-edition-4-10-1_documentation.zip",
+    "html_root": "pub/as/4.10.1/doc/html/",
+    "extracted_at": "2026-04-22T23:50:20",
+    "file_count": 1173,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activespaces-enterprise-edition-5-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/as/5.0.0/tibco-activespaces-enterprise-edition-5-0-0_documentation.zip",
+    "html_root": "pub/as/5.0.0/doc/html/",
+    "extracted_at": "2026-04-22T23:50:26",
+    "file_count": 1226,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activespaces-enterprise-edition-5-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/as/5.1.0/tibco-activespaces-enterprise-edition-5-1-0_documentation.zip",
+    "html_root": "pub/as/5.1.0/doc/html/",
+    "extracted_at": "2026-04-22T23:50:32",
+    "file_count": 1228,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-administrator-enterprise-edition-5-12-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/administrator/5.12.2/tibco-administrator-enterprise-edition-5-12-2_documentation.zip",
+    "html_root": "pub/administrator/5.12.2/doc/html/",
+    "extracted_at": "2026-04-22T23:50:36",
+    "file_count": 1476,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-administrator-enterprise-edition-5-12-4.xml": {
+    "zip_url": "https://docs.tibco.com/pub/administrator/5.12.4/tibco-administrator-enterprise-edition-5-12-4_documentation.zip",
+    "html_root": "pub/administrator/5.12.4/doc/html/",
+    "extracted_at": "2026-04-22T23:50:41",
+    "file_count": 1476,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-administrator-enterprise-edition-5-13-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/administrator/5.13.0/tibco-administrator-enterprise-edition-5-13-0_documentation.zip",
+    "html_root": "pub/administrator/5.13.0/doc/html/",
+    "extracted_at": "2026-04-22T23:50:47",
+    "file_count": 927,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-4-3-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/4.3.3/tibco-business-studio-bpm-edition-4-3-3_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/4.3.3/doc/html/",
+    "extracted_at": "2026-04-22T23:50:59",
+    "file_count": 3191,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-4-3-4.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/4.3.4/tibco-business-studio-bpm-edition-4-3-4_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/4.3.4/doc/html/",
+    "extracted_at": "2026-04-22T23:51:10",
+    "file_count": 3188,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-4-3-5.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/4.3.5/tibco-business-studio-bpm-edition-4-3-5_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/4.3.5/doc/html/",
+    "extracted_at": "2026-04-22T23:51:22",
+    "file_count": 3193,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-5-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/5.3.0/tibco-business-studio-bpm-edition-5-3-0_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/5.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:51:34",
+    "file_count": 3472,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-5-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/5.4.0/tibco-business-studio-bpm-edition-5-4-0_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/5.4.0/doc/html/",
+    "extracted_at": "2026-04-22T23:51:45",
+    "file_count": 2731,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-5-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/5.5.0/tibco-business-studio-bpm-edition-5-5-0_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/5.5.0/doc/html/",
+    "extracted_at": "2026-04-22T23:51:56",
+    "file_count": 2784,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-5-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/5.6.0/tibco-business-studio-bpm-edition-5-6-0_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/5.6.0/doc/html/",
+    "extracted_at": "2026-04-22T23:52:06",
+    "file_count": 2792,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-5-6-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/5.6.1/tibco-business-studio-bpm-edition-5-6-1_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/5.6.1/doc/html/",
+    "extracted_at": "2026-04-22T23:52:15",
+    "file_count": 2793,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-business-studio-bpm-edition-5-7-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/business-studio-bpm-edition/5.7.0/tibco-business-studio-bpm-edition-5-7-0_documentation.zip",
+    "html_root": "pub/business-studio-bpm-edition/5.7.0/doc/html/",
+    "extracted_at": "2026-04-22T23:52:26",
+    "file_count": 2808,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-7-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bc/7.4.0/tibco-businessconnect-7-4-0_documentation.zip",
+    "html_root": "pub/bc/7.4.0/doc/bcgs/html/",
+    "extracted_at": "2026-04-22T23:52:30",
+    "file_count": 1448,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-7-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bc/7.5.0/tibco-businessconnect-7-5-0_documentation.zip",
+    "html_root": "pub/bc/7.5.0/doc/bcgs/",
+    "extracted_at": "2026-04-22T23:52:42",
+    "file_count": 4102,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce/1.3.0/tibco-businessconnect-container-edition-1-3-0_documentation.zip",
+    "html_root": "pub/bcce/1.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:52:48",
+    "file_count": 762,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-1-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce/1.4.0/tibco-businessconnect-container-edition-1-4-0_documentation.zip",
+    "html_root": "pub/bcce/1.4.0/doc/html/",
+    "extracted_at": "2026-04-22T23:52:53",
+    "file_count": 771,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-1-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce/1.5.0/tibco-businessconnect-container-edition-1-5-0_documentation.zip",
+    "html_root": "pub/bcce/1.5.0/doc/html/",
+    "extracted_at": "2026-04-22T23:52:59",
+    "file_count": 784,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-1-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce/1.6.0/tibco-businessconnect-container-edition-1-6-0_documentation.zip",
+    "html_root": "pub/bcce/1.6.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:04",
+    "file_count": 800,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-1-6-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce/1.6.1/tibco-businessconnect-container-edition-1-6-1_documentation.zip",
+    "html_root": "pub/bcce/1.6.1/doc/html/",
+    "extracted_at": "2026-04-22T23:53:11",
+    "file_count": 858,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-1-7-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce/1.7.0/tibco-businessconnect-container-edition-1-7-0_documentation.zip",
+    "html_root": "pub/bcce/1.7.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:17",
+    "file_count": 848,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-ebxml-protocol-1-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ebxml/1.1.0/tibco-businessconnect-container-edition-ebxml-protocol-1-1-0_documentation.zip",
+    "html_root": "pub/bcce-ebxml/1.1.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:22",
+    "file_count": 686,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-ebxml-protocol-1-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ebxml/1.2.0/tibco-businessconnect-container-edition-ebxml-protocol-1-2-0_documentation.zip",
+    "html_root": "pub/bcce-ebxml/1.2.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:27",
+    "file_count": 685,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-ebxml-protocol-1-2-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ebxml/1.2.1/tibco-businessconnect-container-edition-ebxml-protocol-1-2-1_documentation.zip",
+    "html_root": "pub/bcce-ebxml/1.2.1/doc/html/",
+    "extracted_at": "2026-04-22T23:53:33",
+    "file_count": 697,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-ebxml-protocol-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ebxml/1.3.0/tibco-businessconnect-container-edition-ebxml-protocol-1-3-0_documentation.zip",
+    "html_root": "pub/bcce-ebxml/1.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:38",
+    "file_count": 700,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edihipaa/1.1.0/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-1-0_documentation.zip",
+    "html_root": "pub/bcce-edihipaa/1.1.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:43",
+    "file_count": 399,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edihipaa/1.2.0/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-2-0_documentation.zip",
+    "html_root": "pub/bcce-edihipaa/1.2.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:48",
+    "file_count": 398,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edihipaa/1.3.0/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-3-0_documentation.zip",
+    "html_root": "pub/bcce-edihipaa/1.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:52",
+    "file_count": 401,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edi/1.2.0/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-2-0_documentation.zip",
+    "html_root": "pub/bcce-edi/1.2.0/doc/html/",
+    "extracted_at": "2026-04-22T23:53:55",
+    "file_count": 665,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edi/1.3.0/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-3-0_documentation.zip",
+    "html_root": "pub/bcce-edi/1.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:01",
+    "file_count": 754,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edi/1.4.0/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-4-0_documentation.zip",
+    "html_root": "pub/bcce-edi/1.4.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:06",
+    "file_count": 821,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edi/1.5.0/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-5-0_documentation.zip",
+    "html_root": "pub/bcce-edi/1.5.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:13",
+    "file_count": 928,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edi/1.6.0/tibco-businessconnect-container-edition-edi-protocol-powered-by-instream-1-6-0_documentation.zip",
+    "html_root": "pub/bcce-edi/1.6.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:20",
+    "file_count": 930,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-rosettanet-protocol-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-rn/1.3.0/tibco-businessconnect-container-edition-rosettanet-protocol-1-3-0_documentation.zip",
+    "html_root": "pub/bcce-rn/1.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:24",
+    "file_count": 432,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-rosettanet-protocol-1-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-rn/1.4.0/tibco-businessconnect-container-edition-rosettanet-protocol-1-4-0_documentation.zip",
+    "html_root": "pub/bcce-rn/1.4.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:28",
+    "file_count": 433,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-rosettanet-protocol-1-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-rn/1.5.0/tibco-businessconnect-container-edition-rosettanet-protocol-1-5-0_documentation.zip",
+    "html_root": "pub/bcce-rn/1.5.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:32",
+    "file_count": 437,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-services-plug-in-1-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ezcomm/1.6.0/tibco-businessconnect-container-edition-services-plug-in-1-6-0_documentation.zip",
+    "html_root": "pub/bcce-ezcomm/1.6.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:36",
+    "file_count": 436,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-services-plug-in-1-7-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ezcomm/1.7.0/tibco-businessconnect-container-edition-services-plug-in-1-7-0_documentation.zip",
+    "html_root": "pub/bcce-ezcomm/1.7.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:41",
+    "file_count": 438,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-soap-protocol-1-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-soap/1.1.0/tibco-businessconnect-container-edition-soap-protocol-1-1-0_documentation.zip",
+    "html_root": "pub/bcce-soap/1.1.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:46",
+    "file_count": 567,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-soap-protocol-1-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-soap/1.2.0/tibco-businessconnect-container-edition-soap-protocol-1-2-0_documentation.zip",
+    "html_root": "pub/bcce-soap/1.2.0/doc/html/",
+    "extracted_at": "2026-04-22T23:54:51",
+    "file_count": 566,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-soap-protocol-1-2-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-soap/1.2.1/tibco-businessconnect-container-edition-soap-protocol-1-2-1_documentation.zip",
+    "html_root": "pub/bcce-soap/1.2.1/doc/html/",
+    "extracted_at": "2026-04-22T23:54:56",
+    "file_count": 566,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-soap-protocol-1-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-soap/1.3.0/tibco-businessconnect-container-edition-soap-protocol-1-3-0_documentation.zip",
+    "html_root": "pub/bcce-soap/1.3.0/doc/html/",
+    "extracted_at": "2026-04-22T23:55:00",
+    "file_count": 522,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-configstore-management-interface-protocol-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-cmi/1.0.0/tibco-businessconnect-container-edition-configstore-management-interface-protocol-1-0-0_documentation.zip",
+    "html_root": "pub/bcce-cmi/1.0.0/doc/html/",
+    "extracted_at": "2026-04-22T23:55:03",
+    "file_count": 335,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-configstore-management-interface-protocol-1-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-cmi/1.1.0/tibco-businessconnect-container-edition-configstore-management-interface-protocol-1-1-0_documentation.zip",
+    "html_root": "pub/bcce-cmi/1.1.0/doc/html/",
+    "extracted_at": "2026-04-22T23:55:07",
+    "file_count": 336,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-configstore-management-interface-protocol-1-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-cmi/1.2.0/tibco-businessconnect-container-edition-configstore-management-interface-protocol-1-2-0_documentation.zip",
+    "html_root": "pub/bcce-cmi/1.2.0/doc/html/",
+    "extracted_at": "2026-04-22T23:55:11",
+    "file_count": 338,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-ebxml-protocol-6-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcebxml/6.4.0/tibco-businessconnect-ebxml-protocol-6-4-0_documentation.zip",
+    "html_root": "pub/bcebxml/6.4.0/doc/bcebxml/html/",
+    "extracted_at": "2026-04-22T23:55:17",
+    "file_count": 830,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-edi-protocol-powered-by-instream-6-11-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcedi/6.11.0/tibco-businessconnect-edi-protocol-powered-by-instream-6-11-0_documentation.zip",
+    "html_root": "pub/bcedi/6.11.0/doc/tibedi/",
+    "extracted_at": "2026-04-22T23:55:25",
+    "file_count": 1373,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-palette-6-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcpalette/6.5.0/tibco-businessconnect-palette-6-5-0_documentation.zip",
+    "html_root": "pub/bcpalette/6.5.0/doc/bcpalette/html/",
+    "extracted_at": "2026-04-22T23:55:29",
+    "file_count": 343,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-palette-6-6-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcpalette/6.6.0/tibco-businessconnect-palette-6-6-0_documentation.zip",
+    "html_root": "pub/bcpalette/6.6.0/doc/bcpalette/html/",
+    "extracted_at": "2026-04-22T23:55:36",
+    "file_count": 3173,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-partner-management-portal-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-pmp/1.0.0/tibco-businessconnect-partner-management-portal-1-0-0_documentation.zip",
+    "html_root": "emp/bcce-pmp/1.0.0/doc/html-client/",
+    "extracted_at": "2026-04-22T23:55:41",
+    "file_count": 779,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-partner-management-portal-1-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-pmp/1.1.0/tibco-businessconnect-partner-management-portal-1-1-0_documentation.zip",
+    "html_root": "pub/bcce-pmp/1.1.0/doc/html-client/",
+    "extracted_at": "2026-04-22T23:55:47",
+    "file_count": 784,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-services-plug-in-6-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcezcomm/6.4.0/tibco-businessconnect-services-plug-in-6-4-0_documentation.zip",
+    "html_root": "pub/bcezcomm/6.4.0/doc/bcezcomm/html/",
+    "extracted_at": "2026-04-22T23:55:49",
+    "file_count": 449,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-soap-protocol-7-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcsoap/7.2.0/tibco-businessconnect-soap-protocol-7-2-0_documentation.zip",
+    "html_root": "pub/bcsoap/7.2.0/doc/bcsoap/html/",
+    "extracted_at": "2026-04-22T23:55:53",
+    "file_count": 548,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-trading-community-management-6-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bctcm/6.2.0/tibco-businessconnect-trading-community-management-6-2-0_documentation.zip",
+    "html_root": "pub/bctcm/6.2.0/doc/webclient/html/",
+    "extracted_at": "2026-04-22T23:55:57",
+    "file_count": 426,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents-enterprise/6.3.0/tibco-businessevents-enterprise-edition-6-3-0_documentation.zip",
+    "html_root": "pub/businessevents-enterprise/6.3.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents-enterprise/6.3.1/tibco-businessevents-enterprise-edition-6-3-1_documentation.zip",
+    "html_root": "pub/businessevents-enterprise/6.3.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents-enterprise/6.3.2/tibco-businessevents-enterprise-edition-6-3-2_documentation.zip",
+    "html_root": "pub/businessevents-enterprise/6.3.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-4-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents-enterprise/6.4.0/tibco-businessevents-enterprise-edition-6-4-0_documentation.zip",
+    "html_root": "pub/businessevents-enterprise/6.4.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-10-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.10.0/tibco-businessworks-container-edition-2-10-0_documentation.zip",
+    "html_root": "pub/bwce/2.10.0/doc/html/",
+    "extracted_at": "2026-04-22T23:56:19",
+    "file_count": 3931,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-8-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.8.1/tibco-businessworks-container-edition-2-8-1_documentation.zip",
+    "html_root": "pub/bwce/2.8.1/relnotes/",
+    "extracted_at": "2026-04-22T23:57:11",
+    "file_count": 17303,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-8-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.8.2/tibco-businessworks-container-edition-2-8-2_documentation.zip",
+    "html_root": "pub/bwce/2.8.2/doc/html/",
+    "extracted_at": "2026-04-22T23:58:04",
+    "file_count": 17317,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-8-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.8.3/tibco-businessworks-container-edition-2-8-3_documentation.zip",
+    "html_root": "pub/bwce/2.8.3/doc/html/",
+    "extracted_at": "2026-04-22T23:58:27",
+    "file_count": 4374,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-9-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.9.0/tibco-businessworks-container-edition-2-9-0_documentation.zip",
+    "html_root": "pub/bwce/2.9.0/doc/html/",
+    "extracted_at": "2026-04-22T23:58:49",
+    "file_count": 4349,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-9-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.9.1/tibco-businessworks-container-edition-2-9-1_documentation.zip",
+    "html_root": "pub/bwce/2.9.1/doc/html/",
+    "extracted_at": "2026-04-22T23:59:11",
+    "file_count": 4273,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-container-edition-2-9-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwce/2.9.2/tibco-businessworks-container-edition-2-9-2_documentation.zip",
+    "html_root": "pub/bwce/2.9.2/doc/html/",
+    "extracted_at": "2026-04-22T23:59:34",
+    "file_count": 4130,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessworks-plug-in-for-ai-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginai/6.0.0/tibco-businessworks-plug-in-for-ai-6-0-0_documentation.zip",
+    "html_root": "pub/bwpluginai/6.0.0/doc/html/",
+    "extracted_at": "2026-04-22T23:59:38",
+    "file_count": 364,
+    "format": "madcap"
+  }
+}

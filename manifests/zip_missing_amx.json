@@ -1,0 +1,32 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-osisoft-pi-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-adapter-for-osisoft-pi/1.0.0/tibco-activematrix-adapter-for-osisoft-pi-1-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-osisoft-pi-1-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-adapter-for-osisoft-pi/1.1.0/tibco-activematrix-adapter-for-osisoft-pi-1-1-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-peoplesoft-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-adapter-for-peoplesoft/6.1.0/tibco-activematrix-adapter-for-peoplesoft-6-1-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-siebel-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-adapter-for-siebel/6.0.0/tibco-activematrix-adapter-for-siebel-6-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-siebel-6-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-adapter-for-siebel/6.0.1/tibco-activematrix-adapter-for-siebel-6-0-1_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-tuxedo-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-adapter-for-tuxedo/6.0.0/tibco-activematrix-adapter-for-tuxedo-6-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  }
+}

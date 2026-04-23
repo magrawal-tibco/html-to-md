@@ -1,0 +1,51 @@
+# Phase file template — copy and rename to config/phases/phase_XX.yaml
+#
+# A phase defines which products/versions to process in one pipeline run.
+# Two keys are supported and can be combined freely:
+#
+#   products:  — L2 product sitemapindex URLs
+#               All versions under the product are discovered automatically.
+#               Use this to process an entire product's history.
+#
+#   versions:  — L3 version urlset URLs
+#               Targets one specific version directly, bypassing product discovery.
+#               Use this to cherry-pick individual versions or re-run a single version.
+#
+# Sitemap URL patterns:
+#   L2 (product):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
+#   L3 (version):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
+#
+# The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
+
+name: "BW Plugins - businessconnect, database, file, google, hadoop, http, jdbc, ldap, messaging, salesforce, sap, soa suite, twitter"
+
+# Optional: product-level sitemaps (discovers all versions automatically)
+
+
+# Optional: specific version sitemaps (bypasses product-level discovery)
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mongodb-6-4-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mongodb-6-4-2.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mongodb-6-5-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-netsuite-1-2-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-netsuite-1-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-netsuite-6-3-5.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-netsuite-6-3-6.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-netsuite-6-4-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-6-4-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-6-5-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-6-6-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-6-7-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-6-8-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-services-for-sap-s-4hana-6-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-odata-services-for-sap-s-4hana-6-4-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-oracle-e-business-suite-1-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-oracle-e-business-suite-6-1-2.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-oracle-fusion-cloud-applications-suite-6-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-oracle-tuxedo-8-1-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-oracle-tuxedo-8-2-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-oracle-tuxedo-8-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-osisoft-pi-system-6-4-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-osisoft-pi-system-6-5-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-pdf-6-2-2.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-pdf-6-2-3.xml

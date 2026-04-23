@@ -1,0 +1,44 @@
+# Phase file template — copy and rename to config/phases/phase_XX.yaml
+#
+# A phase defines which products/versions to process in one pipeline run.
+# Two keys are supported and can be combined freely:
+#
+#   products:  — L2 product sitemapindex URLs
+#               All versions under the product are discovered automatically.
+#               Use this to process an entire product's history.
+#
+#   versions:  — L3 version urlset URLs
+#               Targets one specific version directly, bypassing product discovery.
+#               Use this to cherry-pick individual versions or re-run a single version.
+#
+# Sitemap URL patterns:
+#   L2 (product):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
+#   L3 (version):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
+#
+# The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
+
+name: "BW Plugins - businessconnect, database, file, google, hadoop, http, jdbc, ldap, messaging, salesforce, sap, soa suite, twitter"
+
+# Optional: product-level sitemaps (discovers all versions automatically)
+
+
+# Optional: specific version sitemaps (bypasses product-level discovery)
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ldap-7-2-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ldap-7-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mdm-7-0-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-dynamics-crm-6-10-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-dynamics-crm-6-10-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-dynamics-crm-6-9-3.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-dynamics-crm-6-9-4.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-excel-6-1-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-sharepoint-6-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-sharepoint-6-3-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-microsoft-sharepoint-6-4-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-1-2-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-1-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-1-4-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-2-0-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-6-2-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-6-3-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-mobile-integration-6-4-0.xml

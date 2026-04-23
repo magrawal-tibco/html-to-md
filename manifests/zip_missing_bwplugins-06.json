@@ -1,0 +1,7 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-pdf-6-2-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginpdf/6.2.3/tibco-activematrix-businessworks-plug-in-for-pdf-6-2-3_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  }
+}

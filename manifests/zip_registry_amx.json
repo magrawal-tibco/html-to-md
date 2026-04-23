@@ -1,0 +1,107 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-database-7-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adadb/7.2.0/tibco-activematrix-adapter-for-database-7-2-0_documentation.zip",
+    "html_root": "pub/adadb/7.2.0/doc/adadb/html/",
+    "extracted_at": "2026-04-22T14:01:56",
+    "file_count": 1635,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-database-7-2-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adadb/7.2.1/tibco-activematrix-adapter-for-database-7-2-1_documentation.zip",
+    "html_root": "pub/adadb/7.2.1/doc/adadb/html/",
+    "extracted_at": "2026-04-22T14:02:00",
+    "file_count": 1257,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-database-7-3-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adadb/7.3.1/tibco-activematrix-adapter-for-database-7-3-1_documentation.zip",
+    "html_root": "pub/adadb/7.3.1/doc/html/",
+    "extracted_at": "2026-04-22T14:02:06",
+    "file_count": 1188,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-database-7-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adadb/7.3.2/tibco-activematrix-adapter-for-database-7-3-2_documentation.zip",
+    "html_root": "pub/adadb/7.3.2/doc/adadb/html/",
+    "extracted_at": "2026-04-22T14:02:10",
+    "file_count": 1261,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-ldap-6-1-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adldap/6.1.2/tibco-activematrix-adapter-for-ldap-6-1-2_documentation.zip",
+    "html_root": "pub/adldap/6.1.2/doc/adldap/html/",
+    "extracted_at": "2026-04-22T14:02:16",
+    "file_count": 1984,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-sap-7-2-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adr3/7.2.0/tibco-activematrix-adapter-for-sap-7-2-0_documentation.zip",
+    "html_root": "pub/adr3/7.2.0/doc/adr3/html/",
+    "extracted_at": "2026-04-22T14:02:25",
+    "file_count": 1568,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-sap-7-2-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adr3/7.2.1/tibco-activematrix-adapter-for-sap-7-2-1_documentation.zip",
+    "html_root": "pub/adr3/7.2.1/doc/adr3/html/",
+    "extracted_at": "2026-04-22T14:02:31",
+    "file_count": 1567,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-sap-7-3-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adr3/7.3.0/tibco-activematrix-adapter-for-sap-7-3-0_documentation.zip",
+    "html_root": "pub/adr3/7.3.0/doc/adr3/html/",
+    "extracted_at": "2026-04-22T14:02:37",
+    "file_count": 1947,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-sap-7-3-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adr3/7.3.1/tibco-activematrix-adapter-for-sap-7-3-1_documentation.zip",
+    "html_root": "pub/adr3/7.3.1/doc/adr3/html/",
+    "extracted_at": "2026-04-22T14:02:44",
+    "file_count": 1947,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-sap-7-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adr3/7.3.2/tibco-activematrix-adapter-for-sap-7-3-2_documentation.zip",
+    "html_root": "pub/adr3/7.3.2/doc/adr3/html/",
+    "extracted_at": "2026-04-22T14:02:49",
+    "file_count": 1013,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-tuxedo-6-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adtuxedo/6.1.0/tibco-activematrix-adapter-for-tuxedo-6-1-0_documentation.zip",
+    "html_root": "pub/adtuxedo/6.1.0/doc/html/",
+    "extracted_at": "2026-04-22T14:02:56",
+    "file_count": 1480,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-adapter-for-tuxedo-6-1-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adtuxedo/6.1.1/tibco-activematrix-adapter-for-tuxedo-6-1-1_documentation.zip",
+    "html_root": "pub/adtuxedo/6.1.1/doc/html/",
+    "extracted_at": "2026-04-22T14:03:00",
+    "file_count": 664,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-service-grid-3-4-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/amsg/3.4.2/tibco-activematrix-service-grid-3-4-2_documentation.zip",
+    "html_root": "pub/amsg/3.4.2/doc/html/",
+    "extracted_at": "2026-04-22T14:03:17",
+    "file_count": 5060,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-service-grid-3-4-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/amsg/3.4.3/tibco-activematrix-service-grid-3-4-3_documentation.zip",
+    "html_root": "pub/amsg/3.4.3/doc/html/",
+    "extracted_at": "2026-04-22T14:03:37",
+    "file_count": 4861,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-service-grid-3-4-4.xml": {
+    "zip_url": "https://docs.tibco.com/pub/amsg/3.4.4/tibco-activematrix-service-grid-3-4-4_documentation.zip",
+    "html_root": "pub/amsg/3.4.4/doc/html/",
+    "extracted_at": "2026-04-22T14:03:57",
+    "file_count": 4861,
+    "format": "madcap"
+  }
+}

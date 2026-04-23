@@ -1,0 +1,22 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-adapter-for-siebel-5-3-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/adapter-for-siebel/5.3.2/tibco-adapter-for-siebel-5-3-2_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-ebxml-protocol-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-ebxml/1.0.0/tibco-businessconnect-container-edition-ebxml-protocol-1-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-edihipaa/1.0.0/tibco-businessconnect-container-edition-edi-protocol-hipaa-edition-powered-by-instream-1-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-businessconnect-container-edition-soap-protocol-1-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bcce-soap/1.0.0/tibco-businessconnect-container-edition-soap-protocol-1-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  }
+}

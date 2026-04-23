@@ -1,0 +1,31 @@
+# Phase file template — copy and rename to config/phases/phase_XX.yaml
+#
+# A phase defines which products/versions to process in one pipeline run.
+# Two keys are supported and can be combined freely:
+#
+#   products:  — L2 product sitemapindex URLs
+#               All versions under the product are discovered automatically.
+#               Use this to process an entire product's history.
+#
+#   versions:  — L3 version urlset URLs
+#               Targets one specific version directly, bypassing product discovery.
+#               Use this to cherry-pick individual versions or re-run a single version.
+#
+# Sitemap URL patterns:
+#   L2 (product):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
+#   L3 (version):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
+#
+# The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
+
+name: "Flogo"
+
+# Optional: product-level sitemaps (discovers all versions automatically)
+
+
+# Optional: specific version sitemaps (bypasses product-level discovery)
+versions:
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-25-10.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-25-11.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-26-0.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-26-1.xml
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-26-2.xml

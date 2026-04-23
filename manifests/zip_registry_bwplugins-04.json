@@ -1,0 +1,93 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-5-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginhl7/8.5.0/tibco-activematrix-businessworks-plug-in-for-hl7-with-fhir-8-5-0_documentation.zip",
+    "html_root": "pub/bwpluginhl7/8.5.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibi-mdm-7-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginmdm/7.0.0/tibco-activematrix-businessworks-plug-in-for-ibi-mdm-7-0-0_documentation.zip",
+    "html_root": "pub/bwpluginmdm/7.0.0/doc/html/",
+    "extracted_at": "2026-04-22T12:37:52",
+    "file_count": 404,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-7-7-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginmq/7.7.3/tibco-activematrix-businessworks-plug-in-for-ibm-mq-7-7-3_documentation.zip",
+    "html_root": "pub/bwpluginmq/7.7.3/doc/bwpluginmq/html/",
+    "extracted_at": "2026-04-22T12:37:54",
+    "file_count": 765,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-7-8-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginmq/7.8.0/tibco-activematrix-businessworks-plug-in-for-ibm-mq-7-8-0_documentation.zip",
+    "html_root": "pub/bwpluginmq/7.8.0/doc/bwpluginmq/html/",
+    "extracted_at": "2026-04-22T12:38:00",
+    "file_count": 1097,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-7-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwmq/8.7.0/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-7-0_documentation.zip",
+    "html_root": "pub/bwmq/8.7.0/doc/html/",
+    "extracted_at": "2026-04-22T12:38:03",
+    "file_count": 146,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwmq/8.8.0/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-0_documentation.zip",
+    "html_root": "pub/bwmq/8.8.0/doc/html/",
+    "extracted_at": "2026-04-22T12:38:04",
+    "file_count": 152,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwmq/8.8.1/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-1_documentation.zip",
+    "html_root": "pub/bwmq/8.8.1/doc/html/",
+    "extracted_at": "2026-04-22T12:38:08",
+    "file_count": 149,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwmq/8.8.2/tibco-activematrix-businessworks-plug-in-for-ibm-mq-8-8-2_documentation.zip",
+    "html_root": "pub/bwmq/8.8.2/doc/html/",
+    "extracted_at": "2026-04-22T12:38:11",
+    "file_count": 439,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-jd-edwards-enterpriseone-7-0-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginjde/7.0.1/tibco-activematrix-businessworks-plug-in-for-jd-edwards-enterpriseone-7-0-1_documentation.zip",
+    "html_root": "pub/bwpluginjde/7.0.1/doc/html/",
+    "extracted_at": "2026-04-22T12:38:13",
+    "file_count": 115,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-jd-edwards-enterpriseone-7-1-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginjde/7.1.0/tibco-activematrix-businessworks-plug-in-for-jd-edwards-enterpriseone-7-1-0_documentation.zip",
+    "html_root": "pub/bwpluginjde/7.1.0/doc/html/",
+    "extracted_at": "2026-04-22T12:38:15",
+    "file_count": 390,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwlx/6.1.2/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-2_documentation.zip",
+    "html_root": "pub/bwlx/6.1.2/doc/html/",
+    "extracted_at": "2026-04-22T12:38:16",
+    "file_count": 119,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-3.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwlx/6.1.3/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-3_documentation.zip",
+    "html_root": "pub/bwlx/6.1.3/doc/html/",
+    "extracted_at": "2026-04-22T12:38:19",
+    "file_count": 87,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-4.xml": {
+    "zip_url": "https://docs.tibco.com/pub/bwlx/6.1.4/tibco-activematrix-businessworks-plug-in-for-large-xml-6-1-4_documentation.zip",
+    "html_root": "pub/bwlx/6.1.4/doc/html/",
+    "extracted_at": "2026-04-22T12:38:21",
+    "file_count": 375,
+    "format": "madcap"
+  }
+}

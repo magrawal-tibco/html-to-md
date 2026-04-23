@@ -17,7 +17,7 @@
 #
 # The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
 
-name: "BW Plugins - Kafka, Pulsar, Cassandra, AMQP, applicability statement, Azure, Big Data"
+name: "BW Plugins - businessconnect, database, file, google, hadoop, http, jdbc, ldap, messaging, salesforce, sap, soa suite, twitter"
 
 # Optional: product-level sitemaps (discovers all versions automatically)
 

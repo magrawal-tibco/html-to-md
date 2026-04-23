@@ -1,0 +1,7 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-activematrix-businessworks-plug-in-for-smartmapper-6-0-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/activematrix-businessworks-plugin-for-smartmapper/6.0.0/tibco-activematrix-businessworks-plug-in-for-smartmapper-6-0-0_documentation.zip",
+    "reason": "corrupt_zip",
+    "fallback": "web_crawl"
+  }
+}

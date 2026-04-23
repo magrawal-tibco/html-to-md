@@ -1,0 +1,37 @@
+{
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-25-10.xml": {
+    "zip_url": "https://docs.tibco.com/pub/flogo/2.25.10/tibco-flogo-2-25-10_documentation.zip",
+    "html_root": "pub/flogo/2.25.10/doc/html/",
+    "extracted_at": "2026-04-23T13:21:27",
+    "file_count": 1260,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-25-11.xml": {
+    "zip_url": "https://docs.tibco.com/pub/flogo/2.25.11/tibco-flogo-2-25-11_documentation.zip",
+    "html_root": "pub/flogo/2.25.11/doc/html/",
+    "extracted_at": "2026-04-23T13:21:38",
+    "file_count": 2005,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-26-0.xml": {
+    "zip_url": "https://docs.tibco.com/pub/flogo/2.26.0/tibco-flogo-2-26-0_documentation.zip",
+    "html_root": "pub/flogo/2.26.0/doc/html/",
+    "extracted_at": "2026-04-23T13:21:51",
+    "file_count": 2020,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-26-1.xml": {
+    "zip_url": "https://docs.tibco.com/pub/flogo/2.26.1/tibco-flogo-2-26-1_documentation.zip",
+    "html_root": "pub/flogo/2.26.1/doc/html/",
+    "extracted_at": "2026-04-23T13:22:01",
+    "file_count": 2026,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-26-2.xml": {
+    "zip_url": "https://docs.tibco.com/pub/flogo/2.26.2/tibco-flogo-2-26-2_documentation.zip",
+    "html_root": "pub/flogo/2.26.2/doc/html/",
+    "extracted_at": "2026-04-23T13:22:13",
+    "file_count": 2046,
+    "format": "madcap"
+  }
+}
