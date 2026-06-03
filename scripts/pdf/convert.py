@@ -640,8 +640,28 @@ def discover_pdfs(cache_dir: Path, manifest: list[dict], settings: dict) -> list
             if len(path_parts) >= 2:
                 manifest_lookup[(path_parts[1].lower(), version)] = name
 
+    # Scope the PDF search to only the version doc-dirs present in this phase's manifest.
+    # This avoids re-processing PDFs from every other phase that has ever run.
+    phase_pdf_dirs: set[Path] = set()
+    for entry in manifest:
+        url = entry.get("url", "")
+        if not url:
+            continue
+        path = urlparse(url).path.strip("/")   # e.g. pub/dsp_gridserver/7.2.0/doc/html/f.htm
+        parts = path.split("/")
+        try:
+            doc_idx = parts.index("doc")
+            phase_pdf_dirs.add(cache_dir / "/".join(parts[: doc_idx + 1]) / "pdf")
+        except ValueError:
+            continue
+
+    all_pdfs: list[Path] = []
+    for pdf_dir in phase_pdf_dirs:
+        if pdf_dir.is_dir():
+            all_pdfs.extend(pdf_dir.glob("*.pdf"))
+
     entries: list[dict] = []
-    for pdf_path in sorted(cache_dir.glob("**/doc/pdf/*.pdf")):
+    for pdf_path in sorted(all_pdfs):
         stem = pdf_path.stem
         # Filter: must be a release notes file
         stem_lower = stem.lower()
