@@ -258,7 +258,7 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
             reporter.count("product_errors")
 
     # Process version-level sitemaps (L3 URLs listed directly under 'versions:' in phase YAML)
-    version_direct = phase.get("versions", [])
+    version_direct = phase.get("versions") or []
     if version_direct:
         reporter.info(f"Processing {len(version_direct)} directly specified version sitemap(s)")
     for version_url in version_direct:
