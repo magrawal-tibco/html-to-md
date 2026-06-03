@@ -387,6 +387,26 @@ def main():
     reporter.info(f"=== WebWorks Convert | phase={args.phase} dry_run={args.dry_run} ===")
 
     versions_found = list(discover_webworks_versions(cache_dir))
+
+    # Scope to versions present in the current phase's manifest so we don't
+    # re-process WebWorks content from every other phase in the cache.
+    if manifest:
+        manifest_pairs: set[tuple[str, str]] = set()
+        for entry in manifest:
+            url = entry.get("url", "")
+            ver = entry.get("product_version", "")
+            if url and ver:
+                path = url.split("://", 1)[-1].split("/", 1)[-1].strip("/")
+                parts = path.split("/")
+                for i, p in enumerate(parts):
+                    if re.match(r"^\d+\.\d+", p):
+                        manifest_pairs.add(("/".join(parts[:i]), ver))
+                        break
+        versions_found = [
+            (root, slug, ver) for root, slug, ver in versions_found
+            if (slug, ver) in manifest_pairs
+        ]
+
     if not versions_found:
         reporter.info("No WebWorks versions found in cache — nothing to do.")
         reporter.finish()
