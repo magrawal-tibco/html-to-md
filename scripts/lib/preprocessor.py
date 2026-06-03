@@ -17,6 +17,7 @@ Transform order:
   7.5 code_urls_to_links   — <code>https://...</code> bare URLs → <a href>
   8.  anchor_only_links    — strip <a name="..."> anchors with no href
   9.  split_colspan_tables — full-width colspan rows → bold label + sub-tables
+  9.5 extract_table_captions — <caption> elements → bold <p> before table
   10. classify_tables      — 3-tier table handling (calls table_classifier)
   11. normalize_whitespace — collapse \\n\\t in text nodes (browser whitespace rules)
   12. fix_pre_linebreaks   — replace <br> inside <pre> with actual newlines
@@ -214,6 +215,18 @@ def merge_list_continuations(content: Tag) -> int:
                             merged += 1
                             changed = True
                             break
+
+                # Case F: <ul> immediately following <ol> — absorb as sub-list.
+                # MadCap emits sub-bullet tables right after their parent step table;
+                # after fake_list_tables() these appear as <ul> siblings of the <ol>.
+                elif sib.name == "ul" and node.name == "ol":
+                    lis = node.find_all("li", recursive=False)
+                    if lis:
+                        sib.extract()
+                        lis[-1].append(sib)
+                        merged += 1
+                        changed = True
+                        break
 
                 # Case D: same-type list follows — merge into current list
                 elif sib.name == node.name:
@@ -684,6 +697,35 @@ def split_colspan_tables(content: Tag) -> int:
     return converted
 
 
+# ── Transform 9.5: extract table captions ─────────────────────────────────────
+
+def extract_table_captions(content: Tag) -> int:
+    """
+    Promote <caption> elements to bold paragraphs before their parent table.
+
+    MadCap table captions use <caption><p class="TableTitle">text</p></caption>.
+    markdownify renders these as italic inline text (from any inner <i> wrapper)
+    or drops them in GFM tables. This transform moves each caption to a
+    <p><strong>text</strong></p> before the table so it renders consistently
+    as bold text above the table in all tier outputs.
+    """
+    promoted = 0
+    for table in list(content.find_all("table")):
+        caption = table.find("caption")
+        if not caption:
+            continue
+        text = caption.get_text(strip=True)
+        if not text:
+            caption.decompose()
+            continue
+        stub = BeautifulSoup(f"<p><strong>{text}</strong></p>", "lxml")
+        caption_p = stub.find("p")
+        table.insert_before(caption_p)
+        caption.decompose()
+        promoted += 1
+    return promoted
+
+
 # ── Transform 9: classify tables ──────────────────────────────────────────────
 
 def classify_tables(content: Tag, block_tags: set[str] | None = None) -> dict[str, int]:
@@ -849,6 +891,7 @@ def run_all(
     stats["code_url_links"]   = code_urls_to_links(content)
     stats["anchor_links"]     = anchor_only_links(content)
     stats["colspan_tables"]   = split_colspan_tables(content)
+    stats["table_captions"]   = extract_table_captions(content)
     table_counts              = classify_tables(content, block_tags)
     stats.update(table_counts)
     stats["ws_normalized"]    = normalize_whitespace(content)
