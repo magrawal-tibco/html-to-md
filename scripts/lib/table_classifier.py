@@ -56,13 +56,19 @@ def classify_table(table: Tag, block_tags: set[str] | None = None) -> int:
 def _promote_first_row_as_header(table: Tag) -> bool:
     """
     If a table has no <thead>, promote the first data row to <thead> with <th> cells.
+    If a table has <thead> but uses <td> cells (MadCap pattern), convert them to <th>.
 
     GFM pipe tables require a header row. Without a <thead>, markdownify generates
     blank |  |  | headers. This promotes the first <tr> to fix that.
-    Returns True if a row was promoted.
+    Returns True if a row was promoted or cells were converted.
     """
-    if table.find("thead"):
-        return False  # already has a header
+    thead = table.find("thead")
+    if thead:
+        # MadCap tables often have <thead> with <td> instead of <th> — fix that
+        tds = thead.find_all("td")
+        for td in tds:
+            td.name = "th"
+        return bool(tds)
 
     first_row = table.find("tr")
     if not first_row:

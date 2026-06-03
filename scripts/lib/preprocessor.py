@@ -1,5 +1,5 @@
 """
-preprocessor.py — 12 BeautifulSoup transform passes on the extracted main content.
+preprocessor.py — BeautifulSoup transform passes on the extracted main content.
 
 Transforms are applied IN ORDER on the <div role="main"> element before markdownify runs.
 Each transform modifies the soup in-place and returns a count of elements changed.
@@ -7,16 +7,20 @@ Each transform modifies the soup in-place and returns a count of elements change
 Transform order:
   1.  strip_chrome         — remove nav/UI chrome listed in settings
   2.  fake_list_tables     — AutoNumber_p_* tables → <ul>/<ol>
+  2.5 merge_list_continuations — merge split lists and absorb <pre> into <li>
   3.  callout_divs         — div.note/warning/etc → <blockquote>
+  3.5 icon_tables          — TableStyle-IconTable note/warning tables → <blockquote>
   4.  text_popups          — MCTextPopup inline popups → Note blockquotes
   5.  definition_lists     — div.dl/dlentry/dt/dd → bold term + content
   6.  task_sections        — DITA task structure → semantic HTML
   7.  inline_spans         — MadCap span classes → strong/code/em
+  7.5 code_urls_to_links   — <code>https://...</code> bare URLs → <a href>
   8.  anchor_only_links    — strip <a name="..."> anchors with no href
   9.  split_colspan_tables — full-width colspan rows → bold label + sub-tables
   10. classify_tables      — 3-tier table handling (calls table_classifier)
   11. normalize_whitespace — collapse \\n\\t in text nodes (browser whitespace rules)
   12. fix_pre_linebreaks   — replace <br> inside <pre> with actual newlines
+  12.5 merge_adjacent_code — merge adjacent <code> spans from variable references
   13. rewrite_image_src    — make image paths relative to output location
 """
 
@@ -30,11 +34,16 @@ from scripts.lib.table_classifier import handle_tables, DEFAULT_BLOCK_TAGS
 # ── Callout label map ──────────────────────────────────────────────────────────
 
 CALLOUT_CLASSES = {
-    "note":      "Note",
-    "warning":   "Warning",
-    "caution":   "Caution",
-    "tip":       "Tip",
-    "important": "Important",
+    "note":          "Note",
+    "noteNote":      "Note",
+    "warning":       "Warning",
+    "noteWarning":   "Warning",
+    "caution":       "Caution",
+    "noteCaution":   "Caution",
+    "tip":           "Tip",
+    "noteTip":       "Tip",
+    "important":     "Important",
+    "noteImportant": "Important",
 }
 
 # ── Inline span class → HTML element mapping ───────────────────────────────────
@@ -94,7 +103,7 @@ def fake_list_tables(content: Tag) -> int:
             continue
 
         is_ordered = any(
-            kw in class_str for kw in ("Number", "Step", "Procedure", "Numbered")
+            kw in class_str for kw in ("_Number", "_Step", "_Procedure", "_Numbered")
         )
         list_tag = "ol" if is_ordered else "ul"
         soup_stub = BeautifulSoup(f"<{list_tag}></{list_tag}>", "lxml")
@@ -115,6 +124,112 @@ def fake_list_tables(content: Tag) -> int:
     return converted
 
 
+# ── Transform 2.5: merge list continuations ────────────────────────────────────
+
+def merge_list_continuations(content: Tag) -> int:
+    """
+    Merge consecutive same-type lists separated only by <pre> blocks and
+    MadCap list-continuation paragraphs.
+
+    MadCap Flare emits each numbered step as a separate AutoNumber_p_Step table.
+    After fake_list_tables(), each table becomes its own <ol><li>...</li></ol>.
+    Code blocks (<pre>) and continuation text (<p class="ListContinue">) between
+    steps appear as siblings, not inside any <li>.
+
+    This transform:
+      1. Absorbs any <pre> following a list into the last <li> of that list.
+      2. Absorbs any <p class="ListContinue"> following a list into the last <li>.
+      3. Merges consecutive same-type (<ol>/<ul>) lists into one.
+
+    Result: steps with inline code blocks and continuation text become a single
+    <ol> with <pre> and <p> inside the appropriate <li>, so markdownify produces
+    properly indented content inside list items.
+    """
+    merged = 0
+    _LIST_CONTINUE_CLASSES = {"ListContinue", "ListContinueIndent"}
+
+    def _is_list_continue(tag: Tag) -> bool:
+        classes = set(tag.get("class", []))
+        return bool(classes & _LIST_CONTINUE_CLASSES)
+
+    def _process(parent: Tag) -> None:
+        nonlocal merged
+        changed = True
+        while changed:
+            changed = False
+            tag_children = [c for c in parent.children if isinstance(c, Tag)]
+            for i, node in enumerate(tag_children):
+                if node.name not in ("ol", "ul"):
+                    continue
+
+                # Case A: orphan nested list inside outer <ol>/<ul> (MadCap invalid HTML).
+                # Move it into the preceding <li>.
+                if parent.name in ("ol", "ul"):
+                    prev_li = None
+                    for j in range(i - 1, -1, -1):
+                        if tag_children[j].name == "li":
+                            prev_li = tag_children[j]
+                            break
+                    if prev_li:
+                        node.extract()
+                        prev_li.append(node)
+                        merged += 1
+                        changed = True
+                        break
+                    continue  # no preceding <li> — leave it as-is
+
+                if i + 1 >= len(tag_children):
+                    break
+                sib = tag_children[i + 1]
+
+                # Case B: <pre> after list — absorb into last <li>
+                if sib.name == "pre":
+                    lis = node.find_all("li", recursive=False)
+                    if lis:
+                        sib.extract()
+                        lis[-1].append(sib)
+                        merged += 1
+                        changed = True
+                        break
+
+                # Case C: ListContinue paragraph after list — absorb into last <li>
+                elif sib.name == "p" and _is_list_continue(sib):
+                    lis = node.find_all("li", recursive=False)
+                    if lis:
+                        sib.extract()
+                        lis[-1].append(sib)
+                        merged += 1
+                        changed = True
+                        break
+
+                # Case E: <p> between two same-type lists (e.g. image/caption after a step).
+                # Only absorb if a same-type list follows within the next few siblings.
+                elif sib.name == "p":
+                    look_ahead = tag_children[i + 2: i + 7]
+                    if any(t.name == node.name for t in look_ahead):
+                        lis = node.find_all("li", recursive=False)
+                        if lis:
+                            sib.extract()
+                            lis[-1].append(sib)
+                            merged += 1
+                            changed = True
+                            break
+
+                # Case D: same-type list follows — merge into current list
+                elif sib.name == node.name:
+                    for li in list(sib.find_all("li", recursive=False)):
+                        node.append(li.extract())
+                    sib.decompose()
+                    merged += 1
+                    changed = True
+                    break
+
+    _process(content)
+    for el in content.find_all(["div", "td", "th", "li", "blockquote", "section", "ol", "ul"]):
+        _process(el)
+    return merged
+
+
 # ── Transform 3: callout divs ─────────────────────────────────────────────────
 
 def callout_divs(content: Tag) -> int:
@@ -126,6 +241,59 @@ def callout_divs(content: Tag) -> int:
             bq.p.extend(list(div.children))
             div.replace_with(bq)
             converted += 1
+    return converted
+
+
+# ── Transform 3.5: icon tables (TableStyle-IconTable) ────────────────────────
+
+_ICON_TABLE_LABELS = {
+    "note":      "Note",
+    "warning":   "Warning",
+    "caution":   "Caution",
+    "tip":       "Tip",
+    "important": "Important",
+}
+
+
+def icon_tables(content: Tag) -> int:
+    """
+    Convert MadCap TableStyle-IconTable note/warning tables to blockquotes.
+
+    Pattern:
+      <table class="TableStyle-IconTable">
+        <tr>
+          <td><p class="IconNote">Note</p></td>   ← label cell
+          <td><p class="Default">Content...</p></td>  ← body cell
+        </tr>
+      </table>
+
+    Result:
+      <blockquote><p><strong>Note:</strong></p><p>Content...</p></blockquote>
+    """
+    converted = 0
+    for table in list(content.find_all("table", class_="TableStyle-IconTable")):
+        row = table.find("tr")
+        if not row:
+            continue
+        cells = row.find_all(["td", "th"])
+        if len(cells) < 2:
+            continue
+
+        label_text = cells[0].get_text(strip=True).lower()
+        label = "Note"
+        for key, val in _ICON_TABLE_LABELS.items():
+            if key in label_text:
+                label = val
+                break
+
+        bq = BeautifulSoup(
+            f"<blockquote><p><strong>{label}:</strong></p></blockquote>", "lxml"
+        ).find("blockquote")
+        for child in list(cells[1].children):
+            bq.append(child.extract())
+
+        table.replace_with(bq)
+        converted += 1
     return converted
 
 
@@ -365,6 +533,35 @@ def inline_spans(content: Tag) -> int:
         var_el.replace_with(em)
         converted += 1
 
+    # 5. <code class="CodeItalic"> → <em> (MadCap italic variable placeholder in code)
+    #    Prevents double-backtick artifacts when these appear adjacent to other <code> spans.
+    for code in content.find_all("code", class_="CodeItalic"):
+        em = BeautifulSoup("<em></em>", "lxml").find("em")
+        em.extend(list(code.children))
+        code.replace_with(em)
+        converted += 1
+
+    return converted
+
+
+# ── Transform 7.5: code URLs to links ────────────────────────────────────────
+
+_URL_RE = re.compile(r'^https?://')
+
+
+def code_urls_to_links(content: Tag) -> int:
+    """
+    Convert <code>https://...</code> bare-URL code spans to <a href="url">url</a>.
+
+    MadCap Flare sometimes marks up bare URLs with <code> instead of <a href>.
+    """
+    converted = 0
+    for code in list(content.find_all("code")):
+        text = code.get_text(strip=True)
+        if _URL_RE.match(text):
+            a = BeautifulSoup(f'<a href="{text}">{text}</a>', "lxml").find("a")
+            code.replace_with(a)
+            converted += 1
     return converted
 
 
@@ -540,6 +737,65 @@ def fix_pre_linebreaks(content: Tag) -> int:
     return fixed
 
 
+# ── Transform 12.5: merge adjacent code spans ────────────────────────────────
+
+_PATH_START_CHARS = frozenset("./\\_-")
+
+
+def merge_adjacent_code(content: Tag) -> int:
+    """
+    Merge <code> elements that are adjacent (only whitespace between them) when the
+    second span starts with a path separator character (/, ., _, -, \\).
+
+    MadCap variable references like:
+      <code><span class="mc-variable">DS_INSTALL</span></code><code>/manager-data</code>
+    produce adjacent code spans in markdownify output (`DS_INSTALL``/manager-data`).
+    This pass merges them into a single code span after normalize_whitespace has run.
+    """
+    merged = 0
+    for code in list(content.find_all("code")):
+        if code.parent is None:
+            continue
+
+        # Skip to next non-whitespace sibling
+        nxt = code.next_sibling
+        while nxt and isinstance(nxt, NavigableString) and not nxt.strip():
+            nxt = nxt.next_sibling
+
+        if not (isinstance(nxt, Tag) and nxt.name == "code"):
+            continue
+
+        # Only merge if second code starts with a path/separator character
+        second_stripped = nxt.get_text().strip()
+        if not second_stripped or second_stripped[0] not in _PATH_START_CHARS:
+            continue
+
+        # Confirm only whitespace-only nodes are between code and nxt
+        sib = code.next_sibling
+        only_ws = True
+        while sib and sib is not nxt:
+            if isinstance(sib, Tag) or (isinstance(sib, NavigableString) and sib.strip()):
+                only_ws = False
+                break
+            sib = sib.next_sibling
+        if not only_ws:
+            continue
+
+        # Remove whitespace nodes between them, then absorb nxt's children
+        sib = code.next_sibling
+        while sib and sib is not nxt:
+            to_remove = sib
+            sib = sib.next_sibling
+            to_remove.extract()
+
+        for child in list(nxt.children):
+            code.append(child.extract())
+        nxt.decompose()
+        merged += 1
+
+    return merged
+
+
 # ── Transform 11: rewrite image src ──────────────────────────────────────────
 
 def rewrite_image_src(content: Tag, page_url_path: str) -> int:
@@ -583,16 +839,20 @@ def run_all(
     stats = {}
     stats["chrome_removed"]   = strip_chrome(content, chrome_selectors)
     stats["fake_lists"]       = fake_list_tables(content)
+    stats["list_merges"]      = merge_list_continuations(content)
     stats["callouts"]         = callout_divs(content)
+    stats["icon_tables"]      = icon_tables(content)
     stats["text_popups"]      = text_popups(content)
     stats["definition_lists"] = definition_lists(content)
     stats["task_sections"]    = task_sections(content)
     stats["inline_spans"]     = inline_spans(content)
+    stats["code_url_links"]   = code_urls_to_links(content)
     stats["anchor_links"]     = anchor_only_links(content)
     stats["colspan_tables"]   = split_colspan_tables(content)
     table_counts              = classify_tables(content, block_tags)
     stats.update(table_counts)
     stats["ws_normalized"]    = normalize_whitespace(content)
     stats["pre_linebreaks"]   = fix_pre_linebreaks(content)
+    stats["adjacent_code"]    = merge_adjacent_code(content)
     stats["images_rewritten"] = rewrite_image_src(content, page_url_path)
     return stats

@@ -2875,33 +2875,113 @@
     "product_name": "TIBCO DataSynapse GridServer® LogViewer",
     "product_version": "1.0.0",
     "doc_name": "Installation Overview",
-    "phase": "phase_04",
-    "converted_at": "2026-04-17T15:32:07Z",
+    "phase": "gridserver_bu",
+    "converted_at": "2026-06-03T04:55:46Z",
     "page_count": 20
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-gridserver-manager-7-2-0.xml": {
     "product_name": "TIBCO DataSynapse GridServer® Manager",
     "product_version": "7.2.0",
     "doc_name": "Configuring Instrumentation",
-    "phase": "phase_04",
-    "converted_at": "2026-04-17T15:32:07Z",
+    "phase": "gridserver_bu",
+    "converted_at": "2026-06-03T04:55:46Z",
     "page_count": 985
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0.xml": {
     "product_name": "TIBCO DataSynapse™ High-Performance Computing Cloud Adapter",
     "product_version": "2.0.0",
     "doc_name": "Installing the Adapter",
-    "phase": "phase_04",
-    "converted_at": "2026-04-17T15:32:07Z",
+    "phase": "gridserver_bu",
+    "converted_at": "2026-06-03T04:55:46Z",
     "page_count": 15
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0.xml": {
     "product_name": "TIBCO DataSynapse™ High-Performance Computing Cloud Adapter",
     "product_version": "2.1.0",
     "doc_name": "Installing the Adapter",
-    "phase": "phase_04",
-    "converted_at": "2026-04-17T15:32:07Z",
+    "phase": "gridserver_bu",
+    "converted_at": "2026-06-03T04:55:46Z",
     "page_count": 18
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-5-9-26.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "5.9.26",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3090
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-5-9-27.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "5.9.27",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3090
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-1-0.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.1.0",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3440
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-1-1.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.1.1",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 5229
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-1-2.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.1.2",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 5229
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-1-4.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.1.4",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3502
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-1-5.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.1.5",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3502
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-2-0.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.2.0",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3722
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-2-2.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.2.2",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3886
+  },
+  "https://docs.tibco.com/ftp_portal/coveo/tibco-ebx-6-2-3.xml": {
+    "product_name": "TIBCO EBX®",
+    "product_version": "6.2.3",
+    "doc_name": "",
+    "phase": "ebx_bu",
+    "converted_at": "2026-05-26T12:17:48Z",
+    "page_count": 3980
   },
   "https://docs.tibco.com/ftp_portal/coveo/tibco-flogo-2-25-10.xml": {
     "product_name": "TIBCO Flogo®",
