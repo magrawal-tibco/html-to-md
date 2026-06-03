@@ -672,9 +672,9 @@ def discover_pdfs(cache_dir: Path, manifest: list[dict], settings: dict) -> list
         if not parsed:
             continue
 
-        # Derive output path: mirror cache path with doc_name.md
+        # Derive output path: place under doc/relnotes/ instead of doc/pdf/
         rel = pdf_path.relative_to(cache_dir)
-        out_rel = rel.parent / f"{parsed['doc_name']}.md"
+        out_rel = rel.parent.parent / "relnotes" / f"{parsed['doc_name']}.md"
 
         # Look up canonical product name from manifest
         slug_lower = parsed["product_slug"].lower()
