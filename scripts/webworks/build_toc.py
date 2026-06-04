@@ -116,12 +116,36 @@ def main():
     cache_dir  = Path(settings.get("cache_dir", "cache"))
     output_dir = Path(settings.get("output_dir", "output"))
     logs_dir   = Path(settings.get("logs_dir", "logs"))
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+
+    manifest_path = manifests_dir / f"manifest_{args.phase}.json"
+    manifest = []
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
     run_dir  = logs_dir / args.phase / datetime.now().strftime("%Y%m%d-%H%M%S")
     reporter = Reporter(run_dir, "webworks_toc", dry_run=args.dry_run)
     reporter.info(f"=== WebWorks TOC | phase={args.phase} ===")
 
-    for version_html_root, product_slug, version in discover_webworks_versions(cache_dir):
+    versions_found = list(discover_webworks_versions(cache_dir))
+
+    manifest_pairs: set[tuple[str, str]] = set()
+    for entry in manifest:
+        url = entry.get("url", "")
+        ver = entry.get("product_version", "")
+        if url and ver:
+            path = url.split("://", 1)[-1].split("/", 1)[-1].strip("/")
+            parts = path.split("/")
+            for i, p in enumerate(parts):
+                if re.match(r"^\d+\.\d+", p):
+                    manifest_pairs.add(("/".join(parts[:i]), ver))
+                    break
+    versions_found = [
+        (root, slug, ver) for root, slug, ver in versions_found
+        if (slug, ver) in manifest_pairs
+    ]
+
+    for version_html_root, product_slug, version in versions_found:
         reporter.info(f"TOC: {product_slug} {version}")
         guide_dirs = read_books_htm(version_html_root)
 
