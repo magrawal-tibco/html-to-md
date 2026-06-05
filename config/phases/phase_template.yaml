@@ -1,30 +1,52 @@
-# Phase file template — copy and rename to config/phases/phase_XX.yaml
+# Phase file template — copy and rename to config/phases/<name>.yaml
 #
-# A phase defines which products/versions to process in one pipeline run.
-# Two keys are supported and can be combined freely:
+# A phase defines which product versions to convert in one pipeline run.
 #
-#   products:  — L2 product sitemapindex URLs
-#               All versions under the product are discovered automatically.
-#               Use this to process an entire product's history.
+# ─────────────────────────────────────────────────────────────────────────────
+# PRIMARY FORMAT — product version page URLs (recommended)
+# ─────────────────────────────────────────────────────────────────────────────
 #
-#   versions:  — L3 version urlset URLs
-#               Targets one specific version directly, bypassing product discovery.
-#               Use this to cherry-pick individual versions or re-run a single version.
+#   products:  — one URL per product version
+#               Step 1 calls /api/products/<slug> to get folder_path, then
+#               constructs the exact documentation ZIP URL. Step 2a downloads
+#               the ZIP and scans its HTML files to build per-page entries.
+#               No sitemap crawl needed.
 #
-# Sitemap URL patterns:
-#   L2 (product):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
-#   L3 (version):  https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
+# URL format:
+#   https://docs.tibco.com/products/<versioned-slug>
 #
-# The master sitemap at https://docs.tibco.com/sitemap.xml lists all L2 URLs.
+# Example versioned slugs:
+#   tibco-businessevents-enterprise-edition-6-4-0
+#   tibco-activematrix-businessworks-6-10-0
+#   tibco-flogo-enterprise-2-17-0
+#
+# To get a full list of product version URLs, run:
+#   python scripts/catalog/fetch_versions.py
+# This writes tibco_versions.csv with a doc_url column ready to paste here.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# LEGACY FORMAT — sitemap URLs (backward-compatible, not recommended for new phases)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   products:  — L2 product sitemapindex .xml URL
+#               Crawls all version sitemaps under the product automatically.
+#               Note: docs.tibco.com sitemaps are stale and may be missing
+#               current versions or contain broken localhost:5001 URLs.
+#
+#   versions:  — L3 version urlset .xml URL
+#               Targets one specific version directly.
+#
+# Step 1 detects the format automatically:
+#   /products/<slug>  → product version URL → uses API
+#   *.xml / ftp_portal → sitemap URL → crawls sitemap
 
-name: "Phase XX — <description>"
+name: "<descriptive phase name>"
 
-# Optional: product-level sitemaps (discovers all versions automatically)
 products:
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml
-  # - https://docs.tibco.com/ftp_portal/coveo/tibco-<another-product>.xml
+  # Paste doc_url values from tibco_versions.csv here — one per line
+  - https://docs.tibco.com/products/tibco-<product-slug>-<X-Y-Z>
+  # - https://docs.tibco.com/products/tibco-<another-product>-<A-B-C>
 
-# Optional: specific version sitemaps (bypasses product-level discovery)
-versions:
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
-  # - https://docs.tibco.com/ftp_portal/coveo/tibco-<another-product>-<A-B-C>.xml
+# Optional: legacy L3 version sitemap URLs (for re-running specific old versions)
+# versions:
+#   - https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml
