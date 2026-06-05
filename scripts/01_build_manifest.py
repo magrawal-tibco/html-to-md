@@ -27,6 +27,8 @@ from scripts.lib.reporter import Reporter
 from scripts.lib.sitemap_parser import build_http_client, iter_product_versions, iter_version_entries
 from scripts.lib.version_registry import load_registry
 
+PRODUCTS_API = "https://docs.tibco.com/api/products/{slug}"
+
 
 def load_settings(config_path: str) -> dict:
     return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
@@ -140,6 +142,50 @@ def _is_dita_version(entries: list, patterns: list[str]) -> bool:
     return False
 
 
+def _is_product_version_url(url: str) -> bool:
+    """Return True if url is a product version page URL, not an L2 sitemap XML."""
+    path = urlparse(url).path
+    return "/products/" in path and not url.endswith(".xml")
+
+
+def _fetch_json(client: httpx.Client, url: str) -> dict | None:
+    try:
+        r = client.get(url)
+        r.raise_for_status()
+        if "json" in r.headers.get("content-type", ""):
+            return r.json()
+    except Exception:
+        pass
+    return None
+
+
+def _resolve_version_entry(client: httpx.Client, version_url: str) -> dict | None:
+    """
+    Given a product version page URL (e.g. .../products/tibco-foo-6-4-0),
+    call /api/products/<slug> to get folder_path, then construct the ZIP URL.
+    Returns a version-level manifest entry, or None on failure.
+    """
+    versioned_slug = urlparse(version_url).path.rstrip("/").split("/")[-1]
+    data = _fetch_json(client, PRODUCTS_API.format(slug=versioned_slug))
+    if not data:
+        return None
+    product = data.get("result", {}).get("product", {})
+    folder_path = product.get("folder_path", "")
+    if not folder_path or "/" not in folder_path:
+        return None
+    pub_slug, product_version = folder_path.split("/", 1)
+    zip_url = f"https://docs.tibco.com/pub/{folder_path}/{versioned_slug}_documentation.zip"
+    return {
+        "version_url":     version_url,
+        "versioned_slug":  versioned_slug,
+        "zip_url":         zip_url,
+        "pub_slug":        pub_slug,
+        "product_version": product_version,
+        "product_name":    product.get("name", "").strip(),
+        "version_format":  "unknown",
+    }
+
+
 def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: bool,
                    ignore_registry: bool = False) -> tuple[list[dict], list[dict], list[dict]]:
     """
@@ -178,6 +224,20 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
     for product_url in products:
         reporter.info(f"  Product: {product_url}")
         try:
+            if _is_product_version_url(product_url):
+                # New format: product version page URL — resolve via products API
+                entry = _resolve_version_entry(client, product_url)
+                if entry:
+                    manifest.append(entry)
+                    reporter.info(f"    -> zip_url={entry['zip_url']}")
+                    reporter.count("versions_found")
+                else:
+                    reporter.fail(product_url, "Could not resolve version entry via API", step="01_build_manifest")
+                    reporter.count("product_errors")
+                time.sleep(delay)
+                continue
+
+            # Old format: L2 sitemap XML URL — crawl to version sitemaps
             for version_url, entries in iter_product_versions(client, product_url):
                 reporter.info(f"    Version sitemap: {version_url} ({len(entries)} raw entries)")
                 reporter.count("versions_found")

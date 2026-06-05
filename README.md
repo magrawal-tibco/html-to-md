@@ -1,6 +1,6 @@
 # TIBCO Docs HTML → Markdown Converter
 
-A Python pipeline that converts TIBCO product documentation (~2000 product versions) from HTML to plain Markdown. The source is MadCap Flare WebHelp2 HTML output published at [docs.tibco.com](https://docs.tibco.com), crawled via a 3-level sitemap hierarchy.
+A Python pipeline that converts TIBCO product documentation (~2000 product versions) from HTML to plain Markdown. The source is MadCap Flare WebHelp2 HTML output published at [docs.tibco.com](https://docs.tibco.com).
 
 ## Overview
 
@@ -22,19 +22,19 @@ pip install -r requirements.txt
 
 ```bash
 # Full pipeline run for a phase (includes DITA + PDF sub-pipelines automatically)
-python run.py --phase phase_01
+python run.py --phase businessevents
 
 # Resume from step 3 (steps 1–2 already done)
-python run.py --phase phase_01 --from-step 3
+python run.py --phase businessevents --from-step 3
 
 # Dry run — no files written
-python run.py --phase phase_01 --dry-run
+python run.py --phase businessevents --dry-run
 
 # Re-convert already-processed files
-python run.py --phase phase_03 --from-step 3 --force-rerun
+python run.py --phase businessevents --from-step 3 --force-rerun
 
 # Run a single step directly
-python scripts/03_convert.py --phase phase_01
+python scripts/03_convert.py --phase businessevents
 ```
 
 ## Complete Workflow
@@ -49,7 +49,7 @@ python run.py --phase <name>
 
 | Step | Script | What it does |
 |------|--------|-------------|
-| 1 | `01_build_manifest.py` | Crawl sitemap → build manifest JSON |
+| 1 | `01_build_manifest.py` | Resolve product version URLs → build manifest JSON |
 | 2a | `02a_download_zip.py` | Download full documentation ZIPs and extract |
 | 2 | `02_download.py` | Download individual HTML pages (fallback for missing ZIPs) |
 | 3 | `03_convert.py` | Convert HTML → Markdown (use `--scan-cache` flag if ZIP path structure differs from sitemap URLs) |
@@ -137,8 +137,7 @@ html-to-md/
 │   ├── settings.yaml               # All tunable settings
 │   └── phases/
 │       ├── phase_template.yaml     # Annotated template — copy to create a new phase
-│       ├── phase_01.yaml           # L2 product or L3 version sitemap URLs
-│       └── phase_02.yaml
+│       └── <name>.yaml             # Product version page URLs (one per phase)
 ├── scripts/
 │   ├── 01_build_manifest.py        # Sitemap crawl → manifests/manifest_<phase>.json
 │   ├── 02a_download_zip.py         # Download + extract per-version documentation ZIPs
@@ -149,6 +148,8 @@ html-to-md/
 │   ├── 06_build_toc.py             # Build _toc.json (prefers ZIP TOC JS, falls back to breadcrumbs)
 │   ├── 07_generate_report.py       # Write phase_report.csv and update conversion_log.csv
 │   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
+│   ├── catalog/
+│   │   └── fetch_versions.py       # Fetch all product versions from docs.tibco.com → tibco_versions.csv
 │   ├── dita/                       # DITA WebHelp Responsive sub-pipeline
 │   │   └── run.py                  # DITA orchestrator
 │   ├── pdf/
@@ -160,6 +161,7 @@ html-to-md/
 │   │   ├── run.py                  # WebWorks orchestrator
 │   │   └── utils.py                # Shared discovery + file-reading helpers
 │   └── lib/
+│       ├── manifest_utils.py       # Shared URL/path helpers (skip logic, alias.xml URL, output path)
 │       ├── sitemap_parser.py       # 3-level sitemap crawl functions
 │       ├── toc_parser.py           # MadCap WebHelp2 TOC JS parsing (shared by steps 6 + compare_toc)
 │       ├── preprocessor.py         # 13 BeautifulSoup transform passes
@@ -176,8 +178,8 @@ html-to-md/
 
 | Step | Script | Input | Output |
 |------|--------|-------|--------|
-| 1 | `01_build_manifest.py` | Phase YAML | `manifests/manifest_<phase>.json`, `dita_versions_<phase>.json`, `empty_versions_<phase>.json` |
-| 2a | `02a_download_zip.py` | Manifest JSON | `cache/` — full ZIP extracted; `zip_registry_<phase>.json`, `zip_missing_<phase>.json` |
+| 1 | `01_build_manifest.py` | Phase YAML | `manifests/manifest_<phase>.json`, `empty_versions_<phase>.json` |
+| 2a | `02a_download_zip.py` | Manifest JSON | `cache/` — full ZIP extracted; manifest expanded to per-page entries; `zip_registry_<phase>.json`, `zip_missing_<phase>.json` |
 | 2 | `02_download.py` | Manifest + zip_registry | `cache/` — HTML, images, alias.xml (skips versions covered by ZIP) |
 | 3 | `03_convert.py` | Manifest + cache/ | `output/**/*.md` + images |
 | 4 | `04_build_csh_maps.py` | cache/ alias.xml | `output/.../csh_map.json` + updated frontmatter |
@@ -187,11 +189,13 @@ html-to-md/
 
 ### ZIP-first download (Step 2a)
 
-TIBCO publishes a documentation ZIP per product version at a predictable URL. Step 2a downloads and extracts these ZIPs, which provides:
+Step 2a downloads the full documentation ZIP per version and extracts it into `cache/`. After extraction it scans the HTML files and rewrites the manifest with per-page entries (expanding the version-level entries from Step 1). This provides:
 
 - **Authoritative TOC** — `Data/Tocs/*.js` files give exact hierarchy and page order (Step 6 prefers these over breadcrumb reconstruction)
 - **Efficiency** — one request per version instead of hundreds of individual page requests
 - **Completeness** — all HTML pages, images, and PDFs in one download
+
+For new-format phase files (product version URLs), the ZIP URL is resolved via the products API — no sitemap crawl needed. For legacy sitemap phases, the ZIP URL is inferred from the sitemap slug.
 
 Versions where the ZIP is missing or fails are written to `zip_missing_<phase>.json` and fall back to individual page downloading in Step 2.
 
@@ -207,12 +211,31 @@ zip:
 
 ## Phase Files
 
-Phase files (`config/phases/<name>.yaml`) define which products or versions to process. Copy `config/phases/phase_template.yaml` to create a new phase.
+Phase files (`config/phases/<name>.yaml`) define which product versions to process. Copy `config/phases/phase_template.yaml` to create a new phase.
 
-Two keys are supported and can be combined:
+### Primary format — product version page URLs (recommended)
 
 ```yaml
-name: "Phase 3 — BusinessEvents"
+name: "BusinessEvents"
+products:
+  - https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-4-0
+  - https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-3-2
+```
+
+Each entry is a versioned product page URL. Step 1 calls `/api/products/<slug>` to get the `folder_path`, then constructs the exact documentation ZIP URL:
+
+```
+https://docs.tibco.com/pub/<folder_path>/<versioned-slug>_documentation.zip
+```
+
+Step 2a downloads and extracts the ZIP, then scans the HTML files to produce per-page manifest entries. No sitemap crawl is needed.
+
+**Finding version URLs:** Run `scripts/catalog/fetch_versions.py` to generate `tibco_versions.csv` — a full catalog of all 736 products and their versions with `doc_url` column ready to paste into a phase file. You can also find version URLs on [docs.tibco.com](https://docs.tibco.com) product pages.
+
+### Legacy format — sitemap URLs (backward-compatible)
+
+```yaml
+name: "Phase (legacy)"
 
 # L2 product sitemaps — all versions discovered automatically
 products:
@@ -223,26 +246,43 @@ versions:
   - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-4-0.xml
 ```
 
-| Key | Level | Discovers |
-|-----|-------|-----------|
-| `products:` | L2 product sitemapindex | All versions under the product automatically |
-| `versions:` | L3 version urlset | Exactly the specified version |
+| Key | When it's a sitemap URL | Behavior |
+|-----|------------------------|---------|
+| `products:` (`.xml`) | L2 product sitemapindex | Crawls all version sitemaps under the product |
+| `versions:` | L3 version urlset | Processes exactly the specified version |
 
-Sitemap URL patterns:
-- **L2:** `https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>.xml`
-- **L3:** `https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml`
+Step 1 detects the URL type automatically — `.xml` / `ftp_portal` paths use the sitemap crawl; `/products/` paths use the API approach.
 
-The master sitemap at `https://docs.tibco.com/sitemap.xml` lists all L2 URLs.
+> **Note:** The docs.tibco.com sitemaps contain stale `localhost:5001` hostnames for many products and do not list current versions reliably. The product version URL approach is preferred for all new phases.
 
-## Sitemap Hierarchy
+## Fetching Product Version URLs
 
+`scripts/catalog/fetch_versions.py` queries the docs.tibco.com products API and writes a CSV of every product version across all 736 products:
+
+```bash
+python scripts/catalog/fetch_versions.py
+# → writes tibco_versions.csv (takes ~1 minute, ~4500 rows)
+
+# Limit to a single product
+python scripts/catalog/fetch_versions.py --product tibco-businessevents-enterprise-edition
+
+# Custom output path
+python scripts/catalog/fetch_versions.py --out catalog/versions_2026.csv
 ```
-https://docs.tibco.com/sitemap.xml                              (master sitemapindex)
-  └─ https://docs.tibco.com/ftp_portal/coveo/tibco-foo.xml     (product sitemapindex, L2)
-       └─ https://docs.tibco.com/ftp_portal/coveo/tibco-foo-1-0.xml  (version urlset, L3)
-```
 
-L3 urlsets use the `coveo:` namespace extension for metadata (product name, version, doc name).
+Output columns:
+
+| Column | Description |
+|--------|-------------|
+| `product_name` | Human-readable product name |
+| `product_slug` | Parent product slug |
+| `version` | Version string (e.g. `6.4.0`) |
+| `doc_url` | Product version page URL — paste directly into a phase `products:` list |
+| `is_archived` | `True` if listed under "Other Versions" |
+| `zip_url` | Direct ZIP download URL (archived versions only) |
+| `ga_date` | GA release date (archived versions only) |
+
+The `doc_url` column contains the exact URLs used in `products:` phase entries.
 
 ## TOC Reconstruction (Step 6)
 

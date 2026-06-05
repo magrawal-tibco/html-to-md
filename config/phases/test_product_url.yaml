@@ -1,0 +1,5 @@
+name: "Test — Product Version URL (new format)"
+products:
+  - https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-4-0
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-ibm-i-7-3-0
+  - https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-3-2

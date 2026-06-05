@@ -33,6 +33,7 @@ from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.manifest_utils import infer_alias_xml_url, should_skip_url
 from scripts.lib.reporter import Reporter
 
 
@@ -60,14 +61,21 @@ def alias_xml_to_html_root(alias_xml_url: str) -> str:
 
 def collect_versions(manifest: list[dict]) -> dict[str, dict]:
     """
-    Deduplicate manifest entries by version_sitemap.
-    Returns {version_sitemap: representative_entry}.
+    Deduplicate manifest entries by version key.
+    - New format (version-level entry): keyed by version_url
+    - Old format (per-page entry):      keyed by version_sitemap
+    Returns {key: representative_entry}.
     """
     versions: dict[str, dict] = {}
     for entry in manifest:
-        vs = entry.get("version_sitemap", "")
-        if vs and vs not in versions:
-            versions[vs] = entry
+        if "version_url" in entry and "url" not in entry:
+            # New format: standalone version-level entry
+            key = entry["version_url"]
+        else:
+            # Old format: per-page entry grouped by version_sitemap
+            key = entry.get("version_sitemap", "")
+        if key and key not in versions:
+            versions[key] = entry
     return versions
 
 
@@ -215,22 +223,37 @@ def process_versions(
     )
 
     with client:
-        for version_sitemap, entry in tqdm(versions.items(), desc="Versions"):
-            zip_url   = entry.get("zip_url", "")
-            alias_url = entry.get("alias_xml_url", "")
+        for version_key, entry in tqdm(versions.items(), desc="Versions"):
+            is_new_format = "version_url" in entry and "url" not in entry
+            zip_url = entry.get("zip_url", "")
 
-            if not zip_url or not alias_url:
-                reporter.info(f"  SKIP {version_sitemap} — missing zip_url or alias_xml_url")
-                zip_missing[version_sitemap] = {
-                    "zip_url":  zip_url,
-                    "reason":   "missing_zip_url",
-                    "fallback": "web_crawl",
-                }
-                reporter.count("zip_missing")
-                continue
+            if is_new_format:
+                pub_slug        = entry.get("pub_slug", "")
+                product_version = entry.get("product_version", "")
+                if not zip_url or not pub_slug or not product_version:
+                    reporter.info(f"  SKIP {version_key} — missing zip_url, pub_slug, or product_version")
+                    zip_missing[version_key] = {
+                        "zip_url":  zip_url,
+                        "reason":   "missing_fields",
+                        "fallback": "web_crawl",
+                    }
+                    reporter.count("zip_missing")
+                    continue
+                html_root = f"pub/{pub_slug}/{product_version}/doc/html/"
+            else:
+                alias_url = entry.get("alias_xml_url", "")
+                if not zip_url or not alias_url:
+                    reporter.info(f"  SKIP {version_key} — missing zip_url or alias_xml_url")
+                    zip_missing[version_key] = {
+                        "zip_url":  zip_url,
+                        "reason":   "missing_zip_url",
+                        "fallback": "web_crawl",
+                    }
+                    reporter.count("zip_missing")
+                    continue
+                html_root = alias_xml_to_html_root(alias_url)
 
-            html_root = alias_xml_to_html_root(alias_url)
-            reporter.info(f"  Version: {version_sitemap}")
+            reporter.info(f"  Version: {version_key}")
             reporter.info(f"    html_root: {html_root}")
 
             # Skip if already extracted (unless --force-rerun)
@@ -238,7 +261,7 @@ def process_versions(
                 fmt = detect_format(cache_dir, html_root)
                 reporter.info(f"    -> Already extracted (format={fmt}) — skipping")
                 reporter.count("zip_already_extracted")
-                zip_registry[version_sitemap] = {
+                zip_registry[version_key] = {
                     "zip_url":      zip_url,
                     "html_root":    html_root,
                     "extracted_at": "previously",
@@ -253,7 +276,7 @@ def process_versions(
                 reporter.info(
                     f"    -> SKIP: only {free_gb:.1f} GB free, need {min_free_gb} GB"
                 )
-                zip_missing[version_sitemap] = {
+                zip_missing[version_key] = {
                     "zip_url":  zip_url,
                     "reason":   "disk_space",
                     "fallback": "web_crawl",
@@ -281,7 +304,7 @@ def process_versions(
                 ok, fail_reason = _download_zip(client, zip_url, zip_path, reporter)
             if not ok:
                 reporter.info(f"    -> Download failed: {fail_reason}")
-                zip_missing[version_sitemap] = {
+                zip_missing[version_key] = {
                     "zip_url":  zip_url,
                     "reason":   fail_reason,
                     "fallback": "web_crawl",
@@ -298,7 +321,7 @@ def process_versions(
             ok, fail_reason, file_count = _extract_zip(zip_path, cache_dir, html_root)
             if not ok:
                 reporter.info(f"    -> Extraction failed: {fail_reason}")
-                zip_missing[version_sitemap] = {
+                zip_missing[version_key] = {
                     "zip_url":  zip_url,
                     "reason":   fail_reason,
                     "fallback": "web_crawl",
@@ -315,7 +338,7 @@ def process_versions(
                 zip_path.unlink(missing_ok=True)
                 reporter.count("zip_deleted")
 
-            zip_registry[version_sitemap] = {
+            zip_registry[version_key] = {
                 "zip_url":      zip_url,
                 "html_root":    html_root,
                 "extracted_at": datetime.now().isoformat(timespec="seconds"),
@@ -325,6 +348,51 @@ def process_versions(
             time.sleep(delay)
 
     return zip_registry, zip_missing
+
+
+def scan_extracted_pages(
+    cache_dir: Path,
+    entry: dict,
+    zip_registry_entry: dict,
+    settings: dict,
+) -> list[dict]:
+    """
+    Scan extracted HTML files and return per-page manifest entries for a
+    new-format version-level entry. Sets version_sitemap=version_url so
+    all downstream steps (2, 3, 4, 5, 6) treat it like a normal per-page entry.
+    """
+    version_url     = entry["version_url"]
+    zip_url         = entry["zip_url"]
+    product_name    = entry.get("product_name", "")
+    product_version = entry.get("product_version", "")
+    html_root       = zip_registry_entry["html_root"].rstrip("/")
+    version_format  = zip_registry_entry.get("format", entry.get("version_format", "unknown"))
+
+    html_dir = cache_dir / html_root
+    alias_xml_url = f"https://docs.tibco.com/{html_root}/Data/Alias.xml"
+
+    page_entries = []
+    for suffix in ("*.htm", "*.html"):
+        for htm in sorted(html_dir.rglob(suffix)):
+            rel = htm.relative_to(cache_dir)
+            url = "https://docs.tibco.com/" + rel.as_posix()
+            skip, _ = should_skip_url(url, settings)
+            if skip:
+                continue
+            page_entries.append({
+                "url":             url,
+                "lastmod":         "",
+                "output_path":     str(rel.with_suffix(".md")),
+                "product_name":    product_name,
+                "product_version": product_version,
+                "doc_name":        "",
+                "access_level":    "public",
+                "version_sitemap": version_url,
+                "alias_xml_url":   alias_xml_url,
+                "zip_url":         zip_url,
+                "version_format":  version_format,
+            })
+    return page_entries
 
 
 def main():
@@ -381,6 +449,33 @@ def main():
                 json.dumps(zip_missing, indent=2, ensure_ascii=False), encoding="utf-8"
             )
             reporter.info(f"ZIP missing written to {miss_path}")
+
+        # Expand new-format version-level entries to per-page entries
+        cache_dir = Path(settings.get("cache_dir", "cache"))
+        new_manifest: list[dict] = []
+        expanded_count = 0
+        for entry in manifest:
+            if "version_url" in entry and "url" not in entry:
+                version_url = entry["version_url"]
+                if version_url in zip_registry:
+                    page_entries = scan_extracted_pages(
+                        cache_dir, entry, zip_registry[version_url], settings
+                    )
+                    new_manifest.extend(page_entries)
+                    expanded_count += len(page_entries)
+                    reporter.info(f"  Expanded {version_url}: {len(page_entries)} pages")
+                else:
+                    new_manifest.append(entry)
+            else:
+                new_manifest.append(entry)
+
+        if expanded_count:
+            reporter.info(f"Manifest expanded: {expanded_count} new-format page entries added")
+            manifest_path = manifests_dir / f"manifest_{args.phase}.json"
+            manifest_path.write_text(
+                json.dumps(new_manifest, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+            reporter.info(f"Manifest rewritten with {len(new_manifest)} total entries")
     else:
         reporter.info("Dry run — no files written")
 

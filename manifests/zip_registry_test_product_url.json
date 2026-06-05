@@ -1,0 +1,23 @@
+{
+  "https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-4-0": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents-enterprise/6.4.0/tibco-businessevents-enterprise-edition-6-4-0_documentation.zip",
+    "html_root": "pub/businessevents-enterprise/6.4.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-ibm-i-7-3-0": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginibmi/7.3.0/tibco-activematrix-businessworks-plug-in-for-ibm-i-7-3-0_documentation.zip",
+    "html_root": "pub/bwpluginibmi/7.3.0/doc/html/",
+    "extracted_at": "2026-06-05T16:45:07",
+    "file_count": 175,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-3-2": {
+    "zip_url": "https://docs.tibco.com/pub/businessevents-enterprise/6.3.2/tibco-businessevents-enterprise-edition-6-3-2_documentation.zip",
+    "html_root": "pub/businessevents-enterprise/6.3.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}
