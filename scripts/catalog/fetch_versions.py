@@ -3,10 +3,8 @@ scripts/catalog/fetch_versions.py — Fetch all product versions and archived ZI
 from docs.tibco.com and write a CSV.
 
 For each product the script collects:
-  • Current versions  — from the product's L2 sitemap (these appear in the
-                        main version dropdown on the product page).
-  • Archived versions — from /api/products/archive/<slug> (the "Other Versions"
-                        section), which also includes a ZIP download path.
+  • Active versions  — from /api/products/<versioned-slug> siblings where isArchive=False
+  • Archived versions — from /api/products/archive/<slug> ("Other Versions")
 
 Output CSV columns:
   product_name     — human-readable product name
@@ -26,20 +24,17 @@ Usage:
 
 import argparse
 import csv
-import re
 import sys
 import time
-import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from urllib.parse import urlparse
 
 import httpx
 
 A_TO_Z_API      = "https://docs.tibco.com/api/a_to_z"
 ARCHIVE_API     = "https://docs.tibco.com/api/products/archive/{slug}"
-L2_SITEMAP_BASE = "https://docs.tibco.com/ftp_portal/coveo/tibco-{slug}.xml"
-DOC_URL_BASE    = "https://docs.tibco.com/products/{version_slug}"
+PRODUCTS_API    = "https://docs.tibco.com/api/products/{slug}"
+DOC_URL_BASE    = "https://docs.tibco.com/products/{slug}"
 ZIP_BASE        = "https://docs.tibco.com"
 DEFAULT_OUT     = "tibco_versions.csv"
 USER_AGENT      = "tibco-catalog-fetcher/1.0"
@@ -72,89 +67,28 @@ def _fetch_json(client: httpx.Client, url: str) -> dict | None:
     return None
 
 
-def _fetch_xml(client: httpx.Client, url: str) -> ET.Element | None:
-    try:
-        r = client.get(url)
-        r.raise_for_status()
-        return ET.fromstring(r.content)
-    except Exception:
-        return None
-
-
-# ── Sitemap helpers ───────────────────────────────────────────────────────────
-
-def _ns_uri(root: ET.Element) -> str:
-    return root.tag.split("}")[0].lstrip("{") if "}" in root.tag else ""
-
-
-def _get_locs(root: ET.Element, child_tag: str) -> list[str]:
-    ns = _ns_uri(root)
-    t_child = f"{{{ns}}}{child_tag}" if ns else child_tag
-    t_loc   = f"{{{ns}}}loc"         if ns else "loc"
-    return [
-        child.find(t_loc).text.strip()
-        for child in root.findall(t_child)
-        if child.find(t_loc) is not None and child.find(t_loc).text
-    ]
-
-
-def _version_from_l3(l3_url: str, parent_slug: str) -> str:
-    """Extract dotted version string from an L3 sitemap filename."""
-    stem = Path(urlparse(l3_url).path).stem   # e.g. tibco-foo-6-4-0
-    # Strip "tibco-" prefix + parent slug (without tibco- prefix)
-    slug_no_prefix = parent_slug[len("tibco-"):] if parent_slug.startswith("tibco-") else parent_slug
-    prefix = f"tibco-{slug_no_prefix}-"
-    if stem.startswith(prefix):
-        return stem[len(prefix):].replace("-", ".")
-    m = re.search(r"(\d[\d-]*)$", stem)
-    return m.group(1).replace("-", ".") if m else stem
-
-
-def _version_doc_url(parent_slug: str, version: str) -> str:
-    ver_dash = version.replace(".", "-")
-    # The slug without "tibco-" prefix for the no-tibco part
-    slug_bare = parent_slug[len("tibco-"):] if parent_slug.startswith("tibco-") else parent_slug
-    version_slug = f"tibco-{slug_bare}-{ver_dash}"
-    return DOC_URL_BASE.format(version_slug=version_slug)
-
-
 # ── Per-product fetch ─────────────────────────────────────────────────────────
 
 def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
     """
-    Fetch all version rows for one product.
-    Returns a list of row dicts (one per version).
+    Fetch all version rows for one product using the products API.
+
+    Strategy:
+    1. Archive API → archived version_nos, ZIP URLs, GA dates + one archived versioned slug
+    2. If no archived slug, fall back to /api/products/<parent-slug> for a versioned slug
+    3. /api/products/<versioned-slug> → siblings → active versions (isArchive=False)
     """
-    name  = product["name"]
-    slug  = product["slug"]   # e.g. tibco-businessevents-enterprise-edition
+    name = product["name"]
+    slug = product["slug"]   # parent product slug from a_to_z
     rows: list[dict] = []
 
-    # ── 1. Current versions from L2 sitemap ──────────────────────────────────
-    slug_no_tibco = slug[len("tibco-"):] if slug.startswith("tibco-") else slug
-    l2_url = L2_SITEMAP_BASE.format(slug=slug_no_tibco)
-    l2_root = _fetch_xml(client, l2_url)
-
-    l3_urls: list[str] = []
-    if l2_root is not None:
-        local_tag = l2_root.tag.split("}")[-1] if "}" in l2_root.tag else l2_root.tag
-        if local_tag == "sitemapindex":
-            l3_urls = _get_locs(l2_root, "sitemap")
-        else:
-            # L2 is itself the urlset (single-version product)
-            l3_urls = [l2_url]
-
-    sitemap_versions: dict[str, str] = {}   # version → doc_url
-    for l3_url in l3_urls:
-        ver = _version_from_l3(l3_url, slug)
-        doc_url = _version_doc_url(slug, ver)
-        sitemap_versions[ver] = doc_url
-
-    # ── 2. Archived versions from archive API ─────────────────────────────────
-    arch_data = _fetch_json(client, ARCHIVE_API.format(slug=slug))
+    # ── 1. Archived versions from archive API ─────────────────────────────────
     archived: dict[str, dict] = {}   # version_no → {zip_url, ga_date}
+    archived_versioned_slug: str | None = None
+
+    arch_data = _fetch_json(client, ARCHIVE_API.format(slug=slug))
     if arch_data:
-        product_data = arch_data.get("result", {}).get("product", {})
-        for child in product_data.get("children", []):
+        for child in arch_data.get("result", {}).get("product", {}).get("children", []):
             ver  = child.get("version_no", "")
             path = child.get("zipPath", "")
             date = child.get("GA_date", "")
@@ -163,36 +97,93 @@ def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
                     "zip_url": (ZIP_BASE + path) if path else "",
                     "ga_date": date,
                 }
+                if path and archived_versioned_slug is None:
+                    fname = path.rstrip("/").split("/")[-1]
+                    if fname.endswith("_documentation.zip"):
+                        archived_versioned_slug = fname[: -len("_documentation.zip")]
 
-    # ── 3. Merge: sitemap versions as primary, archived adds zip info ─────────
-    # Versions from sitemap (current dropdown)
-    for ver, doc_url in sitemap_versions.items():
-        arch_info = archived.get(ver, {})
+    # ── 2. Find a versioned slug for the siblings API ─────────────────────────
+    versioned_slug = archived_versioned_slug
+
+    if versioned_slug is None:
+        # No archives → ask the parent-slug API
+        p_data = _fetch_json(client, PRODUCTS_API.format(slug=slug))
+        if p_data:
+            product_data = p_data.get("result", {}).get("product", {})
+            if not product_data.get("isParentProduct") and product_data.get("version_no"):
+                versioned_slug = product_data.get("slug")
+
+    if versioned_slug is None:
+        # No versioned slug found at all — emit archived-only rows and return
+        for ver, arch_info in archived.items():
+            rows.append({
+                "product_name": name,
+                "product_slug": slug,
+                "version":      ver,
+                "doc_url":      "",
+                "is_archived":  True,
+                "zip_url":      arch_info["zip_url"],
+                "ga_date":      arch_info["ga_date"],
+            })
+        return rows
+
+    # ── 3. Siblings of a versioned product → active versions ──────────────────
+    v_data = _fetch_json(client, PRODUCTS_API.format(slug=versioned_slug))
+    if not v_data:
+        return rows
+    vp = v_data.get("result", {}).get("product", {})
+
+    # Collect all version entries: current product + all siblings
+    all_entries: list[dict] = []
+    if vp.get("version_no") and vp.get("slug"):
+        all_entries.append({
+            "version_no": vp["version_no"],
+            "slug":       vp["slug"],
+            "isArchive":  bool(vp.get("isArchive")),
+        })
+    for sib in vp.get("siblings", []):
+        if sib.get("version_no") and sib.get("slug"):
+            all_entries.append({
+                "version_no": sib["version_no"],
+                "slug":       sib["slug"],
+                "isArchive":  bool(sib.get("isArchive")),
+            })
+
+    seen_versions: set[str] = set()
+    for entry in all_entries:
+        ver = entry["version_no"]
+        if ver in seen_versions:
+            continue
+        seen_versions.add(ver)
+
+        is_archived = entry["isArchive"]
+        arch_info   = archived.get(ver, {})
+        doc_url     = DOC_URL_BASE.format(slug=entry["slug"])
+
         rows.append({
             "product_name": name,
             "product_slug": slug,
             "version":      ver,
             "doc_url":      doc_url,
-            "is_archived":  bool(arch_info),
+            "is_archived":  is_archived,
             "zip_url":      arch_info.get("zip_url", ""),
             "ga_date":      arch_info.get("ga_date", ""),
         })
 
-    # Archived versions not in the sitemap (very old versions)
-    sitemap_ver_set = set(sitemap_versions.keys())
+    # Include archived versions from archive API not yet covered by siblings
     for ver, arch_info in archived.items():
-        if ver not in sitemap_ver_set:
+        if ver not in seen_versions:
             rows.append({
                 "product_name": name,
                 "product_slug": slug,
                 "version":      ver,
-                "doc_url":      _version_doc_url(slug, ver),
+                "doc_url":      "",
                 "is_archived":  True,
-                "zip_url":      arch_info.get("zip_url", ""),
-                "ga_date":      arch_info.get("ga_date", ""),
+                "zip_url":      arch_info["zip_url"],
+                "ga_date":      arch_info["ga_date"],
             })
 
-    # Sort by version (newest first) — natural sort on version parts
+    # Sort by version (newest first)
     def _ver_key(row):
         parts = row["version"].split(".")
         return tuple(int(p) if p.isdigit() else p for p in parts)
