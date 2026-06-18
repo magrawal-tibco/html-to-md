@@ -67,7 +67,7 @@ def run_step(
     cmd = [sys.executable, script, f"--phase={phase}", f"--config={config}"]
     if dry_run:
         cmd.append("--dry-run")
-    if force_rerun and "02_download.py" not in script:
+    if force_rerun and "02_download.py" not in script and "01_build_manifest" not in script:
         cmd.append("--force-rerun")
     # --force-refresh is only used by Step 2; treat --force-rerun as equivalent
     if "02_download.py" in script and (force_refresh or force_rerun):

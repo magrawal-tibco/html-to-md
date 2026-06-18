@@ -1,0 +1,10 @@
+# Phase 1 — example phase (replace with actual product sitemap URLs)
+# Each entry is a product-level sitemapindex URL from the master sitemap.
+# All versions under each product are discovered automatically.
+name: "Activespaces EE"
+products:
+  - https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-2-0
+  - https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-1-0
+  - https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-0-0
+  - https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-4-10-1
+  - https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-4-10-0

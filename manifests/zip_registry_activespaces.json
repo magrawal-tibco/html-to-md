@@ -1,0 +1,37 @@
+{
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/as/5.2.0/tibco-activespaces-enterprise-edition-5-2-0_documentation.zip",
+    "html_root": "pub/as/5.2.0/doc/html/",
+    "extracted_at": "2026-06-09T10:24:04",
+    "file_count": 1241,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-1-0": {
+    "zip_url": "https://docs.tibco.com/pub/as/5.1.0/tibco-activespaces-enterprise-edition-5-1-0_documentation.zip",
+    "html_root": "pub/as/5.1.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-0-0": {
+    "zip_url": "https://docs.tibco.com/pub/as/5.0.0/tibco-activespaces-enterprise-edition-5-0-0_documentation.zip",
+    "html_root": "pub/as/5.0.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-4-10-1": {
+    "zip_url": "https://docs.tibco.com/pub/as/4.10.1/tibco-activespaces-enterprise-edition-4-10-1_documentation.zip",
+    "html_root": "pub/as/4.10.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-4-10-0": {
+    "zip_url": "https://docs.tibco.com/pub/as/4.10.0/tibco-activespaces-enterprise-edition-4-10-0_documentation.zip",
+    "html_root": "pub/as/4.10.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}

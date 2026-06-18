@@ -112,7 +112,7 @@ def _version_label_from_entries(version_entries: list[dict], output_dir: Path) -
             fm = read_frontmatter(md_path)
             name    = fm.get("product_name", "")
             version = fm.get("product_version", "")
-            label   = f"{name} {version}".strip()
+            label = f"{name} {version}".strip()
             if label:
                 return label
     return ""
@@ -226,6 +226,31 @@ def build_version_toc(
     }
 
 
+def node_to_yaml(node: dict, version_root: str) -> dict:
+    result: dict = {"title": node["title"]}
+
+    file_path = node.get("file")
+    if file_path:
+        posix = Path(file_path).as_posix()
+        root  = version_root.replace("\\", "/").rstrip("/") + "/"
+        rel   = posix[len(root):] if posix.startswith(root) else posix
+        result["url"] = rel
+
+    children = node.get("children", [])
+    if children:
+        result["subfolderlist"] = [node_to_yaml(c, version_root) for c in children]
+
+    return result
+
+
+def toc_to_yaml(toc: dict) -> dict:
+    version_root = toc["root"].replace("\\", "/")
+    return {
+        "docs_list_title": toc.get("version", ""),
+        "docs": [node_to_yaml(n, version_root) for n in toc["tree"]],
+    }
+
+
 def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
     """Group manifest entries by version_html_root."""
     versions: dict[str, list[dict]] = defaultdict(list)
@@ -237,11 +262,31 @@ def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
 
 def main():
     parser = argparse.ArgumentParser(description="Step 6: Build TOC JSON per version")
-    parser.add_argument("--phase",   required=True)
+    parser.add_argument("--phase",   required=False)
     parser.add_argument("--config",  default="config/settings.yaml")
     parser.add_argument("--dry-run",     action="store_true")
     parser.add_argument("--force-rerun", action="store_true", help="Accepted for orchestrator compat")
+    parser.add_argument("--from-json", metavar="PATH", help="Convert a single _toc.json to toc.yml and exit")
     args = parser.parse_args()
+
+    if args.from_json:
+        json_path = Path(args.from_json)
+        toc = json.loads(json_path.read_text(encoding="utf-8"))
+        yml_path = json_path.parent / "toc.yml"
+        yml_path.write_text(
+            yaml.dump(
+                toc_to_yaml(toc),
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        print(f"Written: {yml_path}")
+        return 0
+
+    if not args.phase:
+        parser.error("--phase is required when --from-json is not specified")
 
     settings   = load_settings(args.config)
     manifest   = load_manifest(args.phase, settings)
@@ -267,6 +312,16 @@ def main():
             toc_path.parent.mkdir(parents=True, exist_ok=True)
             toc_path.write_text(
                 json.dumps(toc, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+            toc_yml_path = output_dir / version_root / "toc.yml"
+            toc_yml_path.write_text(
+                yaml.dump(
+                    toc_to_yaml(toc),
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
             )
 
         reporter.count("toc_files_written")

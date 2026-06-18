@@ -1,0 +1,13 @@
+# Phase 1 — example phase (replace with actual product sitemap URLs)
+# Each entry is a product-level sitemapindex URL from the master sitemap.
+# All versions under each product are discovered automatically.
+name: "bw plugins for POC - only latest versions of each plugin"
+products:
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-component-for-aws-common-services-6-1-1
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-development-kit-6-3-1
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-applicability-statement-2-6-0-0
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0

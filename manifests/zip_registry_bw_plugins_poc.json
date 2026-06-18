@@ -1,0 +1,58 @@
+{
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-component-for-aws-common-services-6-1-1": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugin-cawscs/6.1.1/tibco-activematrix-businessworks-plug-in-component-for-aws-common-services-6-1-1_documentation.zip",
+    "html_root": "pub/bwplugin-cawscs/6.1.1/doc/html/",
+    "extracted_at": "2026-06-08T13:54:59",
+    "file_count": 357,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-development-kit-6-3-1": {
+    "zip_url": "https://docs.tibco.com/pub/bwpdk/6.3.1/tibco-activematrix-businessworks-plug-in-development-kit-6-3-1_documentation.zip",
+    "html_root": "pub/bwpdk/6.3.1/doc/html/",
+    "extracted_at": "2026-06-08T13:55:05",
+    "file_count": 651,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas/8.1.1/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1_documentation.zip",
+    "html_root": "pub/bwpluginas/8.1.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawsredshift/6.1.0/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0_documentation.zip",
+    "html_root": "pub/bwpluginawsredshift/6.1.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginamqp/6.5.2/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2_documentation.zip",
+    "html_root": "pub/bwpluginamqp/6.5.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3": {
+    "zip_url": "https://docs.tibco.com/pub/bwplugincassandra/6.3.3/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3_documentation.zip",
+    "html_root": "pub/bwplugincassandra/6.3.3/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-applicability-statement-2-6-0-0": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginas2/6.0.0/tibco-activematrix-businessworks-plug-in-for-applicability-statement-2-6-0-0_documentation.zip",
+    "html_root": "pub/bwpluginas2/6.0.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginacs/6.0.0/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0_documentation.zip",
+    "html_root": "pub/bwpluginacs/6.0.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}

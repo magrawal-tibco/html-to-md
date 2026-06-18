@@ -215,13 +215,18 @@ def extract_page_metadata(soup: BeautifulSoup, entry: dict) -> dict:
     title_tag = soup.find("title")
     title = title_tag.get_text(strip=True) if title_tag else ""
 
+    product_name    = entry.get("product_name", "")
+    product_version = entry.get("product_version", "")
+    if product_version and product_name.endswith(product_version):
+        product_name = product_name[: -len(product_version)].strip()
+
     return {
         "title":           title,
         "lang":            lang,
         "topic_type":      topic_type,
         "toc_path":        toc_path,
-        "product_name":    entry.get("product_name", ""),
-        "product_version": entry.get("product_version", ""),
+        "product_name":    product_name,
+        "product_version": product_version,
         "doc_name":        entry.get("doc_name", ""),
         "source_url":      entry["url"],
     }
