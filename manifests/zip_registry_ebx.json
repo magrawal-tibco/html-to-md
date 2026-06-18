@@ -1,0 +1,30 @@
+{
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-4-5-22": {
+    "zip_url": "https://docs.tibco.com/pub/ebx-addon/4.5.22/tibco-ebx-add-ons-4-5-22_documentation.zip",
+    "html_root": "pub/ebx-addon/4.5.22/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-5-6-4": {
+    "zip_url": "https://docs.tibco.com/pub/ebx-addon/5.6.4/tibco-ebx-add-ons-5-6-4_documentation.zip",
+    "html_root": "pub/ebx-addon/5.6.4/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3": {
+    "zip_url": "https://docs.tibco.com/pub/ebx-addon/6.2.3/tibco-ebx-add-ons-6-2-3_documentation.zip",
+    "html_root": "pub/ebx-addon/6.2.3/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-2-3": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.2.3/tibco-ebx-6-2-3_documentation.zip",
+    "html_root": "pub/ebx/6.2.3/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  }
+}

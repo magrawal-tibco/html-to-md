@@ -1,0 +1,10 @@
+# Phase 1 — example phase (replace with actual product sitemap URLs)
+# Each entry is a product-level sitemapindex URL from the master sitemap.
+# All versions under each product are discovered automatically.
+name: "ebx POC"
+products:
+  - https://docs.tibco.com/products/tibco-ebx-add-ons-4-5-22
+  - https://docs.tibco.com/products/tibco-ebx-add-ons-5-6-4
+  - https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3
+  - https://docs.tibco.com/products/tibco-ebx-6-2-3
+

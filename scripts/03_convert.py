@@ -207,13 +207,25 @@ def extract_page_metadata(soup: BeautifulSoup, entry: dict) -> dict:
 
     # TOC path — pipe-separated breadcrumb
     toc_path = attrs.get("data-mc-toc-path", "")
+    if not toc_path:
+        # EBX: breadcrumb in span.ebx_breadcrumbLabel, segments separated by " > "
+        bc = soup.select_one("span.ebx_breadcrumbLabel")
+        if bc:
+            segments = [s.strip() for s in bc.get_text().split(">") if s.strip()]
+            if segments and segments[0].lower() == "documentation":
+                segments = segments[1:]
+            toc_path = "|".join(segments)
 
     # Language
     lang = attrs.get("lang", attrs.get("xml:lang", "en-us"))
 
-    # Title: prefer <title> tag, fallback to first h1 in content
+    # Title: prefer <title> tag; for EBX strip "Product Documentation - " prefix via h1
     title_tag = soup.find("title")
     title = title_tag.get_text(strip=True) if title_tag else ""
+    if " - " in title:
+        h1 = soup.find("h1")
+        if h1:
+            title = h1.get_text(strip=True)
 
     product_name    = entry.get("product_name", "")
     product_version = entry.get("product_version", "")
@@ -524,6 +536,28 @@ def main():
             reporter.info(f"  + {vs}")
     else:
         reporter.info("Version registry: no new versions registered (errors present or dry run)")
+
+    # Copy path segments (e.g. Java_API/, java/) as-is from cache to output.
+    # Scoped to the current phase's versions via the zip_registry.
+    copy_segments = {s.strip("/") for s in settings.get("copy_path_segments", [])}
+    if copy_segments and not args.dry_run:
+        reg_path = manifests_dir / f"zip_registry_{args.phase}.json"
+        zip_registry: dict = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists() else {}
+        for reg_entry in zip_registry.values():
+            html_root = reg_entry.get("html_root", "").rstrip("/")
+            search_root = cache_dir / html_root
+            # EBX addon: doc/html/ doesn't exist — search from doc/ instead
+            if not search_root.exists():
+                search_root = search_root.parent
+            if not search_root.exists():
+                continue
+            for src in search_root.rglob("*"):
+                if src.is_dir() and src.name in copy_segments:
+                    rel = src.relative_to(cache_dir)
+                    dst = output_dir / rel
+                    if not dst.exists() or force_rerun:
+                        shutil.copytree(src, dst, dirs_exist_ok=True)
+                        reporter.info(f"Copied {rel} → output/{rel}")
 
     report = reporter.finish()
     return 0 if report["error_count"] == 0 else 1

@@ -89,6 +89,17 @@ def is_already_extracted(cache_dir: Path, html_root: str) -> bool:
     # DITA WebHelp Responsive: static/body.js
     if (root / "static" / "body.js").exists():
         return True
+    # EBX: look for ebx_common.css at root level or one directory deep (lang/ or module/)
+    for check_dir in ([root] + list(root.iterdir() if root.exists() else [])):
+        if check_dir.is_dir() and (check_dir / "resources" / "stylesheets" / "ebx_common.css").exists():
+            return True
+    # EBX addon: module subdirs under doc/ when doc/html/ doesn't exist
+    if not root.exists():
+        doc_dir = root.parent
+        if doc_dir.exists():
+            for subdir in doc_dir.iterdir():
+                if subdir.is_dir() and (subdir / "resources" / "stylesheets" / "ebx_common.css").exists():
+                    return True
     return False
 
 
@@ -105,6 +116,17 @@ def detect_format(cache_dir: Path, html_root: str) -> str:
     tocs_dir = root / "Data" / "Tocs"
     if tocs_dir.exists() and any(tocs_dir.glob("*.js")):
         return "madcap"
+    # EBX: look for ebx_common.css at root level or one directory deep (lang/ or module/)
+    for check_dir in ([root] + list(root.iterdir() if root.exists() else [])):
+        if check_dir.is_dir() and (check_dir / "resources" / "stylesheets" / "ebx_common.css").exists():
+            return "ebx"
+    # EBX addon: module subdirs under doc/ when doc/html/ doesn't exist
+    if not root.exists():
+        doc_dir = root.parent
+        if doc_dir.exists():
+            for subdir in doc_dir.iterdir():
+                if subdir.is_dir() and (subdir / "resources" / "stylesheets" / "ebx_common.css").exists():
+                    return "ebx"
     return "unknown"
 
 
@@ -369,6 +391,12 @@ def scan_extracted_pages(
     version_format  = zip_registry_entry.get("format", entry.get("version_format", "unknown"))
 
     html_dir = cache_dir / html_root
+    # EBX addon: ZIPs use doc/{module}/ instead of doc/html/ — fall back to parent
+    if not html_dir.exists():
+        parent = html_dir.parent
+        if parent.exists():
+            html_dir = parent
+
     alias_xml_url = f"https://docs.tibco.com/{html_root}/Data/Alias.xml"
 
     page_entries = []

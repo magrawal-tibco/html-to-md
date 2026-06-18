@@ -16,10 +16,12 @@ http:
 # Selectors tried in order — first match wins
 # 1. MadCap Flare WebHelp2 output
 # 2. DITA WebHelp Responsive output (GUID-based filenames)
+# 3. EBX custom YUI frameset output
 content_selectors:
   - "div[role='main']#mc-main-content"
   - "div#center article"
   - "article"
+  - "div#ebx_main"
 
 # Shell pages — frameset/navigation entry points with no topic content
 skip_filenames:
@@ -30,6 +32,7 @@ skip_filenames:
   - index.html
   - index_CSH.htm
   - suitehelp_topic_list.html
+  - welcome.html
 
 # URL path segments that indicate non-topic content — filtered in Step 1
 skip_path_segments:
@@ -42,6 +45,14 @@ skip_path_segments:
   - /Resources/
   - /functions/
   - /videos/
+  - /resources/
+  - /Java_API/
+  - /java/
+
+# Path segments to copy as-is from cache to output (no HTML→Markdown conversion)
+copy_path_segments:
+  - /Java_API/
+  - /java/
 
 # Filename regex patterns to skip — matched against the bare filename (case-insensitive)
 # GUID-based filenames are SDL Trisoft / DITA WebHelp Responsive output, not MadCap Flare
@@ -68,12 +79,20 @@ chrome_selectors:
   - div.codeSnippetCaption
   # MadCap "Related Topics" navigation link (javascript:void chrome)
   - a.MCHelpControl-Related
+  # EBX chrome elements (harmless on non-EBX pages — IDs won't exist)
+  - div#printHeader
+  - div#ebx_breadcrumbTop
+  - div#toc
 
 # Image src prefixes to skip when downloading images
 image_skip_prefixes:
   - Skins/
   - Resources/Scripts/
   - Resources/Stylesheets/
+  - resources/stylesheets/
+  - resources/yui/
+  - resources/icons/
+  - resources/syntaxHighlighter/
 
 tables:
   # Block-level tags inside a cell that force Tier 3 (raw HTML passthrough)

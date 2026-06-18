@@ -1,0 +1,154 @@
+{
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-component-for-aws-common-services-6-1-1": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in Component for AWS Common Services 6.1.1",
+    "product_version": "6.1.1",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 50
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-development-kit-6-3-1": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in Development Kit 6.3.1",
+    "product_version": "6.3.1",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 165
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-activespaces-8-1-1": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for ActiveSpaces® 8.1.1",
+    "product_version": "8.1.1",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amazon-redshift-6-1-0": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon Redshift 6.1.0",
+    "product_version": "6.1.0",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 56
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amqp-6-5-2": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for AMQP 6.5.2",
+    "product_version": "6.5.2",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 52
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-apache-cassandra-6-3-3": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Apache Cassandra 6.3.3",
+    "product_version": "6.3.3",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-applicability-statement-2-6-0-0": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Applicability Statement 2 6.0.0",
+    "product_version": "6.0.0",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 47
+  },
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-azure-cloud-services-azure-data-lake-storage-gen2-6-0-0": {
+    "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Azure Cloud Services (Azure Data Lake Storage Gen2) 6.0.0",
+    "product_version": "6.0.0",
+    "doc_name": "",
+    "phase": "bw_plugins_poc",
+    "converted_at": "2026-06-08T08:25:45Z",
+    "page_count": 51
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-4-10-0": {
+    "product_name": "TIBCO ActiveSpaces® - Enterprise Edition 4.10.0",
+    "product_version": "4.10.0",
+    "doc_name": "",
+    "phase": "activespaces",
+    "converted_at": "2026-06-09T04:56:12Z",
+    "page_count": 421
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-4-10-1": {
+    "product_name": "TIBCO ActiveSpaces® - Enterprise Edition 4.10.1",
+    "product_version": "4.10.1",
+    "doc_name": "",
+    "phase": "activespaces",
+    "converted_at": "2026-06-09T04:56:12Z",
+    "page_count": 421
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-0-0": {
+    "product_name": "TIBCO ActiveSpaces® - Enterprise Edition 5.0.0",
+    "product_version": "5.0.0",
+    "doc_name": "",
+    "phase": "activespaces",
+    "converted_at": "2026-06-09T04:56:12Z",
+    "page_count": 428
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-1-0": {
+    "product_name": "TIBCO ActiveSpaces® - Enterprise Edition 5.1.0",
+    "product_version": "5.1.0",
+    "doc_name": "",
+    "phase": "activespaces",
+    "converted_at": "2026-06-09T04:56:12Z",
+    "page_count": 429
+  },
+  "https://docs.tibco.com/products/tibco-activespaces-enterprise-edition-5-2-0": {
+    "product_name": "TIBCO ActiveSpaces® - Enterprise Edition 5.2.0",
+    "product_version": "5.2.0",
+    "doc_name": "",
+    "phase": "activespaces",
+    "converted_at": "2026-06-09T04:56:12Z",
+    "page_count": 425
+  },
+  "https://docs.tibco.com/products/tibco-datasynapse-gridserver-logviewer-1-0-0": {
+    "product_name": "TIBCO DataSynapse GridServer® LogViewer 1.0.0",
+    "product_version": "1.0.0",
+    "doc_name": "",
+    "phase": "gridserver_bu",
+    "converted_at": "2026-06-17T08:54:20Z",
+    "page_count": 20
+  },
+  "https://docs.tibco.com/products/tibco-datasynapse-gridserver-manager-7-2-0": {
+    "product_name": "TIBCO DataSynapse GridServer® Manager 7.2.0",
+    "product_version": "7.2.0",
+    "doc_name": "",
+    "phase": "gridserver_bu",
+    "converted_at": "2026-06-17T08:54:20Z",
+    "page_count": 985
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-2-3": {
+    "product_name": "TIBCO EBX® 6.2.3",
+    "product_version": "6.2.3",
+    "doc_name": "",
+    "phase": "ebx",
+    "converted_at": "2026-06-18T09:18:45Z",
+    "page_count": 526
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-4-5-22": {
+    "product_name": "TIBCO EBX® Add-ons 4.5.22",
+    "product_version": "4.5.22",
+    "doc_name": "",
+    "phase": "ebx",
+    "converted_at": "2026-06-18T09:18:45Z",
+    "page_count": 342
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-5-6-4": {
+    "product_name": "TIBCO EBX® Add-ons 5.6.4",
+    "product_version": "5.6.4",
+    "doc_name": "",
+    "phase": "ebx",
+    "converted_at": "2026-06-18T09:18:45Z",
+    "page_count": 342
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3": {
+    "product_name": "TIBCO EBX® Add-ons 6.2.3",
+    "product_version": "6.2.3",
+    "doc_name": "",
+    "phase": "ebx",
+    "converted_at": "2026-06-18T09:18:45Z",
+    "page_count": 357
+  }
+}

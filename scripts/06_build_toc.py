@@ -13,9 +13,10 @@ Usage:
 
 import argparse
 import json
+import re
 import sys
 from collections import defaultdict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse
 
 import yaml
@@ -58,15 +59,25 @@ def read_frontmatter(md_path: Path) -> dict:
 
 def version_html_root(output_path: str) -> str:
     """
-    Extract the /doc/html/ root from an output path.
-    e.g. pub/foo/1.0/doc/html/Admin/file.md → pub/foo/1.0/doc/html/
+    Extract the version-level root from an output path.
+
+    - MadCap: pub/foo/1.0/doc/html/Admin/file.md → pub/foo/1.0/doc/html/
+    - EBX main: pub/ebx/6.2.3/doc/html/en/admin/file.md → pub/ebx/6.2.3/doc/html/en/
+    - EBX addon: pub/ebx-addon/6.2.3/doc/adix/guide/file.md → pub/ebx-addon/6.2.3/doc/adix/
     """
-    marker = "/doc/html/"
-    idx = output_path.find(marker)
+    # Normalize to forward slashes (required on Windows)
+    output_path = output_path.replace("\\", "/")
+    html_marker = "/doc/html/"
+    idx = output_path.find(html_marker)
     if idx != -1:
-        return output_path[: idx + len(marker)]
-    # Fallback: use parent of parent directory
-    return str(Path(output_path).parent.parent) + "/"
+        after_html = output_path[idx + len(html_marker):]
+        # EBX main: next segment is a 2-char lowercase language code (en, fr, de, ...)
+        m = re.match(r'^([a-z]{2})/', after_html)
+        if m:
+            return output_path[: idx + len(html_marker)] + m.group(1) + "/"
+        return output_path[: idx + len(html_marker)]
+    # EBX addon / other non-html structures: parent.parent gives module root
+    return PurePosixPath(output_path).parent.parent.as_posix() + "/"
 
 
 def insert_into_tree(tree: dict, segments: list[str], page_entry: dict):
@@ -118,6 +129,36 @@ def _version_label_from_entries(version_entries: list[dict], output_dir: Path) -
     return ""
 
 
+def _parse_ebx_nav(ul_el, version_root: str, version_entries: list[dict]) -> list[dict]:
+    """Recursively parse EBX nav <ul> into TOC tree nodes, resolving hrefs to output paths."""
+    vr = version_root.replace("\\", "/").rstrip("/")
+    lookup: dict[str, str] = {}
+    for entry in version_entries:
+        posix = Path(entry["output_path"]).as_posix()
+        stem = posix.rsplit(".", 1)[0]
+        lookup[stem] = entry["output_path"]
+
+    def parse_ul(ul) -> list[dict]:
+        nodes = []
+        for li in ul.find_all("li", recursive=False):
+            a = li.find("a", recursive=False)
+            if a is None:
+                continue
+            title = a.get_text(strip=True)
+            href  = a.get("href", "").split("?")[0].split("#")[0]
+            file_path = None
+            if href:
+                resolved = f"{vr}/{href}".replace("//", "/")
+                stem = resolved.rsplit(".", 1)[0] if "." in resolved else resolved
+                file_path = lookup.get(stem)
+            child_ul = li.find("ul", recursive=False)
+            children = parse_ul(child_ul) if child_ul else []
+            nodes.append({"title": title, "file": file_path, "children": children})
+        return nodes
+
+    return parse_ul(ul_el)
+
+
 def build_version_toc(
     version_entries: list[dict],
     output_dir: Path,
@@ -152,6 +193,32 @@ def build_version_toc(
                 }
             except Exception as exc:
                 reporter.warning(f"TOC JS parse failed for {version_root}: {exc} — falling back to breadcrumbs")
+
+    # EBX: parse nav tree from the index.html frameset within the version root
+    if cache_dir is not None:
+        for ebx_idx in [
+            cache_dir / version_root.rstrip("/") / "index.html",
+        ]:
+            if ebx_idx.exists():
+                try:
+                    from bs4 import BeautifulSoup as _BS
+                    idx_soup = _BS(ebx_idx.read_bytes(), "html.parser")
+                    nav_ul = idx_soup.select_one("div#ebx_NavigationPagesList > ul")
+                    if nav_ul:
+                        tree = _parse_ebx_nav(nav_ul, version_root, version_entries)
+                        if tree:
+                            version_label = _version_label_from_entries(version_entries, output_dir)
+                            reporter.count("toc_from_ebx_index")
+                            return {
+                                "version":  version_label,
+                                "root":     version_root,
+                                "tree":     tree,
+                                "_orphans": [],
+                                "_source":  "ebx_index",
+                            }
+                except Exception as exc:
+                    reporter.warning(f"EBX index.html parse failed for {version_root}: {exc} — falling back to breadcrumbs")
+                break
 
     tree_root = {"title": "root", "file": None, "children": []}
     orphans   = []
