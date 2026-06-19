@@ -372,6 +372,95 @@ def process_versions(
     return zip_registry, zip_missing
 
 
+def _scan_ebx_from_nav(
+    html_dir: Path,
+    cache_dir: Path,
+    version_url: str,
+    zip_url: str,
+    product_name: str,
+    product_version: str,
+    alias_xml_url: str,
+    version_format: str,
+    settings: dict,
+) -> list[dict]:
+    """For EBX: derive ordered page list from index.html nav tree instead of file scan."""
+    import re as _re
+    from bs4 import BeautifulSoup
+
+    skip_filenames_set = set(settings.get("skip_filenames", []))
+    skip_patterns = [
+        _re.compile(p, _re.IGNORECASE)
+        for p in settings.get("skip_filename_patterns", [])
+    ]
+
+    # Find all index.html files that have an EBX nav:
+    # EBX main  → html_dir/en/index.html (and fr/ if present)
+    # EBX addon → html_dir/{module}/index.html for each module
+    html_extensions = set(settings.get("html_extensions", [".htm", ".html"]))
+    index_candidates = sorted(html_dir.rglob("index.html"))
+    abs_cache_dir = cache_dir.resolve()
+
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    for index_path in index_candidates:
+        try:
+            soup = BeautifulSoup(index_path.read_bytes(), "html.parser")
+        except Exception:
+            continue
+        nav_ul = soup.select_one("div#ebx_NavigationPagesList > ul")
+        if not nav_ul:
+            continue
+        base_dir = index_path.parent
+
+        def walk(ul) -> None:
+            for li in ul.find_all("li", recursive=False):
+                href = ""
+                span = li.find("span", recursive=False)
+                if span:
+                    # 6.x style: <li><span><a href="...">Title</a></span>
+                    a = span.find("a")
+                    if a:
+                        href = a.get("href", "").split("?")[0].split("#")[0]
+                else:
+                    # 4.x style: <li><a href="..."><span>Title</span></a>
+                    a = li.find("a", recursive=False)
+                    if a:
+                        href = a.get("href", "").split("?")[0].split("#")[0]
+
+                if href and Path(href).suffix.lower() in html_extensions:
+                    fname = Path(href).name
+                    if fname not in skip_filenames_set and not any(
+                        p.match(fname) for p in skip_patterns
+                    ):
+                        resolved = (base_dir / href).resolve()
+                        key = str(resolved)
+                        if key not in seen and resolved.exists():
+                            seen.add(key)
+                            rel = resolved.relative_to(abs_cache_dir)
+                            results.append({
+                                "url":             "https://docs.tibco.com/" + rel.as_posix(),
+                                "lastmod":         "",
+                                "output_path":     str(rel.with_suffix(".md")),
+                                "product_name":    product_name,
+                                "product_version": product_version,
+                                "doc_name":        "",
+                                "access_level":    "public",
+                                "version_sitemap": version_url,
+                                "alias_xml_url":   alias_xml_url,
+                                "zip_url":         zip_url,
+                                "version_format":  version_format,
+                            })
+
+                child_ul = li.find("ul", recursive=False)
+                if child_ul:
+                    walk(child_ul)
+
+        walk(nav_ul)
+
+    return results
+
+
 def scan_extracted_pages(
     cache_dir: Path,
     entry: dict,
@@ -398,6 +487,13 @@ def scan_extracted_pages(
             html_dir = parent
 
     alias_xml_url = f"https://docs.tibco.com/{html_root}/Data/Alias.xml"
+
+    # EBX: derive page list from index.html nav tree (TOC-first)
+    if version_format == "ebx":
+        return _scan_ebx_from_nav(
+            html_dir, cache_dir, version_url, zip_url,
+            product_name, product_version, alias_xml_url, version_format, settings,
+        )
 
     page_entries = []
     for suffix in ("*.htm", "*.html"):

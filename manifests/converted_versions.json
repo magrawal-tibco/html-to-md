@@ -124,31 +124,31 @@
     "product_version": "6.2.3",
     "doc_name": "",
     "phase": "ebx",
-    "converted_at": "2026-06-18T09:18:45Z",
-    "page_count": 526
+    "converted_at": "2026-06-18T13:33:39Z",
+    "page_count": 486
   },
   "https://docs.tibco.com/products/tibco-ebx-add-ons-4-5-22": {
     "product_name": "TIBCO EBX® Add-ons 4.5.22",
     "product_version": "4.5.22",
     "doc_name": "",
     "phase": "ebx",
-    "converted_at": "2026-06-18T09:18:45Z",
-    "page_count": 342
+    "converted_at": "2026-06-18T13:33:39Z",
+    "page_count": 321
   },
   "https://docs.tibco.com/products/tibco-ebx-add-ons-5-6-4": {
     "product_name": "TIBCO EBX® Add-ons 5.6.4",
     "product_version": "5.6.4",
     "doc_name": "",
     "phase": "ebx",
-    "converted_at": "2026-06-18T09:18:45Z",
-    "page_count": 342
+    "converted_at": "2026-06-18T13:33:39Z",
+    "page_count": 316
   },
   "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3": {
     "product_name": "TIBCO EBX® Add-ons 6.2.3",
     "product_version": "6.2.3",
     "doc_name": "",
     "phase": "ebx",
-    "converted_at": "2026-06-18T09:18:45Z",
-    "page_count": 357
+    "converted_at": "2026-06-18T13:33:39Z",
+    "page_count": 320
   }
 }

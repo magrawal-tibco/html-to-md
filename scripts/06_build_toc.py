@@ -76,8 +76,14 @@ def version_html_root(output_path: str) -> str:
         if m:
             return output_path[: idx + len(html_marker)] + m.group(1) + "/"
         return output_path[: idx + len(html_marker)]
-    # EBX addon / other non-html structures: parent.parent gives module root
-    return PurePosixPath(output_path).parent.parent.as_posix() + "/"
+    # EBX addon / other non-html structures: parent.parent gives module root.
+    # If parent.parent ends in a generic directory name ("doc", "html"), step
+    # back only one level so the module directory is the version root.
+    pp   = PurePosixPath(output_path)
+    root = pp.parent.parent
+    if root.name in ("doc", "html"):
+        root = pp.parent
+    return root.as_posix() + "/"
 
 
 def insert_into_tree(tree: dict, segments: list[str], page_entry: dict):
@@ -131,6 +137,7 @@ def _version_label_from_entries(version_entries: list[dict], output_dir: Path) -
 
 def _parse_ebx_nav(ul_el, version_root: str, version_entries: list[dict]) -> list[dict]:
     """Recursively parse EBX nav <ul> into TOC tree nodes, resolving hrefs to output paths."""
+    from bs4 import NavigableString
     vr = version_root.replace("\\", "/").rstrip("/")
     lookup: dict[str, str] = {}
     for entry in version_entries:
@@ -141,16 +148,39 @@ def _parse_ebx_nav(ul_el, version_root: str, version_entries: list[dict]) -> lis
     def parse_ul(ul) -> list[dict]:
         nodes = []
         for li in ul.find_all("li", recursive=False):
-            a = li.find("a", recursive=False)
-            if a is None:
+            title = ""
+            href  = ""
+
+            span = li.find("span", recursive=False)
+            a_direct = li.find("a", recursive=False)
+            if span and span.find("a"):
+                # 6.x style: <li><span><a href="...">Title</a></span>
+                a = span.find("a")
+                title = a.get_text(strip=True)
+                href  = a.get("href", "").split("?")[0].split("#")[0]
+            elif a_direct:
+                # 4.x style: <li><a href="..."><span>Title</span></a>
+                title = a_direct.get_text(strip=True)
+                href  = a_direct.get("href", "").split("?")[0].split("#")[0]
+            elif span:
+                # Section root with no link
+                title = span.get_text(strip=True)
+            else:
+                # Structure node: <li>Section Title<ul>...</ul></li>
+                direct = next(
+                    (s for s in li.children if isinstance(s, NavigableString)), ""
+                )
+                title = str(direct).strip()
+
+            if not title:
                 continue
-            title = a.get_text(strip=True)
-            href  = a.get("href", "").split("?")[0].split("#")[0]
+
             file_path = None
             if href:
                 resolved = f"{vr}/{href}".replace("//", "/")
                 stem = resolved.rsplit(".", 1)[0] if "." in resolved else resolved
                 file_path = lookup.get(stem)
+
             child_ul = li.find("ul", recursive=False)
             children = parse_ul(child_ul) if child_ul else []
             nodes.append({"title": title, "file": file_path, "children": children})
