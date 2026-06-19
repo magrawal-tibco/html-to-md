@@ -545,10 +545,19 @@ def main():
         zip_registry: dict = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists() else {}
         for reg_entry in zip_registry.values():
             html_root = reg_entry.get("html_root", "").rstrip("/")
+            version_fmt = reg_entry.get("format", "")
             search_root = cache_dir / html_root
-            # EBX addon: doc/html/ doesn't exist — search from doc/ instead
+            # EBX: html_root is doc/html/ which does not exist in addon ZIPs.
+            # Fall back to doc/ (one level up) so we only copy doc/<addon>/Java_API/
+            # and never reach standalone <addon>/Java_API/ at the version root.
             if not search_root.exists():
-                search_root = search_root.parent
+                parent = search_root.parent
+                if parent.exists():
+                    search_root = parent
+                elif version_fmt == "ebx":
+                    continue  # cannot determine search root for EBX — skip
+                else:
+                    search_root = search_root.parent
             if not search_root.exists():
                 continue
             for src in search_root.rglob("*"):
