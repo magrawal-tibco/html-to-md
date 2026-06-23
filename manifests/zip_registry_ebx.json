@@ -26,5 +26,82 @@
     "extracted_at": "previously",
     "file_count": -1,
     "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-2-2": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.2.2/tibco-ebx-6-2-2_documentation.zip",
+    "html_root": "pub/ebx/6.2.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-2-1": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.2.1/tibco-ebx-6-2-1_documentation.zip",
+    "html_root": "pub/ebx/6.2.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.2.0/tibco-ebx-6-2-0_documentation.zip",
+    "html_root": "pub/ebx/6.2.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-1-5": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.1.5/tibco-ebx-6-1-5_documentation.zip",
+    "html_root": "pub/ebx/6.1.5/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-1-4": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.1.4/tibco-ebx-6-1-4_documentation.zip",
+    "html_root": "pub/ebx/6.1.4/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-1-3": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.1.3/tibco-ebx-6-1-3_documentation.zip",
+    "html_root": "pub/ebx/6.1.3/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-1-2": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.1.2/tibco-ebx-6-1-2_documentation.zip",
+    "html_root": "pub/ebx/6.1.2/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-1-1": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.1.1/tibco-ebx-6-1-1_documentation.zip",
+    "html_root": "pub/ebx/6.1.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-6-1-0": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/6.1.0/tibco-ebx-6-1-0_documentation.zip",
+    "html_root": "pub/ebx/6.1.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-5-9-27": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/5.9.27/tibco-ebx-5-9-27_documentation.zip",
+    "html_root": "pub/ebx/5.9.27/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-5-9-26": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/5.9.26/tibco-ebx-5-9-26_documentation.zip",
+    "html_root": "pub/ebx/5.9.26/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "ebx"
   }
 }

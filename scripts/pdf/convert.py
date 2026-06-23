@@ -698,17 +698,36 @@ def discover_pdfs(cache_dir: Path, manifest: list[dict], settings: dict) -> list
 
 # ── Frontmatter ───────────────────────────────────────────────────────────────
 
+_DOC_NAME_DISPLAY = {
+    "relnotes":     "Release Notes",
+    "release-notes": "Release Notes",
+    "releasenotes": "Release Notes",
+}
+
+
 def _build_frontmatter(entry: dict) -> str:
-    doc_name = entry["doc_name"].replace("-", " ").title()
+    raw_doc_name = entry["doc_name"]
+    doc_name = _DOC_NAME_DISPLAY.get(
+        raw_doc_name.lower(), raw_doc_name.replace("-", " ").title()
+    )
+
+    # Strip trailing version number that manifests sometimes append to product_name
+    product_name = re.sub(
+        r"\s+" + re.escape(entry["product_version"]) + r"\s*$",
+        "",
+        entry["product_name"],
+    ).strip()
+
+    title = f"{product_name} {entry['product_version']} {doc_name}"
+
     data = {
-        "title":           doc_name,
-        "source_pdf":      str(entry["pdf_path"]).replace("\\", "/"),
-        "product_name":    entry["product_name"],
+        "doc_name":        doc_name,
+        "product_name":    product_name,
         "product_version": entry["product_version"],
-        "doc_name":        entry["doc_name"],
+        "title":           title,
     }
     data = {k: v for k, v in data.items() if v}
-    return "---\n" + yaml.dump(data, allow_unicode=True, default_flow_style=False) + "---\n\n"
+    return "---\n" + yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=True) + "---\n\n"
 
 
 # ── Per-file conversion ───────────────────────────────────────────────────────
