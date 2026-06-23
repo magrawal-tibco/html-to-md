@@ -84,6 +84,50 @@ def url_to_cache_path(loc: str, cache_dir: Path) -> Path:
     return cache_dir / path
 
 
+_MONTH_NAMES = {
+    "january": "01", "february": "02", "march": "03", "april": "04",
+    "may": "05", "june": "06", "july": "07", "august": "08",
+    "september": "09", "october": "10", "november": "11", "december": "12",
+}
+_MONTH_YEAR_RE = re.compile(
+    r"(January|February|March|April|May|June|July|August|September|October|November|December)"
+    r"\s+(\d{4})",
+    re.IGNORECASE,
+)
+
+
+def _parse_release_date(text: str) -> str | None:
+    m = _MONTH_YEAR_RE.search(text)
+    if not m:
+        return None
+    return f"{m.group(2)}-{_MONTH_NAMES[m.group(1).lower()]}"
+
+
+def _extract_release_date(entry: dict, cache_dir: Path) -> str | None:
+    """Read release date from Home.htm (ga-date span) in the version HTML root."""
+    alias_url = entry.get("alias_xml_url", "")
+    if not alias_url:
+        return None
+    idx = alias_url.find("/Data/Alias.xml")
+    if idx < 0:
+        return None
+    html_root_path = urlparse(alias_url[:idx]).path.lstrip("/")
+    html_root_dir = cache_dir / html_root_path
+    for rel in ("_templates/Home.htm", "Home.htm"):
+        home_path = html_root_dir / rel
+        if home_path.exists():
+            try:
+                soup = BeautifulSoup(home_path.read_bytes(), "lxml")
+                span = soup.select_one("#ga-date span")
+                if span:
+                    rd = _parse_release_date(span.get_text(strip=True))
+                    if rd:
+                        return rd
+            except Exception:
+                pass
+    return None
+
+
 def _should_skip(url: str, skip_segments: list, skip_filenames: set,
                  html_extensions: set, skip_filename_patterns: list) -> bool:
     parsed   = urlparse(url)
@@ -444,7 +488,11 @@ def convert_entry(
             md_body = clean_markdown(md_body)
 
         # Build final file content
-        frontmatter = build_frontmatter(meta)
+        extra: dict = {}
+        rd = entry.get("release_date")
+        if rd:
+            extra["release_date"] = rd
+        frontmatter = build_frontmatter(meta, extra or None)
         final_content = frontmatter + md_body
 
         if not dry_run:
@@ -509,6 +557,20 @@ def main():
             f"dry_run={args.dry_run} force_rerun={force_rerun} ==="
         )
         reporter.info(f"Manifest: {len(manifest)} entries")
+
+    # Pre-compute release_date per version from Home.htm (ga-date span)
+    version_release_dates: dict[str, str | None] = {}
+    for entry in work_entries:
+        vs = entry.get("version_sitemap", "")
+        if vs and vs not in version_release_dates:
+            version_release_dates[vs] = _extract_release_date(entry, cache_dir)
+    found_dates = sum(1 for v in version_release_dates.values() if v)
+    reporter.info(f"Release dates found in Home.htm: {found_dates}/{len(version_release_dates)} versions")
+    for entry in work_entries:
+        vs = entry.get("version_sitemap", "")
+        rd = version_release_dates.get(vs)
+        if rd:
+            entry["release_date"] = rd
 
     # Track conversion errors per version so only fully-successful versions are registered
     version_errors: dict[str, int] = {}

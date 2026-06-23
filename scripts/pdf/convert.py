@@ -912,6 +912,56 @@ def _clean_markdown(text: str) -> str:
     return text.strip() + "\n"
 
 
+# ── Release date extraction ───────────────────────────────────────────────────
+
+_MONTH_NAMES = {
+    "january": "01", "february": "02", "march": "03", "april": "04",
+    "may": "05", "june": "06", "july": "07", "august": "08",
+    "september": "09", "october": "10", "november": "11", "december": "12",
+}
+_MONTH_YEAR_RE = re.compile(
+    r"(January|February|March|April|May|June|July|August|September|October|November|December)"
+    r"\s+(\d{4})",
+    re.IGNORECASE,
+)
+
+
+def _parse_release_date(text: str) -> str | None:
+    m = _MONTH_YEAR_RE.search(text)
+    if not m:
+        return None
+    return f"{m.group(2)}-{_MONTH_NAMES[m.group(1).lower()]}"
+
+
+def _find_release_date(pdf_path: Path, doc: fitz.Document) -> str | None:
+    """Return 'YYYY-MM' release date. Tries Home.htm first; falls back to PDF cover page."""
+    from bs4 import BeautifulSoup
+
+    # Primary: ga-date span in Home.htm at the version HTML root
+    doc_dir = pdf_path.parent.parent   # .../version/doc/
+    for rel in ("html/_templates/Home.htm", "html/Home.htm"):
+        home_path = doc_dir / rel
+        if home_path.exists():
+            try:
+                soup = BeautifulSoup(home_path.read_bytes(), "lxml")
+                span = soup.select_one("#ga-date span")
+                if span:
+                    rd = _parse_release_date(span.get_text(strip=True))
+                    if rd:
+                        return rd
+            except Exception:
+                pass
+
+    # Fallback: scan PDF cover page (page 0) for a Month YYYY pattern
+    if len(doc) > 0:
+        cover_text = doc[0].get_text()
+        rd = _parse_release_date(cover_text)
+        if rd:
+            return rd
+
+    return None
+
+
 # ── PDF discovery ─────────────────────────────────────────────────────────────
 
 _VERSION_RE = re.compile(r"_(\d+\.\d+(?:\.\d+)?)_")
@@ -1040,6 +1090,7 @@ def _build_frontmatter(entry: dict) -> str:
         "doc_name":        doc_name,
         "product_name":    product_name,
         "product_version": entry["product_version"],
+        "release_date":    entry.get("release_date", ""),
         "title":           title,
     }
     data = {k: v for k, v in data.items() if v}
@@ -1115,6 +1166,11 @@ def convert_pdf(
             return False
 
         body = _clean_markdown("\n".join(_fix_issue_tables(_fix_callouts(_fix_table_rows(md_lines)))))
+
+        release_date = _find_release_date(entry["pdf_path"], doc)
+        if release_date:
+            entry = {**entry, "release_date": release_date}
+
         frontmatter = _build_frontmatter(entry)
         final_content = frontmatter + body
 

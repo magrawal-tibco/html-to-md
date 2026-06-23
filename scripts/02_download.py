@@ -235,6 +235,32 @@ async def download_phase(
         for coro in tqdm(asyncio.as_completed(alias_tasks), total=len(alias_tasks), desc="Alias"):
             await coro
 
+        # ── Download Home.htm files (for release_date extraction in Step 3) ──
+        # Try both /_templates/Home.htm and /Home.htm at the version HTML root.
+        # 404s are common and silently ignored — Home.htm exists only in ZIP products.
+        home_htm_urls: list[str] = []
+        for au in alias_urls:
+            idx = au.find("/Data/Alias.xml")
+            if idx >= 0:
+                html_root = au[:idx]
+                home_htm_urls.append(f"{html_root}/_templates/Home.htm")
+                home_htm_urls.append(f"{html_root}/Home.htm")
+
+        reporter.info(f"Attempting Home.htm for {len(alias_urls)} version(s) ({len(home_htm_urls)} candidates)")
+
+        async def fetch_home_htm(home_url: str):
+            dest = url_to_cache_path(home_url, cache_dir)
+            async with semaphore:
+                if dest.exists() and not force_refresh:
+                    return
+                ok = await download_one(client, home_url, dest, max_retries, backoff, reporter, dry_run, warn_only=True)
+                if ok:
+                    reporter.count("home_htm_downloaded")
+
+        home_tasks = [fetch_home_htm(url) for url in home_htm_urls]
+        for coro in tqdm(asyncio.as_completed(home_tasks), total=len(home_tasks), desc="Home.htm"):
+            await coro
+
 
 def main():
     parser = argparse.ArgumentParser(description="Step 2: Download HTML, images, alias.xml")
