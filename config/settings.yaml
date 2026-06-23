@@ -79,9 +79,14 @@ chrome_selectors:
   - div.codeSnippetCaption
   # MadCap "Related Topics" navigation link (javascript:void chrome)
   - a.MCHelpControl-Related
-  # EBX chrome elements (harmless on non-EBX pages — IDs won't exist)
+  # EBX chrome elements (EBX-specific IDs; won't match MadCap/DITA pages)
   - div#printHeader
   - div#ebx_breadcrumbTop
+
+# Additional chrome selectors applied only when version_format == "ebx".
+# Kept separate from chrome_selectors because div#toc is a generic ID that
+# could legitimately appear as content in non-EBX products.
+ebx_chrome_selectors:
   - div#toc
 
 # Image src prefixes to skip when downloading images

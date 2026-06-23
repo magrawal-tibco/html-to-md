@@ -57,7 +57,7 @@ def read_frontmatter(md_path: Path) -> dict:
         return {}
 
 
-def version_html_root(output_path: str) -> str:
+def version_html_root(output_path: str, version_format: str = "") -> str:
     """
     Extract the version-level root from an output path.
 
@@ -71,10 +71,12 @@ def version_html_root(output_path: str) -> str:
     idx = output_path.find(html_marker)
     if idx != -1:
         after_html = output_path[idx + len(html_marker):]
-        # EBX main: next segment is a 2-char lowercase language code (en, fr, de, ...)
-        m = re.match(r'^([a-z]{2})/', after_html)
-        if m:
-            return output_path[: idx + len(html_marker)] + m.group(1) + "/"
+        # EBX main only: next segment is a 2-char lowercase language code (en, fr, de, ...)
+        # Guard on format so MadCap products with short folder names are unaffected.
+        if version_format == "ebx":
+            m = re.match(r'^([a-z]{2})/', after_html)
+            if m:
+                return output_path[: idx + len(html_marker)] + m.group(1) + "/"
         return output_path[: idx + len(html_marker)]
     # EBX addon / other non-html structures: parent.parent gives module root.
     # If parent.parent ends in a generic directory name ("doc", "html"), step
@@ -352,7 +354,8 @@ def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
     """Group manifest entries by version_html_root."""
     versions: dict[str, list[dict]] = defaultdict(list)
     for entry in manifest:
-        root = version_html_root(entry["output_path"])
+        fmt  = entry.get("version_format", "")
+        root = version_html_root(entry["output_path"], fmt)
         versions[root].append(entry)
     return dict(versions)
 

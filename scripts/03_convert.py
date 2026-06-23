@@ -219,10 +219,11 @@ def extract_page_metadata(soup: BeautifulSoup, entry: dict) -> dict:
     # Language
     lang = attrs.get("lang", attrs.get("xml:lang", "en-us"))
 
-    # Title: prefer <title> tag; for EBX strip "Product Documentation - " prefix via h1
+    # Title: prefer <title> tag, fallback to first h1 in content
+    # EBX pages use "Product Documentation - <page title>" in <title>; use h1 instead.
     title_tag = soup.find("title")
     title = title_tag.get_text(strip=True) if title_tag else ""
-    if " - " in title:
+    if entry.get("version_format") == "ebx" and " - " in title:
         h1 = soup.find("h1")
         if h1:
             title = h1.get_text(strip=True)
@@ -415,7 +416,9 @@ def convert_entry(
 
         # Run preprocessor transforms
         page_url_path = urlparse(url).path
-        chrome_selectors = settings.get("chrome_selectors", [])
+        chrome_selectors = list(settings.get("chrome_selectors", []))
+        if entry.get("version_format") == "ebx":
+            chrome_selectors += settings.get("ebx_chrome_selectors", [])
         block_tags = set(settings.get("tables", {}).get("passthrough_block_tags", []))
         transform_stats = run_preprocessor(content, chrome_selectors, page_url_path, block_tags)
         for k, v in transform_stats.items():
