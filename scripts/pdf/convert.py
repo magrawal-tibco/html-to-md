@@ -668,6 +668,223 @@ def _fix_callouts(md_lines: list[str]) -> list[str]:
     return result
 
 
+# ── Known Issues table reconstruction ────────────────────────────────────────
+
+_ISSUES_HDR_RE  = re.compile(r"^\|\s*Key\s*\|", re.IGNORECASE)
+_ISSUES_SEP_RE  = re.compile(r"^\|\s*-")
+_ISSUES_KEY_RE  = re.compile(r"^([A-Z][A-Z0-9]*-\d+)\s*(.*)", re.DOTALL)
+_ISSUES_SUMM_RE = re.compile(r"^(?:###\s+)?Summary:\s*(.*)", re.IGNORECASE)
+_ISSUES_WKRD_RE = re.compile(r"^(?:###\s+)?Workaround:?\s*(.*)", re.IGNORECASE)
+_OL_ITEM_RE2    = re.compile(r"^\d+\.\s+(.+)")
+_NOTE_BQ_RE     = re.compile(r"^>\s*\*\*Note:\*\*\s*(.*)", re.IGNORECASE)
+_MD_CODE_RE     = re.compile(r"`([^`]+)`")
+
+
+def _md_inline_to_html(text: str) -> str:
+    """Convert markdown inline code spans to <code> elements, merging adjacent spans."""
+    merged = re.sub(r"`([^`]+)``([^`]+)`", r"`\1\2`", text)
+    return _MD_CODE_RE.sub(r"<code>\1</code>", merged)
+
+
+def _build_issue_cell(summary: str, wa_parts: list, use_labels: bool = True) -> str:
+    """Render summary + workaround as HTML cell content.
+
+    use_labels=True  (Known Issues):   wraps content in <strong>Summary:</strong> /
+                                       <strong>Workaround:</strong> labels.
+    use_labels=False (Closed Issues):  renders plain paragraphs without bold labels.
+    """
+    html: list[str] = []
+    if summary:
+        if use_labels:
+            html.append(f"<p><strong>Summary:</strong> {_md_inline_to_html(summary)}</p>")
+        else:
+            html.append(f"<p>{_md_inline_to_html(summary)}</p>")
+    if not wa_parts:
+        return "".join(html)
+
+    intro_parts: list[str] = []
+    ol_items:    list[str] = []
+    notes:       list[str] = []
+    for kind, content in wa_parts:
+        if kind == "text":
+            if ol_items:
+                ol_items[-1] += " " + content
+            else:
+                intro_parts.append(content)
+        elif kind == "ol_item":
+            ol_items.append(content)
+        elif kind == "note":
+            notes.append(content)
+
+    intro = _md_inline_to_html(" ".join(intro_parts).strip())
+    if use_labels:
+        html.append(f"<p><strong>Workaround:</strong> {intro}</p>" if intro
+                    else "<p><strong>Workaround:</strong></p>")
+    elif intro:
+        html.append(f"<p>{intro}</p>")
+    if ol_items:
+        lis = "".join(f"<li>{_md_inline_to_html(li)}</li>" for li in ol_items)
+        html.append(f"<ol>{lis}</ol>")
+    for note in notes:
+        html.append(f"<blockquote><strong>Note:</strong> {_md_inline_to_html(note)}</blockquote>")
+    return "".join(html)
+
+
+def _fix_issue_tables(md_lines: list[str]) -> list[str]:
+    """
+    Reconstruct Known Issues / Closed Issues pseudo-tables into HTML tables.
+
+    Section detection (from the nearest preceding H1 heading):
+    - "Closed Issues" → column "Summary", plain paragraphs (no bold labels)
+    - "Known Issues"  → column "Description", bold Summary/Workaround labels
+
+    Handles PDF layout variations:
+    - Key + Summary on same line: "BWAR-182 Summary: ..."
+    - Summary before key:         "Summary: ...\nBWAR-235"
+    - H3-prefixed tags:           "### Summary: ..." / "### Workaround: ..."
+    - Numbered steps with inline code continuations
+    - Blockquote notes (already converted by _fix_callouts)
+    """
+    result:     list[str]  = []
+    mode:       str | None = None
+    rows:       list[str]  = []
+    col_name:   str        = "Description"
+    use_labels: bool       = True
+    current_h1: str        = ""
+
+    cur_key:   str        = ""
+    section:   str | None = None
+    sum_parts: list[str]  = []
+    wa_parts:  list       = []
+    pre_sum:   list[str]  = []
+
+    def flush() -> None:
+        nonlocal cur_key, section, sum_parts, wa_parts, pre_sum
+        if cur_key:
+            desc = _build_issue_cell(" ".join(sum_parts), wa_parts, use_labels=use_labels)
+            rows.append(f"<tr><td>{cur_key}</td><td>{desc}</td></tr>")
+        cur_key = ""; section = None; sum_parts = []; wa_parts = []; pre_sum = []
+
+    def emit() -> None:
+        if rows:
+            result.extend(["<table>", f"<tr><th>Key</th><th>{col_name}</th></tr>",
+                           *rows, "</table>"])
+        rows.clear()
+
+    for line in md_lines:
+        s = line.strip()
+
+        if mode is None:
+            m_h1 = re.match(r"^#\s+(.+)", s)
+            if m_h1:
+                current_h1 = m_h1.group(1).strip()
+            if _ISSUES_HDR_RE.match(s):
+                is_closed  = "closed" in current_h1.lower()
+                col_name   = "Summary" if is_closed else "Description"
+                use_labels = not is_closed
+                mode = "saw_sep"
+            else:
+                result.append(line)
+            continue
+
+        if mode == "saw_sep":
+            if _ISSUES_SEP_RE.match(s):
+                mode = "in_table"
+            else:
+                result.extend([f"| Key | {col_name} |", line])
+                mode = None
+            continue
+
+        # H1/H2 heading ends the table
+        if re.match(r"^#{1,2}\s", s) and not re.match(r"^###", s):
+            flush(); emit(); mode = None; result.append(line); continue
+
+        if not s:
+            continue  # skip blank lines within table block
+
+        m = _ISSUES_SUMM_RE.match(s)
+        if m:
+            rest = m.group(1).strip()
+            if cur_key and section == "workaround":
+                flush()
+            if cur_key:
+                section = "summary"
+                if rest:
+                    sum_parts.append(rest)
+            else:
+                section = "summary"
+                if rest:
+                    pre_sum.append(rest)
+            continue
+
+        m = _ISSUES_WKRD_RE.match(s)
+        if m:
+            rest = m.group(1).strip()
+            section = "workaround"
+            if rest:
+                wa_parts.append(("text", rest))
+            continue
+
+        m = _ISSUES_KEY_RE.match(s)
+        if m:
+            key, rest = m.group(1), m.group(2).strip()
+            if cur_key and cur_key != key:
+                flush()
+            if not cur_key:
+                cur_key = key; sum_parts = list(pre_sum); pre_sum = []
+            if rest:
+                ms = _ISSUES_SUMM_RE.match(rest)
+                mw = _ISSUES_WKRD_RE.match(rest)
+                if ms:
+                    section = "summary"
+                    rest2 = ms.group(1).strip()
+                    if rest2:
+                        sum_parts.append(rest2)
+                elif mw:
+                    section = "workaround"
+                    rest2 = mw.group(1).strip()
+                    if rest2:
+                        wa_parts.append(("text", rest2))
+                else:
+                    if section in ("summary", None):
+                        section = "summary"; sum_parts.append(rest)
+                    else:
+                        wa_parts.append(("text", rest))
+            continue
+
+        m = _OL_ITEM_RE2.match(s)
+        if m and section == "workaround":
+            wa_parts.append(("ol_item", m.group(1))); continue
+
+        m = _NOTE_BQ_RE.match(s)
+        if m:
+            if section == "workaround":
+                wa_parts.append(("note", m.group(1).strip()))
+            continue
+
+        if s.startswith("`") and section == "workaround" and wa_parts:
+            last_kind, last_content = wa_parts[-1]
+            if last_kind in ("text", "ol_item"):
+                wa_parts[-1] = (last_kind, last_content + " " + s)
+            else:
+                wa_parts.append(("text", s))
+            continue
+
+        if section == "summary":
+            sum_parts.append(s)
+        elif section == "workaround":
+            if wa_parts and wa_parts[-1][0] == "ol_item":
+                k2, c2 = wa_parts[-1]; wa_parts[-1] = (k2, c2 + " " + s)
+            else:
+                wa_parts.append(("text", s))
+        else:
+            section = "summary"; sum_parts.append(s)
+
+    if mode == "in_table":
+        flush(); emit()
+    return result
+
+
 # ── Markdown cleanup ──────────────────────────────────────────────────────────
 
 _STRIP_SECTIONS = re.compile(
@@ -897,7 +1114,7 @@ def convert_pdf(
             reporter.fail(str(pdf_path), "No content extracted from PDF")
             return False
 
-        body = _clean_markdown("\n".join(_fix_callouts(_fix_table_rows(md_lines))))
+        body = _clean_markdown("\n".join(_fix_issue_tables(_fix_callouts(_fix_table_rows(md_lines)))))
         frontmatter = _build_frontmatter(entry)
         final_content = frontmatter + body
 
