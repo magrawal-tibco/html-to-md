@@ -322,6 +322,62 @@ def _render_table(table) -> str:
         return f"<table>\n{td_rows}</table>"
 
 
+# ── Leading-H3 split ──────────────────────────────────────────────────────────
+
+def _extract_leading_h3(block: dict, body_size: float) -> tuple[str, str] | None:
+    """
+    Detect a block whose first span(s) are bold body-size text followed by non-bold
+    body text — i.e. an inline sub-heading that PDF did not separate into its own block.
+
+    Returns (h3_text, body_text) when found, or None.
+
+    Example PDF pattern:
+      [bold] "Creating and Configuring the Redshift Connection Resource"
+      [regular] "By using the Default Credentials Provider Chain..."
+    → ("Creating and Configuring the Redshift Connection Resource",
+       "By using the Default Credentials Provider Chain...")
+    """
+    spans = _meaningful_spans(block)
+    if not spans:
+        return None
+
+    first = spans[0]
+    # Must start with bold text at body size (not a larger heading, not a glyph)
+    if not (_is_bold(first) and body_size - 1 <= first["size"] < body_size + 2
+            and not _is_glyph_span(first)):
+        return None
+
+    # Partition spans into the leading bold run and the remainder
+    split_idx = 0
+    for i, span in enumerate(spans):
+        if _is_bold(span) and not _is_glyph_span(span):
+            split_idx = i + 1
+        else:
+            break
+
+    if split_idx >= len(spans):
+        return None  # entire block is bold → normal H3 classification handles it
+
+    # Build H3 text from bold-prefix spans (simple join; heading text is never code)
+    h3_text = re.sub(r"\s+", " ",
+                     " ".join(s["text"].strip() for s in spans[:split_idx])).strip()
+
+    # Reject if it looks like a sentence rather than a heading label
+    if not h3_text or len(h3_text) >= 120 or re.search(r"[.?!]\s*$", h3_text):
+        return None
+
+    # Build body text from remaining spans, preserving code formatting
+    body_parts: list[str] = []
+    for span in spans[split_idx:]:
+        t = span["text"].strip()
+        if not t:
+            continue
+        body_parts.append(f"`{t}`" if _is_code_span(span) else t)
+    body_text = re.sub(r"\s+", " ", " ".join(body_parts)).strip()
+
+    return (h3_text, body_text) if body_text else None
+
+
 # ── Page conversion ───────────────────────────────────────────────────────────
 
 def _convert_page(
@@ -367,6 +423,18 @@ def _convert_page(
         btype = _classify_block(block, body_size)
         if btype == "skip":
             continue
+
+        # Body blocks that start with a bold run followed by non-bold text are
+        # inline sub-headings the PDF did not separate — split into H3 + body.
+        if btype == "body":
+            split = _extract_leading_h3(block, body_size)
+            if split:
+                h3_text, body_text = split
+                if h3_text not in repeated_h3_texts:
+                    raw_items.append((bbox[1], bbox[0], "h3", f"### {h3_text}"))
+                if body_text:
+                    raw_items.append((bbox[1] + 0.01, bbox[0], "body", body_text))
+                continue
 
         skip_glyph = btype in ("bullet", "sub_bullet", "h3")
         text = _assemble_block_text(block, skip_leading_glyph=skip_glyph)
