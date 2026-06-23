@@ -637,6 +637,37 @@ def _fix_table_rows(md_lines: list[str]) -> list[str]:
     return result
 
 
+# ── Callout normalisation ─────────────────────────────────────────────────────
+
+_CALLOUT_RE = re.compile(
+    r'^(Note|Warning|Caution|Important|Tip)\s*:\s*(.+)',
+    re.IGNORECASE,
+)
+_CALLOUT_LABELS = {
+    "note": "Note", "warning": "Warning", "caution": "Caution",
+    "important": "Important", "tip": "Tip",
+}
+
+
+def _fix_callouts(md_lines: list[str]) -> list[str]:
+    """
+    Convert bare "Note: ..." / "Warning: ..." lines (as produced by PDF extraction)
+    into blockquote callouts matching the HTML pipeline format:
+
+      Note: Some text.  →  > **Note:** Some text.
+    """
+    result: list[str] = []
+    for line in md_lines:
+        m = _CALLOUT_RE.match(line.strip())
+        if m:
+            label = _CALLOUT_LABELS[m.group(1).lower()]
+            body  = m.group(2).strip()
+            result.append(f"> **{label}:** {body}")
+        else:
+            result.append(line)
+    return result
+
+
 # ── Markdown cleanup ──────────────────────────────────────────────────────────
 
 _STRIP_SECTIONS = re.compile(
@@ -866,7 +897,7 @@ def convert_pdf(
             reporter.fail(str(pdf_path), "No content extracted from PDF")
             return False
 
-        body = _clean_markdown("\n".join(_fix_table_rows(md_lines)))
+        body = _clean_markdown("\n".join(_fix_callouts(_fix_table_rows(md_lines))))
         frontmatter = _build_frontmatter(entry)
         final_content = frontmatter + body
 
