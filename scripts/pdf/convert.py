@@ -673,8 +673,9 @@ def _fix_callouts(md_lines: list[str]) -> list[str]:
 _ISSUES_HDR_RE  = re.compile(r"^\|\s*Key\s*\|", re.IGNORECASE)
 _ISSUES_SEP_RE  = re.compile(r"^\|\s*-")
 _ISSUES_KEY_RE  = re.compile(r"^([A-Z][A-Z0-9]*-\d+)\s*(.*)", re.DOTALL)
-_ISSUES_SUMM_RE = re.compile(r"^(?:###\s+)?Summary:\s*(.*)", re.IGNORECASE)
-_ISSUES_WKRD_RE = re.compile(r"^(?:###\s+)?Workaround:?\s*(.*)", re.IGNORECASE)
+_ISSUES_SUMM_RE = re.compile(r"^(?:###\s+)?Summary:?\s*(.*)", re.IGNORECASE)   # colon optional
+_ISSUES_WKRD_RE = re.compile(r"^(?:###\s+)?Workaround:?\s*(.*)", re.IGNORECASE) # colon optional
+_ISSUES_NOTE_RE = re.compile(r"^###\s+Note:?\s*(.*)", re.IGNORECASE)            # H3 note header
 _OL_ITEM_RE2    = re.compile(r"^\d+\.\s+(.+)")
 _NOTE_BQ_RE     = re.compile(r"^>\s*\*\*Note:\*\*\s*(.*)", re.IGNORECASE)
 _MD_CODE_RE     = re.compile(r"`([^`]+)`")
@@ -740,17 +741,30 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
 
     Handles PDF layout variations:
     - Key + Summary on same line: "BWAR-182 Summary: ..."
-    - Summary before key:         "Summary: ...\nBWAR-235"
-    - H3-prefixed tags:           "### Summary: ..." / "### Workaround: ..."
+    - Summary before key:         "### Summary\nBWAR-235 : text"
+    - H3-prefixed labels:         "### Summary" / "### Workaround" (colon optional)
+    - Leading ': ' artifact:      ": text" after a label line
     - Numbered steps with inline code continuations
-    - Blockquote notes (already converted by _fix_callouts)
+    - Two-line notes:             "### Note:\ntext"
+    - Blockquote notes:           "> **Note:** text" (already from _fix_callouts)
+    - No table header:            bare issue keys in Closed Issues section
+    - Multi-line table header:    "| Key | Summary |\n| --- | --- |" as one string
+    - Compound keys:              "BPDK-554/ BPDK-586 : text"
+    - Bold-label artifacts:       "### Apply" (button name rendered as heading)
     """
-    result:     list[str]  = []
-    mode:       str | None = None
-    rows:       list[str]  = []
-    col_name:   str        = "Description"
-    use_labels: bool       = True
-    current_h1: str        = ""
+    # Flatten multi-line elements (e.g. table header+separator in one PDF block)
+    flat: list[str] = []
+    for line in md_lines:
+        flat.extend(line.splitlines())
+    md_lines = flat
+
+    result:       list[str]  = []
+    mode:         str | None = None   # None | "saw_sep" | "in_table"
+    rows:         list[str]  = []
+    col_name:     str        = "Description"
+    use_labels:   bool       = True
+    current_h1:   str        = ""
+    pending_note: bool       = False  # True when "### Note:" seen; next line is note text
 
     cur_key:   str        = ""
     section:   str | None = None
@@ -758,12 +772,22 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
     wa_parts:  list       = []
     pre_sum:   list[str]  = []
 
+    def _strip_art(text: str) -> str:
+        """Strip leading PDF artifacts: compound-key prefix '/ KEY :' and bare ': '."""
+        text = re.sub(r"^/\s*[A-Z][A-Z0-9]*-\d+\s*:\s*", "", text)
+        text = re.sub(r"^:\s*", "", text)
+        return text.strip()
+
+    def _is_issues_h1(h1: str) -> bool:
+        low = h1.lower()
+        return "closed issue" in low or "known issue" in low
+
     def flush() -> None:
-        nonlocal cur_key, section, sum_parts, wa_parts, pre_sum
+        nonlocal cur_key, section, sum_parts, wa_parts, pre_sum, pending_note
         if cur_key:
             desc = _build_issue_cell(" ".join(sum_parts), wa_parts, use_labels=use_labels)
             rows.append(f"<tr><td>{cur_key}</td><td>{desc}</td></tr>")
-        cur_key = ""; section = None; sum_parts = []; wa_parts = []; pre_sum = []
+        cur_key = ""; section = None; sum_parts = []; wa_parts = []; pre_sum = []; pending_note = False
 
     def emit() -> None:
         if rows:
@@ -774,6 +798,7 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
     for line in md_lines:
         s = line.strip()
 
+        # ── pass-through mode ─────────────────────────────────────────────────
         if mode is None:
             m_h1 = re.match(r"^#\s+(.+)", s)
             if m_h1:
@@ -783,51 +808,93 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
                 col_name   = "Summary" if is_closed else "Description"
                 use_labels = not is_closed
                 mode = "saw_sep"
+                continue  # discard header row
+            # Auto-detect: bare issue key in Closed/Known Issues H1, no table header
+            if _is_issues_h1(current_h1) and _ISSUES_KEY_RE.match(s):
+                is_closed  = "closed" in current_h1.lower()
+                col_name   = "Summary" if is_closed else "Description"
+                use_labels = not is_closed
+                mode = "in_table"
+                # fall through to in_table processing for this line
             else:
                 result.append(line)
-            continue
+                continue
 
+        # ── saw separator row ─────────────────────────────────────────────────
         if mode == "saw_sep":
             if _ISSUES_SEP_RE.match(s):
                 mode = "in_table"
+            elif not s:
+                pass  # skip blank line, keep looking
             else:
                 result.extend([f"| Key | {col_name} |", line])
                 mode = None
             continue
 
-        # H1/H2 heading ends the table
+        # ── in_table mode ─────────────────────────────────────────────────────
+
+        # H1/H2 heading ends the table (H3 does not); update current_h1 for H1
         if re.match(r"^#{1,2}\s", s) and not re.match(r"^###", s):
-            flush(); emit(); mode = None; result.append(line); continue
+            flush(); emit(); mode = None
+            m_h1 = re.match(r"^#\s+(.+)", s)
+            if m_h1:
+                current_h1 = m_h1.group(1).strip()
+            result.append(line); continue
 
-        if not s:
-            continue  # skip blank lines within table block
-
-        m = _ISSUES_SUMM_RE.match(s)
-        if m:
-            rest = m.group(1).strip()
-            if cur_key and section == "workaround":
-                flush()
-            if cur_key:
-                section = "summary"
-                if rest:
-                    sum_parts.append(rest)
-            else:
-                section = "summary"
-                if rest:
-                    pre_sum.append(rest)
+        # Pending two-line note: capture text on the line after "### Note:"
+        if pending_note:
+            pending_note = False
+            if s:
+                wa_parts.append(("note", _strip_art(s)))
             continue
 
+        if not s:
+            continue  # skip blank lines within table
+
+        # GFM separator row (| --- | --- |) — skip, already entered in_table
+        if _ISSUES_SEP_RE.match(s):
+            continue
+
+        # H3 Note header: "### Note:" or "### Note: text"
+        m = _ISSUES_NOTE_RE.match(s)
+        if m:
+            rest = _strip_art(m.group(1))
+            if rest:
+                wa_parts.append(("note", rest))
+            else:
+                pending_note = True
+            continue
+
+        # Blockquote note already converted by _fix_callouts
+        m = _NOTE_BQ_RE.match(s)
+        if m:
+            wa_parts.append(("note", m.group(1).strip()))
+            continue
+
+        # Summary label (### Summary / Summary: / ### Summary: text)
+        m = _ISSUES_SUMM_RE.match(s)
+        if m:
+            rest = _strip_art(m.group(1))
+            if cur_key and section == "workaround":
+                flush()
+            section = "summary"
+            if rest:
+                (sum_parts if cur_key else pre_sum).append(rest)
+            continue
+
+        # Workaround label
         m = _ISSUES_WKRD_RE.match(s)
         if m:
-            rest = m.group(1).strip()
+            rest = _strip_art(m.group(1))
             section = "workaround"
             if rest:
                 wa_parts.append(("text", rest))
             continue
 
+        # Issue key (KEY-NNN)
         m = _ISSUES_KEY_RE.match(s)
         if m:
-            key, rest = m.group(1), m.group(2).strip()
+            key, rest = m.group(1), _strip_art(m.group(2))
             if cur_key and cur_key != key:
                 flush()
             if not cur_key:
@@ -837,14 +904,12 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
                 mw = _ISSUES_WKRD_RE.match(rest)
                 if ms:
                     section = "summary"
-                    rest2 = ms.group(1).strip()
-                    if rest2:
-                        sum_parts.append(rest2)
+                    r2 = _strip_art(ms.group(1))
+                    if r2: sum_parts.append(r2)
                 elif mw:
                     section = "workaround"
-                    rest2 = mw.group(1).strip()
-                    if rest2:
-                        wa_parts.append(("text", rest2))
+                    r2 = _strip_art(mw.group(1))
+                    if r2: wa_parts.append(("text", r2))
                 else:
                     if section in ("summary", None):
                         section = "summary"; sum_parts.append(rest)
@@ -852,16 +917,12 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
                         wa_parts.append(("text", rest))
             continue
 
+        # Ordered list item (numbered workaround step)
         m = _OL_ITEM_RE2.match(s)
         if m and section == "workaround":
             wa_parts.append(("ol_item", m.group(1))); continue
 
-        m = _NOTE_BQ_RE.match(s)
-        if m:
-            if section == "workaround":
-                wa_parts.append(("note", m.group(1).strip()))
-            continue
-
+        # Code span continuation (backtick-prefixed) in workaround
         if s.startswith("`") and section == "workaround" and wa_parts:
             last_kind, last_content = wa_parts[-1]
             if last_kind in ("text", "ol_item"):
@@ -870,18 +931,62 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
                 wa_parts.append(("text", s))
             continue
 
+        # Regular body text — strip PDF heading artifacts ("### ButtonName")
+        s_clean = re.sub(r"^###\s+", "", _strip_art(s))
+        if not s_clean:
+            continue
         if section == "summary":
-            sum_parts.append(s)
+            sum_parts.append(s_clean)
         elif section == "workaround":
             if wa_parts and wa_parts[-1][0] == "ol_item":
-                k2, c2 = wa_parts[-1]; wa_parts[-1] = (k2, c2 + " " + s)
+                k2, c2 = wa_parts[-1]; wa_parts[-1] = (k2, c2 + " " + s_clean)
             else:
-                wa_parts.append(("text", s))
+                wa_parts.append(("text", s_clean))
         else:
-            section = "summary"; sum_parts.append(s)
+            section = "summary"; sum_parts.append(s_clean)
 
     if mode == "in_table":
         flush(); emit()
+    return result
+
+
+# ── Heading level correction ─────────────────────────────────────────────────
+
+_RELNOTES_TOP_SECTIONS = frozenset([
+    "new features",
+    "changes in functionality",
+    "changes in platform support",
+    "changes in platform support and functionality",
+    "deprecated features",
+    "deprecated and removed features",
+    "removed features",
+    "migration and compatibility",
+    "closed issues",
+    "known issues",
+    "open issues",
+])
+
+
+def _demote_nested_h1(md_lines: list[str]) -> list[str]:
+    """
+    Convert H1 sub-headings to H2 when they appear inside a known top-level section.
+    E.g. "# Migrating from Release..." under "# Migration and Compatibility" → ## .
+    """
+    result: list[str] = []
+    in_section = False
+    for line in md_lines:
+        m = re.match(r"^(#+)\s+(.+)", line.rstrip())
+        if m and m.group(1) == "#":
+            heading_text = m.group(2).strip().lower()
+            if heading_text in _RELNOTES_TOP_SECTIONS:
+                in_section = True
+                result.append(line)
+            elif in_section:
+                result.append("## " + m.group(2).strip())
+            else:
+                result.append(line)
+        else:
+            result.append(line)
     return result
 
 
@@ -1165,7 +1270,9 @@ def convert_pdf(
             reporter.fail(str(pdf_path), "No content extracted from PDF")
             return False
 
-        body = _clean_markdown("\n".join(_fix_issue_tables(_fix_callouts(_fix_table_rows(md_lines)))))
+        processed = _fix_issue_tables(_fix_callouts(_fix_table_rows(md_lines)))
+        processed = _demote_nested_h1(processed)
+        body = _clean_markdown("\n".join(processed))
 
         release_date = _find_release_date(entry["pdf_path"], doc)
         if release_date:
