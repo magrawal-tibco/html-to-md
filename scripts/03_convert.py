@@ -164,15 +164,18 @@ def build_cache_driven_entries(manifest: list[dict], cache_dir: Path,
     html_extensions  = set(settings.get("html_extensions", [".htm", ".html"]))
     skip_patterns    = settings.get("skip_filename_patterns", [])
 
-    # Per-URL lookup for manifest metadata
-    url_to_entry: dict[str, dict] = {e["url"]: e for e in manifest}
+    # Per-URL lookup for manifest metadata (only entries with a per-page URL)
+    url_to_entry: dict[str, dict] = {e["url"]: e for e in manifest if "url" in e}
 
-    # Group manifest entries by version to find each version's cache root
+    # Group manifest entries by version to find each version's cache root.
+    # Old format: keyed by version_sitemap. New format: keyed by version_url.
     version_groups: dict[str, list[dict]] = defaultdict(list)
     for e in manifest:
         vs = e.get("version_sitemap", "")
         if vs:
             version_groups[vs].append(e)
+        elif "version_url" in e and "url" not in e:
+            version_groups[e["version_url"]].append(e)
 
     # Determine the cache root directory for each version.
     # Strategy: take the path up to and including the version segment (X.Y.Z).
@@ -194,7 +197,15 @@ def build_cache_driven_entries(manifest: list[dict], cache_dir: Path,
     seen_cache_paths: set[Path] = set()
 
     for vs, entries in version_groups.items():
-        cache_root = _version_cache_root(entries)
+        is_new_format = "version_url" in entries[0] and "url" not in entries[0]
+        if is_new_format:
+            pub_slug = entries[0].get("pub_slug", "")
+            product_version = entries[0].get("product_version", "")
+            if not pub_slug or not product_version:
+                continue
+            cache_root = cache_dir / "pub" / pub_slug / product_version / "doc" / "html"
+        else:
+            cache_root = _version_cache_root(entries)
         if cache_root is None or not cache_root.exists():
             continue
 
@@ -203,7 +214,7 @@ def build_cache_driven_entries(manifest: list[dict], cache_dir: Path,
             "product_name":    entries[0].get("product_name", ""),
             "product_version": entries[0].get("product_version", ""),
             "doc_name":        entries[0].get("doc_name", ""),
-            "version_sitemap": vs,
+            "version_sitemap": "" if is_new_format else vs,
             "alias_xml_url":   entries[0].get("alias_xml_url", ""),
             "version_format":  entries[0].get("version_format", ""),
         }
@@ -551,12 +562,21 @@ def main():
         )
         reporter.info(f"Manifest: {len(manifest)} entries | Cache scan: {len(work_entries)} HTML files found")
     else:
-        work_entries = [e for e in manifest if e.get("version_sitemap", "") not in dita_versions]
+        zip_only = [e for e in manifest if "url" not in e]
+        work_entries = [
+            e for e in manifest
+            if "url" in e and e.get("version_sitemap", "") not in dita_versions
+        ]
         reporter.info(
             f"=== Step 3: Convert | phase={args.phase} mode=manifest "
             f"dry_run={args.dry_run} force_rerun={force_rerun} ==="
         )
         reporter.info(f"Manifest: {len(manifest)} entries")
+        if zip_only:
+            reporter.info(
+                f"{len(zip_only)} version-level entry(ies) have no page URL "
+                f"— run --scan-cache after ZIP extraction (step 2a)"
+            )
 
     # Pre-compute release_date per version from Home.htm (ga-date span)
     version_release_dates: dict[str, str | None] = {}

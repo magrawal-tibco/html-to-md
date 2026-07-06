@@ -65,7 +65,7 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
             # <ver>/doc/<addon>/<rest...>  (includes doc/<addon>/Java_API/)
             ver, addon = parts[0], parts[2]
             rest = Path(*parts[3:])
-            new_rel = Path(addon) / ver / rest
+            new_rel = Path("en-us") / "ebx-addon" / addon / ver.replace(".", "-") / rest
 
         else:
             # Version-level aggregate files (e.g. doc/_toc.json) — skip
@@ -226,9 +226,10 @@ def main() -> int:
 
     patched = 0
     for ver, addon, _addon_root in addon_roots:
+        folder_ver = ver.replace(".", "-")
         old_root = f"{src_prefix}/{ver}/doc/{addon}/"
-        new_root = f"{dst_prefix}/{addon}/{ver}/"
-        toc_file = dst / addon / ver / "_toc.json"
+        new_root = f"{dst_prefix}/en-us/ebx-addon/{addon}/{folder_ver}/"
+        toc_file = dst / "en-us" / "ebx-addon" / addon / folder_ver / "_toc.json"
         if toc_file.exists():
             if patch_toc_json(toc_file, old_root, new_root):
                 patched += 1

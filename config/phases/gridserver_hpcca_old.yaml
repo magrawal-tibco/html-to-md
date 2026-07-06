@@ -3,8 +3,6 @@
 # All versions under each product are discovered automatically.
 name: "Gridserver BU - DataSynapse Gridserver BU Products"
 products:
-  - https://docs.tibco.com/products/tibco-datasynapse-gridserver-logviewer-1-0-0
-  - https://docs.tibco.com/products/tibco-datasynapse-gridserver-manager-7-2-0
-  - https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-2-0
+
   - https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0
   - https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0

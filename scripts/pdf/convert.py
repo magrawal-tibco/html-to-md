@@ -668,6 +668,84 @@ def _fix_callouts(md_lines: list[str]) -> list[str]:
     return result
 
 
+# ── Platform support table reconstruction ────────────────────────────────────
+
+# Matches a 2-column header produced when PyMuPDF find_tables() only detected
+# the Status and As-of-Version columns, leaving Platform names as body text.
+_PLATFORM_HDR_RE = re.compile(r"^\|\s*Status\s*\|\s*As\s+of\s+(?:Version|Release)\s*\|$", re.IGNORECASE)
+_PLATFORM_ROW_RE = re.compile(r"^(.+?)\s+(Added|Removed)\s+(\d+\.\d+(?:\.\d+)?)\s*$")
+
+
+def _fix_platform_table(md_lines: list[str]) -> list[str]:
+    """
+    Detect a 2-column '| Status | As of Version |' table followed by body-text
+    platform rows and replace with a proper 3-column table.
+
+    Input pattern:
+        | Status | As of Version |
+        | --- | --- |
+        Apple Mac OS 13.x 64-bit on x86-64 Added 6.1.0
+        Microsoft Windows 11 64-bit on x86-64 Added 6.1.0
+
+    Output:
+        | Platform | Status | As of Version |
+        | --- | --- | --- |
+        | Apple Mac OS 13.x 64-bit on x86-64 | Added | 6.1.0 |
+        | Microsoft Windows 11 64-bit on x86-64 | Added | 6.1.0 |
+    """
+    result, i = [], 0
+    while i < len(md_lines):
+        s = md_lines[i].strip()
+        if _PLATFORM_HDR_RE.match(s):
+            j = i + 1
+            # Consume the separator row if present
+            if j < len(md_lines) and _ISSUES_SEP_RE.match(md_lines[j].strip()):
+                j += 1
+            # Collect body-text rows that match "Platform Added|Removed Version".
+            # PDFs sometimes split a platform name across two lines, e.g.:
+            #   macOS Added 6.3.3
+            #   13.x 64-bit on x86-64        ← continuation of platform name
+            # Detect continuations: short line, no sentence-ending period,
+            # doesn't start a new table/heading element.
+            rows: list[tuple[str, str, str]] = []
+            while j < len(md_lines):
+                cur = md_lines[j].strip()
+                m = _PLATFORM_ROW_RE.match(cur)
+                if m:
+                    rows.append((m.group(1).strip(), m.group(2), m.group(3)))
+                    j += 1
+                    # Consume continuation lines (OS version detail on next line)
+                    while j < len(md_lines):
+                        cont = md_lines[j].strip()
+                        if (cont
+                                and not _PLATFORM_ROW_RE.match(cont)
+                                and not cont.startswith("|")
+                                and not cont.startswith("#")
+                                and not cont.endswith(".")
+                                and len(cont) < 80):
+                            plat, st, ver = rows[-1]
+                            rows[-1] = (plat + " " + cont, st, ver)
+                            j += 1
+                        else:
+                            break
+                else:
+                    break
+            if rows:
+                result.extend([
+                    "| Platform | Status | As of Version |",
+                    "| --- | --- | --- |",
+                ])
+                result.extend(f"| {p} | {st} | {v} |" for p, st, v in rows)
+                i = j
+            else:
+                result.append(md_lines[i])
+                i += 1
+        else:
+            result.append(md_lines[i])
+            i += 1
+    return result
+
+
 # ── Known Issues table reconstruction ────────────────────────────────────────
 
 _ISSUES_HDR_RE  = re.compile(r"^\|\s*Key\s*\|", re.IGNORECASE)
@@ -752,19 +830,14 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
     - Compound keys:              "BPDK-554/ BPDK-586 : text"
     - Bold-label artifacts:       "### Apply" (button name rendered as heading)
     """
-    # Flatten multi-line elements (e.g. table header+separator in one PDF block)
-    flat: list[str] = []
-    for line in md_lines:
-        flat.extend(line.splitlines())
-    md_lines = flat
-
-    result:       list[str]  = []
-    mode:         str | None = None   # None | "saw_sep" | "in_table"
-    rows:         list[str]  = []
-    col_name:     str        = "Description"
-    use_labels:   bool       = True
-    current_h1:   str        = ""
-    pending_note: bool       = False  # True when "### Note:" seen; next line is note text
+    result:         list[str]  = []
+    mode:           str | None = None   # None | "saw_sep" | "in_table"
+    rows:           list[str]  = []
+    col_name:       str        = "Description"
+    use_labels:     bool       = True
+    current_h1:     str        = ""
+    pending_note:   bool       = False  # True when "### Note:" seen; next line is note text
+    saved_hdr_line: str        = ""     # original "| Key | ... |" line saved for pass-through re-emit
 
     cur_key:   str        = ""
     section:   str | None = None
@@ -792,7 +865,7 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
     def emit() -> None:
         if rows:
             result.extend(["<table>", f"<tr><th>Key</th><th>{col_name}</th></tr>",
-                           *rows, "</table>"])
+                           *rows, "</table>", ""])
         rows.clear()
 
     for line in md_lines:
@@ -804,11 +877,12 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
             if m_h1:
                 current_h1 = m_h1.group(1).strip()
             if _ISSUES_HDR_RE.match(s):
-                is_closed  = "closed" in current_h1.lower()
-                col_name   = "Summary" if is_closed else "Description"
-                use_labels = not is_closed
-                mode = "saw_sep"
-                continue  # discard header row
+                is_closed      = "closed" in current_h1.lower()
+                col_name       = "Summary" if is_closed else "Description"
+                use_labels     = not is_closed
+                saved_hdr_line = line   # save original header for potential pass-through re-emit
+                mode           = "saw_sep"
+                continue  # discard header row (re-emitted if table is already rendered)
             # Auto-detect: bare issue key in Closed/Known Issues H1, no table header
             if _is_issues_h1(current_h1) and _ISSUES_KEY_RE.match(s):
                 is_closed  = "closed" in current_h1.lower()
@@ -853,6 +927,17 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
 
         # GFM separator row (| --- | --- |) — skip, already entered in_table
         if _ISSUES_SEP_RE.match(s):
+            continue
+
+        # Already-rendered GFM data row: find_tables() extracted the full table.
+        # If no reconstruction has started yet, exit mode and pass the row through,
+        # re-emitting the header row that was discarded when entering saw_sep mode.
+        if s.startswith("|") and not rows and not cur_key:
+            flush(); emit(); mode = None
+            if saved_hdr_line:
+                result.extend([saved_hdr_line, "| --- | --- |"])
+                saved_hdr_line = ""
+            result.append(line)
             continue
 
         # H3 Note header: "### Note:" or "### Note: text"
@@ -936,14 +1021,17 @@ def _fix_issue_tables(md_lines: list[str]) -> list[str]:
         if not s_clean:
             continue
         if section == "summary":
-            sum_parts.append(s_clean)
+            # Route to pre_sum when no key yet so the text isn't lost when the
+            # key is seen and sum_parts is reset to list(pre_sum).
+            (sum_parts if cur_key else pre_sum).append(s_clean)
         elif section == "workaround":
             if wa_parts and wa_parts[-1][0] == "ol_item":
                 k2, c2 = wa_parts[-1]; wa_parts[-1] = (k2, c2 + " " + s_clean)
             else:
                 wa_parts.append(("text", s_clean))
         else:
-            section = "summary"; sum_parts.append(s_clean)
+            section = "summary"
+            (sum_parts if cur_key else pre_sum).append(s_clean)
 
     if mode == "in_table":
         flush(); emit()
@@ -1264,17 +1352,23 @@ def convert_pdf(
 
             md_lines.extend(page_lines)
 
+        # Resolve release date while doc is still open (fallback reads PDF page 0)
+        release_date = _find_release_date(entry["pdf_path"], doc)
         doc.close()
 
         if not md_lines:
             reporter.fail(str(pdf_path), "No content extracted from PDF")
             return False
 
-        processed = _fix_issue_tables(_fix_callouts(_fix_table_rows(md_lines)))
+        # Flatten any multi-line elements (e.g. table header+separator in one PDF block)
+        flat_lines: list[str] = []
+        for l in md_lines:
+            flat_lines.extend(l.splitlines())
+
+        processed = _fix_issue_tables(_fix_callouts(_fix_platform_table(_fix_table_rows(flat_lines))))
         processed = _demote_nested_h1(processed)
         body = _clean_markdown("\n".join(processed))
 
-        release_date = _find_release_date(entry["pdf_path"], doc)
         if release_date:
             entry = {**entry, "release_date": release_date}
 

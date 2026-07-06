@@ -62,6 +62,7 @@ def run_step(
     ignore_registry: bool,
     scan_cache: bool = False,
     total_seconds: float | None = None,
+    delta: bool = False,
 ) -> tuple[int, float]:
     """Run a single pipeline step as a subprocess. Returns (exit_code, duration_seconds)."""
     cmd = [sys.executable, script, f"--phase={phase}", f"--config={config}"]
@@ -75,6 +76,9 @@ def run_step(
     # --ignore-registry is only used by Step 1
     if ignore_registry and "01_build_manifest" in script:
         cmd.append("--ignore-registry")
+    # --delta is only used by Step 1
+    if delta and "01_build_manifest" in script:
+        cmd.append("--delta")
     # --scan-cache is only used by Step 3
     if scan_cache and "03_convert.py" in script:
         cmd.append("--scan-cache")
@@ -279,6 +283,8 @@ def main():
                         help="Re-download cached files (Step 2 only)")
     parser.add_argument("--ignore-registry", action="store_true",
                         help="Include versions already in converted_versions.json (Step 1 only)")
+    parser.add_argument("--delta",          action="store_true",
+                        help="Skip versions whose ZIP Last-Modified is unchanged since last checkpoint (Step 1 only)")
     parser.add_argument("--scan-cache",    action="store_true",
                         help="Drive Step 3 from cached files instead of sitemap manifest (use when ZIP paths differ from sitemap URLs)")
     parser.add_argument("--skip-dita",    action="store_true",
@@ -313,6 +319,7 @@ def main():
             args.ignore_registry,
             scan_cache=args.scan_cache,
             total_seconds=accumulated_seconds if "07_generate_report" in script else None,
+            delta=args.delta,
         )
         accumulated_seconds += elapsed
         steps_run.append((display_id, script, label, exit_code, elapsed))

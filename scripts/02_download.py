@@ -177,6 +177,11 @@ async def download_phase(
         reporter.info(f"Downloading {len(manifest)} HTML pages (concurrency={concurrency})")
 
         async def fetch_page(entry: dict):
+            if "url" not in entry:
+                # Version-level entry (from /products/ API path) — no individual page URL;
+                # content is handled entirely by step 2a ZIP extraction.
+                reporter.count("pages_zip_extracted")
+                return
             url  = entry["url"]
             dest = url_to_cache_path(url, cache_dir)
             async with semaphore:

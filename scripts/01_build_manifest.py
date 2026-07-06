@@ -14,6 +14,7 @@ import json
 import re
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -186,8 +187,37 @@ def _resolve_version_entry(client: httpx.Client, version_url: str) -> dict | Non
     }
 
 
+def _get_zip_last_modified(client: httpx.Client, zip_url: str) -> str:
+    """Return the Last-Modified header of the ZIP URL, or '' on failure."""
+    try:
+        r = client.head(zip_url, follow_redirects=True)
+        return r.headers.get("last-modified", "")
+    except Exception:
+        return ""
+
+
+def load_checkpoint(manifests_dir: Path, phase: str) -> dict:
+    """Load the crawl checkpoint for a phase, or return {} if none exists."""
+    path = manifests_dir / f"crawl_checkpoint_{phase}.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
+def save_checkpoint(manifests_dir: Path, phase: str, versions: dict) -> None:
+    """Write crawl checkpoint recording ZIP Last-Modified per product URL."""
+    data = {
+        "phase":      phase,
+        "crawled_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "versions":   versions,
+    }
+    path = manifests_dir / f"crawl_checkpoint_{phase}.json"
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: bool,
-                   ignore_registry: bool = False) -> tuple[list[dict], list[dict], list[dict]]:
+                   ignore_registry: bool = False, delta: bool = False,
+                   checkpoint: dict | None = None) -> tuple[list[dict], list[dict], list[dict], dict]:
     """
     Crawl all product sitemaps in the phase and return (manifest, dita_versions, empty_versions).
 
@@ -197,14 +227,19 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
     dita_versions  — always empty (kept for backward compatibility); sdl_dita versions are now
                      included in manifest with version_format='sdl_dita'
     empty_versions — version sitemaps with entries but zero accepted HTML pages
+    version_meta   — dict of product_url → {zip_url, zip_last_modified, ...} for checkpoint
 
     ignore_registry — if True, include versions already in converted_versions.json
+    delta           — if True, skip versions whose ZIP Last-Modified is unchanged since checkpoint
+    checkpoint      — loaded checkpoint dict (from load_checkpoint); ignored when delta=False
     """
+    checkpoint = checkpoint or {}
     delay = settings.get("http", {}).get("delay_seconds", 0.5)
     client = build_http_client(settings)
     manifest: list[dict] = []
     dita_versions: list[dict] = []
     empty_versions: list[dict] = []
+    version_meta: dict = {}
 
     dita_patterns = settings.get("skip_filename_patterns", [])
 
@@ -228,7 +263,22 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                 # New format: product version page URL — resolve via products API
                 entry = _resolve_version_entry(client, product_url)
                 if entry:
+                    zip_lm = _get_zip_last_modified(client, entry["zip_url"])
+                    entry["zip_last_modified"] = zip_lm
+                    if delta:
+                        stored_lm = checkpoint.get("versions", {}).get(product_url, {}).get("zip_last_modified", "")
+                        if stored_lm and zip_lm and stored_lm == zip_lm:
+                            reporter.info(f"    -> SKIPPED (delta: ZIP unchanged since {stored_lm})")
+                            reporter.count("versions_delta_skipped")
+                            time.sleep(delay)
+                            continue
                     manifest.append(entry)
+                    version_meta[product_url] = {
+                        "zip_url":           entry["zip_url"],
+                        "zip_last_modified": zip_lm,
+                        "product_name":      entry.get("product_name", ""),
+                        "product_version":   entry.get("product_version", ""),
+                    }
                     reporter.info(f"    -> zip_url={entry['zip_url']}")
                     reporter.count("versions_found")
                 else:
@@ -395,7 +445,7 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
             reporter.fail(version_url, str(exc), step="01_build_manifest")
             reporter.count("version_errors")
 
-    return manifest, dita_versions, empty_versions
+    return manifest, dita_versions, empty_versions, version_meta
 
 
 def main():
@@ -405,23 +455,34 @@ def main():
     parser.add_argument("--dry-run",          action="store_true", help="Parse sitemaps but do not write manifest")
     parser.add_argument("--ignore-registry",  action="store_true",
                         help="Include versions already in converted_versions.json instead of skipping them")
+    parser.add_argument("--delta",            action="store_true",
+                        help="Skip versions whose ZIP Last-Modified is unchanged since last checkpoint")
     args = parser.parse_args()
 
     settings = load_settings(args.config)
     phase    = load_phase(args.phase, settings)
 
     # Set up run directory
-    from datetime import datetime
     logs_dir = Path(settings.get("logs_dir", "logs"))
     run_dir  = logs_dir / args.phase / datetime.now().strftime("%Y%m%d-%H%M%S")
     reporter = Reporter(run_dir, "01_manifest", dry_run=args.dry_run)
 
     reporter.info(f"=== Step 1: Build Manifest | phase={args.phase} dry_run={args.dry_run} "
-                  f"ignore_registry={args.ignore_registry} ===")
+                  f"ignore_registry={args.ignore_registry} delta={args.delta} ===")
 
-    manifest, dita_versions, empty_versions = build_manifest(
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    checkpoint = load_checkpoint(manifests_dir, args.phase) if args.delta else {}
+    if args.delta and checkpoint:
+        reporter.info(f"Delta mode: checkpoint loaded ({len(checkpoint.get('versions', {}))} versions, "
+                      f"crawled_at={checkpoint.get('crawled_at', '?')})")
+    elif args.delta:
+        reporter.info("Delta mode: no existing checkpoint — all versions will be included")
+
+    manifest, dita_versions, empty_versions, version_meta = build_manifest(
         phase, settings, reporter, args.dry_run,
         ignore_registry=args.ignore_registry,
+        delta=args.delta,
+        checkpoint=checkpoint,
     )
 
     reporter.info(f"Manifest complete: {len(manifest)} pages across "
@@ -433,7 +494,6 @@ def main():
         reporter.info(f"Empty versions: {len(empty_versions)} version(s) with no accepted HTML pages")
 
     if not args.dry_run:
-        manifests_dir = Path(settings.get("manifests_dir", "manifests"))
         manifests_dir.mkdir(parents=True, exist_ok=True)
 
         out_path = manifests_dir / f"manifest_{args.phase}.json"
@@ -442,6 +502,11 @@ def main():
             encoding="utf-8",
         )
         reporter.info(f"Manifest written to {out_path}")
+
+        if version_meta:
+            save_checkpoint(manifests_dir, args.phase, version_meta)
+            reporter.info(f"Checkpoint written: {len(version_meta)} version(s) → "
+                          f"manifests/crawl_checkpoint_{args.phase}.json")
 
         if dita_versions:
             dita_path = manifests_dir / f"dita_versions_{args.phase}.json"

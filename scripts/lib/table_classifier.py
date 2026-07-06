@@ -116,13 +116,13 @@ def handle_tables(soup: BeautifulSoup, block_tags: set[str] | None = None) -> di
         if parent:
             continue
 
-        # Promote first data row to header if the table has no <thead>
-        _promote_first_row_as_header(table)
-
         tier = classify_table(table, block_tags)
         counts[f"tier{tier}"] += 1
 
         if tier == 3:
             table["data-converter-passthrough"] = "true"
+        else:
+            # GFM pipe tables require a header row — only promote for Tier 1/2
+            _promote_first_row_as_header(table)
 
     return counts

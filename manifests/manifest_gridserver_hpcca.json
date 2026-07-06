@@ -1,0 +1,22 @@
+[
+  {
+    "version_url": "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0",
+    "versioned_slug": "tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0",
+    "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.1.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0_documentation.zip",
+    "pub_slug": "ds-highperf-comp-cloud",
+    "product_version": "2.1.0",
+    "product_name": "TIBCO DataSynapse™ High-Performance Computing Cloud Adapter 2.1.0",
+    "version_format": "unknown",
+    "zip_last_modified": "Fri, 26 Jul 2024 04:01:53 GMT"
+  },
+  {
+    "version_url": "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0",
+    "versioned_slug": "tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0",
+    "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.0.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0_documentation.zip",
+    "pub_slug": "ds-highperf-comp-cloud",
+    "product_version": "2.0.0",
+    "product_name": "TIBCO DataSynapse™ High-Performance Computing Cloud Adapter 2.0.0",
+    "version_format": "unknown",
+    "zip_last_modified": "Fri, 09 Jun 2023 07:59:04 GMT"
+  }
+]
