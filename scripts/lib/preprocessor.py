@@ -9,6 +9,7 @@ Transform order:
   2.  fake_list_tables     — AutoNumber_p_* tables → <ul>/<ol>
   2.5 merge_list_continuations — merge split lists and absorb <pre> into <li>
   3.  callout_divs         — div.note/warning/etc → <blockquote>
+  3.2 ebx_callout_divs    — EBX div.ebx_note/ebx_seealso/etc → <blockquote>
   3.5 icon_tables          — TableStyle-IconTable note/warning tables → <blockquote>
   4.  text_popups          — MCTextPopup inline popups → Note blockquotes
   5.  definition_lists     — div.dl/dlentry/dt/dd → bold term + content
@@ -32,7 +33,15 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 
 from scripts.lib.table_classifier import handle_tables, DEFAULT_BLOCK_TAGS
 
-# ── Callout label map ──────────────────────────────────────────────────────────
+# ── Callout label maps ────────────────────────────────────────────────────────
+
+# EBX admonition div classes — each contains an <h5> label as its first child
+EBX_CALLOUT_DIV_CLASSES = frozenset({
+    "ebx_note",
+    "ebx_seealso",
+    "ebx_attention",
+    "ebx_relatedconcepts",
+})
 
 CALLOUT_CLASSES = {
     "note":          "Note",
@@ -252,6 +261,36 @@ def callout_divs(content: Tag) -> int:
         for div in content.find_all("div", class_=cls):
             bq = BeautifulSoup(f"<blockquote><p><strong>{label}:</strong> </p></blockquote>", "lxml").find("blockquote")
             bq.p.extend(list(div.children))
+            div.replace_with(bq)
+            converted += 1
+    return converted
+
+
+# ── Transform 3.2: EBX callout divs ──────────────────────────────────────────
+
+def ebx_callout_divs(content: Tag) -> int:
+    """
+    Convert EBX admonition divs to <blockquote> with a bold label.
+
+    EBX uses div.ebx_note / div.ebx_seealso / div.ebx_attention /
+    div.ebx_relatedconcepts, each with an <h5> as its first child.
+    The H5 text becomes the bold blockquote label (preserving localised
+    variants such as "Voir aussi" / "以下も参照してください。").
+    Removing the H5 eliminates the heading-level jump that causes DOTJ013E
+    when LWDITA imports the converted markdown.
+    """
+    converted = 0
+    for cls in EBX_CALLOUT_DIV_CLASSES:
+        for div in list(content.find_all("div", class_=cls)):
+            h5 = div.find("h5")
+            label = h5.get_text(strip=True) if h5 else cls.replace("ebx_", "").capitalize()
+            if h5:
+                h5.decompose()
+            bq = BeautifulSoup(
+                f"<blockquote><p><strong>{label}:</strong></p></blockquote>", "lxml"
+            ).find("blockquote")
+            for child in list(div.children):
+                bq.append(child.extract())
             div.replace_with(bq)
             converted += 1
     return converted
@@ -883,6 +922,7 @@ def run_all(
     stats["fake_lists"]       = fake_list_tables(content)
     stats["list_merges"]      = merge_list_continuations(content)
     stats["callouts"]         = callout_divs(content)
+    stats["ebx_callouts"]     = ebx_callout_divs(content)
     stats["icon_tables"]      = icon_tables(content)
     stats["text_popups"]      = text_popups(content)
     stats["definition_lists"] = definition_lists(content)
