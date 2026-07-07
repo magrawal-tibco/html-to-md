@@ -1303,11 +1303,21 @@ def _build_frontmatter(entry: dict) -> str:
 
     title = f"{product_name} {entry['product_version']} {doc_name}"
 
+    # Derive source_url from the PDF path (cache/pub/... → https://docs.tibco.com/pub/...)
+    pdf_path: Path = entry["pdf_path"]
+    try:
+        rel_parts = pdf_path.relative_to(Path("cache")).parts  # ('pub', slug, ver, ...)
+        source_url = "https://docs.tibco.com/" + "/".join(rel_parts)
+    except ValueError:
+        source_url = ""
+
     data = {
         "doc_name":        doc_name,
+        "lang":            "en-us",
         "product_name":    product_name,
         "product_version": entry["product_version"],
         "release_date":    entry.get("release_date", ""),
+        "source_url":      source_url,
         "title":           title,
     }
     data = {k: v for k, v in data.items() if v}

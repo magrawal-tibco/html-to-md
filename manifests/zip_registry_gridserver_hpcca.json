@@ -1,16 +1,23 @@
 {
+  "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.2.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-2-0_documentation.zip",
+    "html_root": "pub/ds-highperf-comp-cloud/2.2.0/doc/html/",
+    "extracted_at": "2026-07-07T19:34:57",
+    "file_count": 314,
+    "format": "madcap"
+  },
   "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0": {
     "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.1.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0_documentation.zip",
     "html_root": "pub/ds-highperf-comp-cloud/2.1.0/doc/html/",
-    "extracted_at": "2026-07-07T19:10:24",
-    "file_count": 313,
+    "extracted_at": "previously",
+    "file_count": -1,
     "format": "madcap"
   },
   "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0": {
     "zip_url": "https://docs.tibco.com/pub/ds-highperf-comp-cloud/2.0.0/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0_documentation.zip",
     "html_root": "pub/ds-highperf-comp-cloud/2.0.0/doc/html/",
-    "extracted_at": "2026-07-07T19:10:25",
-    "file_count": 290,
+    "extracted_at": "previously",
+    "file_count": -1,
     "format": "madcap"
   }
 }
