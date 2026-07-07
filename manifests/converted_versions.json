@@ -108,7 +108,7 @@
     "product_version": "1.0.0",
     "doc_name": "",
     "phase": "gridserver_bu",
-    "converted_at": "2026-07-02T12:54:55Z",
+    "converted_at": "2026-07-07T15:33:06Z",
     "page_count": 20
   },
   "https://docs.tibco.com/products/tibco-datasynapse-gridserver-manager-7-2-0": {
@@ -116,7 +116,7 @@
     "product_version": "7.2.0",
     "doc_name": "",
     "phase": "gridserver_bu",
-    "converted_at": "2026-07-02T12:54:55Z",
+    "converted_at": "2026-07-07T15:33:06Z",
     "page_count": 985
   },
   "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0": {
@@ -255,12 +255,36 @@
     "converted_at": "2026-07-06T21:15:17Z",
     "page_count": 316
   },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-0": {
+    "product_name": "TIBCO EBX® Add-ons 6.2.0",
+    "product_version": "6.2.0",
+    "doc_name": "",
+    "phase": "ebx-addon-62x",
+    "converted_at": "2026-07-07T18:04:49Z",
+    "page_count": 314
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-1": {
+    "product_name": "TIBCO EBX® Add-ons 6.2.1",
+    "product_version": "6.2.1",
+    "doc_name": "",
+    "phase": "ebx-addon-62x",
+    "converted_at": "2026-07-07T18:04:49Z",
+    "page_count": 316
+  },
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-2": {
+    "product_name": "TIBCO EBX® Add-ons 6.2.2",
+    "product_version": "6.2.2",
+    "doc_name": "",
+    "phase": "ebx-addon-62x",
+    "converted_at": "2026-07-07T18:04:49Z",
+    "page_count": 318
+  },
   "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3": {
     "product_name": "TIBCO EBX® Add-ons 6.2.3",
     "product_version": "6.2.3",
     "doc_name": "",
-    "phase": "ebx",
-    "converted_at": "2026-07-06T21:15:17Z",
+    "phase": "ebx-addon-62x",
+    "converted_at": "2026-07-07T18:04:49Z",
     "page_count": 320
   }
 }

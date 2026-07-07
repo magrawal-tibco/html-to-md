@@ -1,0 +1,30 @@
+{
+  "phase": "ebx-addon-62x",
+  "crawled_at": "2026-07-07T18:02:21Z",
+  "versions": {
+    "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3": {
+      "zip_url": "https://docs.tibco.com/pub/ebx-addon/6.2.3/tibco-ebx-add-ons-6-2-3_documentation.zip",
+      "zip_last_modified": "Tue, 19 May 2026 12:38:29 GMT",
+      "product_name": "TIBCO EBX® Add-ons 6.2.3",
+      "product_version": "6.2.3"
+    },
+    "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-2": {
+      "zip_url": "https://docs.tibco.com/pub/ebx-addon/6.2.2/tibco-ebx-add-ons-6-2-2_documentation.zip",
+      "zip_last_modified": "Sat, 06 Sep 2025 09:14:56 GMT",
+      "product_name": "TIBCO EBX® Add-ons 6.2.2",
+      "product_version": "6.2.2"
+    },
+    "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-1": {
+      "zip_url": "https://docs.tibco.com/pub/ebx-addon/6.2.1/tibco-ebx-add-ons-6-2-1_documentation.zip",
+      "zip_last_modified": "Thu, 27 Mar 2025 05:23:28 GMT",
+      "product_name": "TIBCO EBX® Add-ons 6.2.1",
+      "product_version": "6.2.1"
+    },
+    "https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-0": {
+      "zip_url": "https://docs.tibco.com/pub/ebx-addon/6.2.0/tibco-ebx-add-ons-6-2-0_documentation.zip",
+      "zip_last_modified": "Thu, 27 Jun 2024 04:01:59 GMT",
+      "product_name": "TIBCO EBX® Add-ons 6.2.0",
+      "product_version": "6.2.0"
+    }
+  }
+}

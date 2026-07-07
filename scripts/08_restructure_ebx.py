@@ -89,7 +89,10 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
 
     Webhelp:  src/<ver>/doc/html/<lang>/<rest> → dst/<lang-norm>/ebx/webhelp/<ver-dashed>/<rest>
     Relnotes: src/<ver>/doc/relnotes/<file>    → dst/en-us/ebx/relnotes/<ver-dashed>/<file>
+    Addon:    src/<ver>/doc/<addon>/<rest>      → dst/en-us/ebx-addon/<addon>/<ver-dashed>/<rest>
+              where <addon> is one of the known EBX add-on module names (not html/relnotes/java)
     """
+    _ADDON_MODULES = {"adix", "common", "dama", "daqa", "dint", "dmdv", "dpra", "dqid", "mame", "moda", "tese"}
     mapping: dict[Path, Path] = {}
 
     for path in src.rglob("*"):
@@ -113,6 +116,14 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
             ver_dashed = ver.replace(".", "-")
             rest = Path(*parts[3:])
             new_rel = Path("en-us") / PRODUCT_SLUG / "relnotes" / ver_dashed / rest
+            mapping[path] = dst / new_rel
+
+        # Addon WebWorks: <ver>/doc/<addon>/<rest…>  — addon modules only
+        elif len(parts) >= 4 and parts[1] == "doc" and parts[2] in _ADDON_MODULES:
+            ver, addon = parts[0], parts[2]
+            ver_dashed = ver.replace(".", "-")
+            rest = Path(*parts[3:])
+            new_rel = Path("en-us") / "ebx-addon" / addon / ver_dashed / rest
             mapping[path] = dst / new_rel
 
     return mapping
