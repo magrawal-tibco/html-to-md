@@ -31,6 +31,9 @@ _TOKEN_RE = re.compile(r"\[%=[\w.\s]+%\]")
 # Matches Markdown links: [text](url)  — captures the URL portion
 _MD_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 
+# Matches malformed autolinks: <http://> (no host) or <http://...path> (ellipsis placeholder)
+_MALFORMED_AUTOLINK_RE = re.compile(r"<(https?://(?:[^>]*\.\.\..*|))>")
+
 
 def load_settings(config_path: str) -> dict:
     return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
@@ -181,6 +184,22 @@ def rewrite_links(
     return updated, rewritten, unresolvable
 
 
+def fix_malformed_autolinks(body: str) -> tuple[str, int]:
+    """Replace <http://> and <http://...> autolinks with backtick inline code.
+
+    code_urls_to_links() in the preprocessor promotes incomplete <code>http://</code>
+    spans (no host, or ellipsis placeholder host) to <a href> links. Markdownify then
+    renders them as autolinks that crash DITA-OT's URI parser.
+    """
+    count = [0]
+
+    def _replace(m: re.Match) -> str:
+        count[0] += 1
+        return f"`{m.group(1)}`"
+
+    return _MALFORMED_AUTOLINK_RE.sub(_replace, body), count[0]
+
+
 def postprocess_file(
     md_path: Path,
     output_path_rel: str,
@@ -212,6 +231,11 @@ def postprocess_file(
         body, rewritten, unresolvable = rewrite_links(
             body, output_path_rel, url_to_md, base_url, source_url, reporter
         )
+
+        # 4. Fix malformed autolinks that crash DITA-OT URI parser
+        body, bad_links = fix_malformed_autolinks(body)
+        if bad_links:
+            reporter.count("malformed_autolinks_fixed", bad_links)
 
         if not dry_run:
             md_path.write_text(write_frontmatter(fm, body), encoding="utf-8")

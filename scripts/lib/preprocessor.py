@@ -598,7 +598,7 @@ def inline_spans(content: Tag) -> int:
 
 # ── Transform 7.5: code URLs to links ────────────────────────────────────────
 
-_URL_RE = re.compile(r'^https?://')
+_URL_RE = re.compile(r'^https?://[^\s./]')  # requires ≥1 real host char — rejects http:// and http://...
 
 
 def code_urls_to_links(content: Tag) -> int:
