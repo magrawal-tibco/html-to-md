@@ -119,6 +119,22 @@
     "converted_at": "2026-07-02T12:54:55Z",
     "page_count": 985
   },
+  "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-0-0": {
+    "product_name": "TIBCO DataSynapse™ High-Performance Computing Cloud Adapter 2.0.0",
+    "product_version": "2.0.0",
+    "doc_name": "",
+    "phase": "gridserver_hpcca",
+    "converted_at": "2026-07-07T13:40:42Z",
+    "page_count": 15
+  },
+  "https://docs.tibco.com/products/tibco-datasynapse-high-performance-computing-cloud-adapter-2-1-0": {
+    "product_name": "TIBCO DataSynapse™ High-Performance Computing Cloud Adapter 2.1.0",
+    "product_version": "2.1.0",
+    "doc_name": "",
+    "phase": "gridserver_hpcca",
+    "converted_at": "2026-07-07T13:40:42Z",
+    "page_count": 18
+  },
   "https://docs.tibco.com/products/tibco-ebx-5-9-26": {
     "product_name": "TIBCO EBX® 5.9.26",
     "product_version": "5.9.26",

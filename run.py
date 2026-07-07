@@ -199,6 +199,59 @@ def run_webworks_pipeline(phase: str, config: str, dry_run: bool, force_rerun: b
     return result.returncode, elapsed
 
 
+def get_zip_pub_slugs(phase: str, settings: dict) -> list[str]:
+    """Return unique pub_slugs for zip-based (new-format) manifest entries in this phase.
+
+    EBX-family products are excluded — they have their own restructure scripts (07/08).
+    Used to decide which products to pass to 09_restructure_tibco.py.
+    """
+    EBX_SLUGS = {"ebx", "ebx-addon", "ebx-addon-reorg"}
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    manifest_path = manifests_dir / f"manifest_{phase}.json"
+    if not manifest_path.exists():
+        return []
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        seen: set[str] = set()
+        slugs: list[str] = []
+        for e in manifest:
+            slug = e.get("pub_slug", "")
+            if slug and slug not in seen and slug not in EBX_SLUGS:
+                seen.add(slug)
+                slugs.append(slug)
+        return slugs
+    except Exception:
+        return []
+
+
+def run_restructure_pipeline(
+    pub_slugs: list[str],
+    dry_run: bool,
+) -> tuple[int, float]:
+    """Run 09_restructure_tibco.py for the given product slugs."""
+    cmd = [
+        sys.executable, "scripts/09_restructure_tibco.py",
+        "--products", *pub_slugs,
+    ]
+    if dry_run:
+        cmd.append("--dry-run")
+
+    print(f"\n{'='*60}")
+    print(f"  Restructure Sub-pipeline  ({', '.join(pub_slugs)})")
+    print(f"  Command: {' '.join(cmd)}")
+    print(f"{'='*60}")
+
+    start = time.time()
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    result = subprocess.run(cmd, text=True, env=env)
+    elapsed = round(time.time() - start, 1)
+
+    status = "OK" if result.returncode == 0 else f"FAILED (exit {result.returncode})"
+    print(f"\n  Restructure sub-pipeline {status} in {elapsed}s")
+    return result.returncode, elapsed
+
+
 def has_dita_versions(phase: str, settings: dict) -> bool:
     """Return True if the phase manifest contains any sdl_dita or file_dita versions."""
     manifests_dir = Path(settings.get("manifests_dir", "manifests"))
@@ -293,6 +346,8 @@ def main():
                         help="Skip the PDF release notes sub-pipeline")
     parser.add_argument("--skip-webworks", action="store_true",
                         help="Skip the WebWorks ePublisher sub-pipeline")
+    parser.add_argument("--skip-restructure", action="store_true",
+                        help="Skip the restructure sub-pipeline (09_restructure_tibco.py)")
     args = parser.parse_args()
 
     settings  = load_settings(args.config)
@@ -368,7 +423,21 @@ def main():
     elif not args.skip_webworks:
         print(f"\nNo WebWorks versions found for phase '{args.phase}' — skipping WebWorks sub-pipeline.")
 
-    return 0 if (dita_ok and pdf_ok and webworks_ok) else 1
+    # ── Restructure sub-pipeline ──────────────────────────────────────────────
+    restructure_ok = True
+    zip_slugs = get_zip_pub_slugs(args.phase, settings)
+    if not args.skip_restructure and zip_slugs:
+        print(f"\nZip-based products detected — running restructure sub-pipeline...")
+        restructure_rc, restructure_elapsed = run_restructure_pipeline(
+            zip_slugs, args.dry_run
+        )
+        restructure_ok = (restructure_rc == 0)
+        if not restructure_ok:
+            print(f"\nRestructure sub-pipeline failed.")
+    elif not args.skip_restructure:
+        print(f"\nNo zip-based products found for phase '{args.phase}' — skipping restructure.")
+
+    return 0 if (dita_ok and pdf_ok and webworks_ok and restructure_ok) else 1
 
 
 if __name__ == "__main__":

@@ -1105,6 +1105,30 @@ def _clean_markdown(text: str) -> str:
     return text.strip() + "\n"
 
 
+def _normalize_heading_levels(text: str) -> str:
+    """Cap heading level jumps so no heading descends more than one level from the previous."""
+    lines = text.split("\n")
+    in_fence = False
+    prev_level = 0
+    out = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if not in_fence:
+            m = re.match(r"^(#{1,6})(\s.*)$", line)
+            if m:
+                level = len(m.group(1))
+                if prev_level > 0 and level > prev_level + 1:
+                    level = prev_level + 1
+                    line = "#" * level + m.group(2)
+                prev_level = level
+        out.append(line)
+    return "\n".join(out)
+
+
 # ── Release date extraction ───────────────────────────────────────────────────
 
 _MONTH_NAMES = {
@@ -1368,6 +1392,7 @@ def convert_pdf(
         processed = _fix_issue_tables(_fix_callouts(_fix_platform_table(_fix_table_rows(flat_lines))))
         processed = _demote_nested_h1(processed)
         body = _clean_markdown("\n".join(processed))
+        body = _normalize_heading_levels(body)
 
         if release_date:
             entry = {**entry, "release_date": release_date}

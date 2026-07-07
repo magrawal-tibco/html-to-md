@@ -200,6 +200,41 @@ def fix_malformed_autolinks(body: str) -> tuple[str, int]:
     return _MALFORMED_AUTOLINK_RE.sub(_replace, body), count[0]
 
 
+def normalize_heading_levels(body: str) -> tuple[str, int]:
+    """Cap heading level jumps so no heading descends more than one level from the previous.
+
+    Walks lines in order, skipping fenced code blocks. When a heading jumps by more
+    than one level (e.g. H1 → H3), it is promoted to prev_level + 1. Going back up
+    (e.g. H3 → H1) is always permitted and resets the tracking anchor.
+    """
+    lines = body.split("\n")
+    in_fence = False
+    prev_level = 0
+    fixes = 0
+    out = []
+
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+
+        if not in_fence:
+            m = re.match(r"^(#{1,6})(\s.*)$", line)
+            if m:
+                level = len(m.group(1))
+                if prev_level > 0 and level > prev_level + 1:
+                    level = prev_level + 1
+                    fixes += 1
+                    line = "#" * level + m.group(2)
+                prev_level = level
+
+        out.append(line)
+
+    return "\n".join(out), fixes
+
+
 def postprocess_file(
     md_path: Path,
     output_path_rel: str,
@@ -236,6 +271,11 @@ def postprocess_file(
         body, bad_links = fix_malformed_autolinks(body)
         if bad_links:
             reporter.count("malformed_autolinks_fixed", bad_links)
+
+        # 5. Normalize heading levels (cap jumps like H1→H3 to H1→H2)
+        body, heading_fixes = normalize_heading_levels(body)
+        if heading_fixes:
+            reporter.count("heading_levels_normalized", heading_fixes)
 
         if not dry_run:
             md_path.write_text(write_frontmatter(fm, body), encoding="utf-8")
