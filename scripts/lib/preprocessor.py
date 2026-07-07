@@ -252,6 +252,35 @@ def merge_list_continuations(content: Tag) -> int:
     return merged
 
 
+# ── Transform 2.5: orphan list images ────────────────────────────────────────
+
+def adopt_orphan_list_images(content: Tag) -> int:
+    """Move <img> elements that are direct children of <ol>/<ul> into the preceding <li>.
+
+    MadCap Flare sometimes emits screenshots between list items as bare <ol>/<ul>
+    children (invalid HTML). Markdownify renders them glued to the next list item
+    on the same line.  Moving each orphan img into the preceding <li> keeps the
+    screenshot visually attached to its step.
+    """
+    moved = 0
+    for lst in content.find_all(["ol", "ul"]):
+        for img in list(lst.find_all("img", recursive=False)):
+            # Capture the preceding <li> sibling BEFORE extracting the img
+            prev_li = img.find_previous_sibling("li")
+            img.extract()
+            if prev_li is not None:
+                p = BeautifulSoup("<p></p>", "lxml").find("p")
+                p.append(img)
+                prev_li.append(p)
+            else:
+                # No preceding li — wrap in a new li so it at least renders as a block
+                li = BeautifulSoup("<li></li>", "lxml").find("li")
+                li.append(img)
+                lst.append(li)
+            moved += 1
+    return moved
+
+
 # ── Transform 3: callout divs ─────────────────────────────────────────────────
 
 def callout_divs(content: Tag) -> int:
@@ -921,6 +950,7 @@ def run_all(
     stats["chrome_removed"]   = strip_chrome(content, chrome_selectors)
     stats["fake_lists"]       = fake_list_tables(content)
     stats["list_merges"]      = merge_list_continuations(content)
+    stats["orphan_list_imgs"] = adopt_orphan_list_images(content)
     stats["callouts"]         = callout_divs(content)
     stats["ebx_callouts"]     = ebx_callout_divs(content)
     stats["icon_tables"]      = icon_tables(content)
