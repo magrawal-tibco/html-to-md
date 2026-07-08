@@ -83,7 +83,8 @@ def discover_relnotes(src: Path) -> list[tuple[str, Path]]:
     return results
 
 
-def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
+def build_path_mapping(src: Path, dst: Path,
+                       exclude_java_api: bool = False) -> dict[Path, Path]:
     """
     Return {old_abs_path: new_abs_path} for every file to restructure.
 
@@ -91,6 +92,9 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
     Relnotes: src/<ver>/doc/relnotes/<file>    → dst/en-us/ebx/relnotes/<ver-dashed>/<file>
     Addon:    src/<ver>/doc/<addon>/<rest>      → dst/en-us/ebx-addon/<addon>/<ver-dashed>/<rest>
               where <addon> is one of the known EBX add-on module names (not html/relnotes/java)
+
+    Java_API/ subdirectories are included by default (copied as-is, no markdown conversion).
+    Pass exclude_java_api=True to omit them entirely.
     """
     _ADDON_MODULES = {"adix", "common", "dama", "daqa", "dint", "dmdv", "dpra", "dqid", "mame", "moda", "tese"}
     mapping: dict[Path, Path] = {}
@@ -101,9 +105,8 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
         parts = path.relative_to(src).parts
 
         # Webhelp: <ver>/doc/html/<lang>/<rest…>  — at least 5 parts
-        # Skip Java_API/ — Javadoc content, not user-facing documentation
         if len(parts) >= 5 and parts[1] == "doc" and parts[2] == "html" and parts[3] != "_toc.json":
-            if len(parts) >= 6 and parts[4] == "Java_API":
+            if exclude_java_api and len(parts) >= 6 and parts[4] == "Java_API":
                 continue
             ver, lang = parts[0], parts[3]
             if not lang.startswith("_") and (Path(src / ver / "doc" / "html" / lang)).is_dir():
@@ -122,9 +125,8 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
             mapping[path] = dst / new_rel
 
         # Addon WebWorks: <ver>/doc/<addon>/<rest…>  — addon modules only
-        # Skip Java_API/ entirely — Javadoc content, not user-facing documentation
         elif len(parts) >= 4 and parts[1] == "doc" and parts[2] in _ADDON_MODULES:
-            if len(parts) >= 5 and parts[3] == "Java_API":
+            if exclude_java_api and len(parts) >= 5 and parts[3] == "Java_API":
                 continue
             ver, addon = parts[0], parts[2]
             ver_dashed = ver.replace(".", "-")
@@ -230,6 +232,8 @@ def main() -> int:
                         help="Destination directory (default: output/ebx)")
     parser.add_argument("--preflight-only", action="store_true",
                         help="Run pre-flight scan only — no files written")
+    parser.add_argument("--exclude-java-api", action="store_true",
+                        help="Omit Java_API/ subdirectories from output (default: include as-is)")
     args = parser.parse_args()
 
     src = Path(args.src)
@@ -269,8 +273,9 @@ def main() -> int:
 
     # ── Phase 1: build path mapping ──────────────────────────────────────────
     print("\n=== Phase 1: Building path mapping ===")
-    mapping = build_path_mapping(src, dst)
-    print(f"  {len(mapping)} files mapped")
+    mapping = build_path_mapping(src, dst, exclude_java_api=args.exclude_java_api)
+    java_api_note = " (Java_API excluded)" if args.exclude_java_api else " (Java_API included)"
+    print(f"  {len(mapping)} files mapped{java_api_note}")
 
     # ── Phase 2: copy files ──────────────────────────────────────────────────
     print("\n=== Phase 2: Copying files ===")
