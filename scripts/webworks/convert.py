@@ -175,6 +175,32 @@ _CALLOUT_LABELS = {
 }
 
 
+# ── Heading normalisation ────────────────────────────────────────────────────
+
+def _normalize_heading_levels(text: str) -> str:
+    """Cap heading level jumps so no heading descends more than one level from the previous."""
+    lines = text.split("\n")
+    in_fence = False
+    prev_level = 0
+    out = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if not in_fence:
+            m = re.match(r"^(#{1,6})(\s.*)$", line)
+            if m:
+                level = len(m.group(1))
+                if prev_level > 0 and level > prev_level + 1:
+                    level = prev_level + 1
+                    line = "#" * level + m.group(2)
+                prev_level = level
+        out.append(line)
+    return "\n".join(out)
+
+
 # ── Block-level converter ────────────────────────────────────────────────────
 
 def _convert_blockquote(bq: Tag) -> str:
@@ -345,6 +371,7 @@ def _convert_file(htm_path: Path, title: str, guide_dir: Path,
         source_url = rel
 
     md_body = _convert_blockquote(bq)
+    md_body = _normalize_heading_levels(md_body)
     frontmatter = _build_frontmatter(
         page_title, guide_dir, output_path,
         product_name, product_version, doc_name, source_url

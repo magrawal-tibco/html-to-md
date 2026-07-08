@@ -101,7 +101,10 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
         parts = path.relative_to(src).parts
 
         # Webhelp: <ver>/doc/html/<lang>/<rest…>  — at least 5 parts
+        # Skip Java_API/ — Javadoc content, not user-facing documentation
         if len(parts) >= 5 and parts[1] == "doc" and parts[2] == "html" and parts[3] != "_toc.json":
+            if len(parts) >= 6 and parts[4] == "Java_API":
+                continue
             ver, lang = parts[0], parts[3]
             if not lang.startswith("_") and (Path(src / ver / "doc" / "html" / lang)).is_dir():
                 lang_norm = _norm_lang(lang)
@@ -119,7 +122,10 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
             mapping[path] = dst / new_rel
 
         # Addon WebWorks: <ver>/doc/<addon>/<rest…>  — addon modules only
+        # Skip Java_API/ entirely — Javadoc content, not user-facing documentation
         elif len(parts) >= 4 and parts[1] == "doc" and parts[2] in _ADDON_MODULES:
+            if len(parts) >= 5 and parts[3] == "Java_API":
+                continue
             ver, addon = parts[0], parts[2]
             ver_dashed = ver.replace(".", "-")
             rest = Path(*parts[3:])
