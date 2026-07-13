@@ -1288,20 +1288,23 @@ _DOC_NAME_DISPLAY = {
 }
 
 
-def _build_frontmatter(entry: dict) -> str:
+def _make_doc_title(entry: dict) -> tuple[str, str, str]:
+    """Return (product_name, doc_name, full_title) for frontmatter and toc.yml."""
     raw_doc_name = entry["doc_name"]
     doc_name = _DOC_NAME_DISPLAY.get(
         raw_doc_name.lower(), raw_doc_name.replace("-", " ").title()
     )
-
-    # Strip trailing version number that manifests sometimes append to product_name
     product_name = re.sub(
         r"\s+" + re.escape(entry["product_version"]) + r"\s*$",
         "",
         entry["product_name"],
     ).strip()
-
     title = f"{product_name} {entry['product_version']} {doc_name}"
+    return product_name, doc_name, title
+
+
+def _build_frontmatter(entry: dict) -> str:
+    product_name, doc_name, title = _make_doc_title(entry)
 
     # Derive source_url from the PDF path (cache/pub/... → https://docs.tibco.com/pub/...)
     pdf_path: Path = entry["pdf_path"]
@@ -1322,6 +1325,94 @@ def _build_frontmatter(entry: dict) -> str:
     }
     data = {k: v for k, v in data.items() if v}
     return "---\n" + yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=True) + "---\n\n"
+
+
+# ── toc.yml generation from PDF outline ──────────────────────────────────────
+
+_TOC_ROOT_TITLES = frozenset({"table of contents", "contents", "content"})
+
+
+def _heading_to_anchor(text: str) -> str:
+    """Convert a heading string to a GFM anchor id."""
+    text = text.lower()
+    text = re.sub(r"[^\w\s-]", "", text)   # keep alphanumerics, spaces, hyphens
+    text = re.sub(r"\s+", "-", text.strip())
+    return text
+
+
+def _extract_content_toc(raw_toc: list) -> list:
+    """
+    Strip the 'Table of Contents' / 'Contents' root entry, promoting its
+    children to the root level.  Handles two PDF bookmark styles:
+
+    Style A (EBX): single L1 'Table of contents' wrapping ALL content as L2/L3
+      → children become L1/L2
+    Style B (most): standalone L1 'Contents' with no children; real content follows
+      → just drop that entry
+    """
+    if not raw_toc:
+        return []
+
+    first_lvl, first_title, _ = raw_toc[0]
+    if first_title.lower().strip() not in _TOC_ROOT_TITLES:
+        # No TOC root wrapper — filter out any stray 'Contents' bookmarks
+        return [(lvl, t, p) for lvl, t, p in raw_toc
+                if t.lower().strip() not in _TOC_ROOT_TITLES]
+
+    # Collect children of the TOC root entry (level > first_lvl)
+    children, rest = [], []
+    saw_peer = False
+    for lvl, t, p in raw_toc[1:]:
+        if not saw_peer and lvl > first_lvl:
+            children.append((lvl, t, p))
+        else:
+            saw_peer = True
+            rest.append((lvl, t, p))
+
+    if children:
+        # Style A: promote children by normalising min child level to 1
+        min_lvl = min(e[0] for e in children)
+        return [(lvl - min_lvl + 1, t, p) for lvl, t, p in children] + rest
+    else:
+        # Style B: standalone Contents entry — just skip it
+        return rest
+
+
+def _flat_toc_to_nested(entries: list, file_name: str) -> list:
+    """Convert flat [(level, title, page), ...] into a nested list for toc.yml."""
+    root: list = []
+    stack: list = [(0, root)]   # (level, children_list)
+
+    for level, title, _ in entries:
+        node: dict = {"title": title, "url": f"{file_name}#{_heading_to_anchor(title)}"}
+        while len(stack) > 1 and stack[-1][0] >= level:
+            stack.pop()
+        stack[-1][1].append(node)
+        children: list = []
+        node["subfolderlist"] = children
+        stack.append((level, children))
+
+    def _prune(nodes: list) -> None:
+        for n in nodes:
+            if "subfolderlist" in n:
+                _prune(n["subfolderlist"])
+                if not n["subfolderlist"]:
+                    del n["subfolderlist"]
+
+    _prune(root)
+    return root
+
+
+def _build_relnotes_toc_yaml(pdf_toc: list, docs_list_title: str) -> str:
+    """Generate toc.yml content from PDF outline bookmarks."""
+    entries = _extract_content_toc(pdf_toc)
+    if not entries:
+        return ""
+    docs = _flat_toc_to_nested(entries, "relnotes.md")
+    if not docs:
+        return ""
+    data = {"docs_list_title": docs_list_title, "docs": docs}
+    return yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
 
 # ── Per-file conversion ───────────────────────────────────────────────────────
@@ -1388,6 +1479,7 @@ def convert_pdf(
 
         # Resolve release date while doc is still open (fallback reads PDF page 0)
         release_date = _find_release_date(entry["pdf_path"], doc)
+        pdf_toc = doc.get_toc()   # [(level, title, page), ...] — PDF outline bookmarks
         doc.close()
 
         if not md_lines:
@@ -1413,6 +1505,13 @@ def convert_pdf(
         if not dry_run:
             out_path.parent.mkdir(parents=True, exist_ok=True)
             out_path.write_text(final_content, encoding="utf-8")
+
+            # Write toc.yml from PDF outline bookmarks
+            _, _, docs_list_title = _make_doc_title(entry)
+            toc_yaml = _build_relnotes_toc_yaml(pdf_toc, docs_list_title)
+            if toc_yaml:
+                (out_path.parent / "toc.yml").write_text(toc_yaml, encoding="utf-8")
+                reporter.count("toc_yml_written")
 
         reporter.count("pdfs_converted")
         return True
