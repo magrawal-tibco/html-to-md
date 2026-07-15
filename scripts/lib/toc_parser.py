@@ -52,16 +52,30 @@ def parse_chunk_files(toc_js_dir: Path) -> dict[int, dict]:
     Format: define({'/path/to/file.htm':{i:[N],t:['Title'],b:['']}, ...})
     """
     id_to_page: dict[int, dict] = {}
+    # URL entries: one file may have multiple IDs and titles (parallel arrays).
+    #   '/path/file.htm':{i:[M,N],t:['Title A','Title B'],b:[...]}
     pattern = re.compile(
-        r"'(/[^']+\.htm)'\s*:\s*\{i:\[(\d+)\],t:\['(.*?)'\]",
+        r"'(/[^']+\.htm)'\s*:\s*\{i:\[([^\]]*)\],t:\[([^\]]*)\]",
         re.DOTALL,
     )
+    # Section header nodes use the special key '___' with parallel id/title arrays:
+    #   '___':{i:[1,6],t:['Installation','User Guide'],b:['','']}
+    _section_pattern = re.compile(r"'___'\s*:\s*\{i:\[([^\]]*)\],t:\[([^\]]*)\]")
+    _title_re = re.compile(r"'((?:[^'\\]|\\.)*)'")
     for chunk_file in sorted(toc_js_dir.glob("*Chunk*.js")):
         content = chunk_file.read_text(encoding="utf-8", errors="replace")
-        for url, node_id_str, title in pattern.findall(content):
-            node_id = int(node_id_str)
-            title = title.replace("\\'", "'")
-            id_to_page[node_id] = {"url": url, "title": title}
+        for m in pattern.finditer(content):
+            url, ids_str, titles_str = m.group(1), m.group(2), m.group(3)
+            ids    = [int(x.strip()) for x in ids_str.split(",") if x.strip()]
+            titles = [t.replace("\\'", "'") for t in _title_re.findall(titles_str)]
+            for node_id, title in zip(ids, titles):
+                id_to_page[node_id] = {"url": url, "title": title}
+        for m in _section_pattern.finditer(content):
+            ids    = [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
+            titles = [t.replace("\\'", "'") for t in _title_re.findall(m.group(2))]
+            for node_id, title in zip(ids, titles):
+                if node_id not in id_to_page:  # page nodes take precedence
+                    id_to_page[node_id] = {"url": None, "title": title}
     return id_to_page
 
 
@@ -155,9 +169,12 @@ def _build_node(
 
     page = id_to_page.get(node_id)
     if page:
-        title      = page["title"]
-        rel_url    = page["url"].lstrip("/")          # e.g. Administration/file.htm
-        output_path = url_to_output.get(rel_url.lower())
+        title = page["title"]
+        url   = page["url"]
+        if url is not None:
+            output_path = url_to_output.get(url.lstrip("/").lower())
+        else:
+            output_path = None          # section header node — no .htm file
     else:
         # Section-only node — no .htm file
         title       = None   # caller fills in from section header heuristic
