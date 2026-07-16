@@ -1,0 +1,57 @@
+# ZIP URL list for download_zips.py
+#
+# Usage:
+#   python scripts/download_zips.py config/zip_urls_template.txt
+#   python scripts/download_zips.py config/zip_urls_template.txt --dry-run
+#
+# Format rules:
+#   - One ZIP URL per line
+#   - Lines starting with # are comments (ignored)
+#   - Blank lines are ignored
+#   - URLs must point directly to a .zip file on docs.tibco.com
+#
+# The script will:
+#   1. Download each ZIP to cache/zip/<url-path>
+#   2. Extract to cache/<url-parent-dir>/  (e.g. cache/pub/foo/1.0/doc/)
+#   3. Skip versions that are already extracted (use --force-rerun to override)
+#
+# Finding ZIP URLs:
+#   - Check the manifest: manifests/manifest_<phase>.json  (zip_url field per entry)
+#   - Or browse: https://docs.tibco.com/products/<product-slug>
+#     and follow the version link → Documentation tab → ZIP download link
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# Examples (replace with actual URLs before running):
+# ─────────────────────────────────────────────────────────────────────────────
+
+# TIBCO EBX 6.2.3
+# https://docs.tibco.com/pub/ebx/6.2.3/doc/tibco-ebx-6-2-3_documentation.zip
+
+# TIBCO EBX Add-ons 6.2.3
+# https://docs.tibco.com/pub/ebx-addon/6.2.3/tibco-ebx-add-ons-6-2-3_documentation.zip
+
+# TIBCO BusinessEvents Enterprise Edition 6.4.0
+# https://docs.tibco.com/pub/businessevents-enterprise/6.4.0/doc/tibco-businessevents-enterprise-6-4-0_documentation.zip
+
+https://docs.tibco.com/pub/dsfed/tibco-datasynapse-federator-3-0-1_documentation.zip
+https://docs.tibco.com/pub/datasynapse_federator/tibco-datasynapse-federator-3-0-0_documentation.zip
+https://docs.tibco.com/pub/datasynapse_federator/tibco-datasynapse-federator-2-1-1_documentation.zip
+https://docs.tibco.com/pub/datasynapse_federator/tibco-datasynapse-federator-2-1-0_documentation.zip
+https://docs.tibco.com/pub/datasynapse_federator/tibco-datasynapse-federator-2-0-0_documentation.zip
+https://docs.tibco.com/pub/datasynapse_federator/tibco-datasynapse-federator-1-6-0_documentation.zip
+https://docs.tibco.com/pub/dsp_gridserver/tibco-datasynapse-gridserver-manager-7-1-0_documentation.zip
+https://docs.tibco.com/pub/dsp_gridserver/tibco-datasynapse-gridserver-manager-7-0-0_documentation.zip
+https://docs.tibco.com/pub/dsp_gridserver/tibco-datasynapse-gridserver-manager-6-3-1_documentation.zip
+https://docs.tibco.com/pub/dsp_gridserver/tibco-datasynapse-gridserver-manager-6-3-0_documentation.zip
+https://docs.tibco.com/pub/datasynapses_gridserver_manager/tibco-datasynapse-gridserver-6-2-0_documentation.zip
+https://docs.tibco.com/pub/datasynapses_gridserver_manager/tibco-datasynapse-gridserver-6-1-1_documentation.zip
+https://docs.tibco.com/pub/datasynapses_gridserver_manager/tibco-datasynapse-gridserver-6-1-0_documentation.zip
+https://docs.tibco.com/pub/dsp_gridserver/tibco-datasynapse-gridserver-manager-5-2-1_documentation.zip
+https://docs.tibco.com/pub/dsp_gridserver/tibco-datasynapse-gridserver-manager-5-2-0_documentation.zip
+https://docs.tibco.com/pub/datasynapses_gridserver_manager/tibco-datasynapse-gridserver-5-1-3_documentation.zip
+https://docs.tibco.com/pub/ds-highperf-comp-cloud/tibco-datasynapse-high-performance-computing-cloud-adapter-1-5-0_documentation.zip
+https://docs.tibco.com/pub/ds-highperf-comp-cloud/tibco-datasynapse-high-performance-computing-cloud-adapter-1-4-0_documentation.zip
+https://docs.tibco.com/pub/ds-highperf-comp-cloud/tibco-datasynapse-high-performance-computing-cloud-adapter-1-3-0_documentation.zip
+https://docs.tibco.com/pub/ds-highperf-comp-cloud/tibco-datasynapse-high-performance-computing-cloud-adapter-1-2-0_documentation.zip
+https://docs.tibco.com/pub/ds-highperf-comp-cloud/tibco-datasynapse-high-performance-computing-cloud-adapter-1-1-0_documentation.zip
+https://docs.tibco.com/pub/ds-highperf-comp-cloud/tibco-datasynapse-high-performance-computing-cloud-adapter-1-0-0_documentation.zip

@@ -1,0 +1,37 @@
+# ZIP URL list for download_zips.py
+#
+# Usage:
+#   python scripts/download_zips.py config/zip_urls_template.txt
+#   python scripts/download_zips.py config/zip_urls_template.txt --dry-run
+#
+# Format rules:
+#   - One ZIP URL per line
+#   - Lines starting with # are comments (ignored)
+#   - Blank lines are ignored
+#   - URLs must point directly to a .zip file on docs.tibco.com
+#
+# The script will:
+#   1. Download each ZIP to cache/zip/<url-path>
+#   2. Extract to cache/<url-parent-dir>/  (e.g. cache/pub/foo/1.0/doc/)
+#   3. Skip versions that are already extracted (use --force-rerun to override)
+#
+# Finding ZIP URLs:
+#   - Check the manifest: manifests/manifest_<phase>.json  (zip_url field per entry)
+#   - Or browse: https://docs.tibco.com/products/<product-slug>
+#     and follow the version link → Documentation tab → ZIP download link
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# Examples (replace with actual URLs before running):
+# ─────────────────────────────────────────────────────────────────────────────
+
+# TIBCO EBX 6.2.3
+https://docs.tibco.com/pub/ebx/tibco-ebx-6-0-17_documentation.zip
+https://docs.tibco.com/pub/ebx/tibco-ebx-6-0-16_documentation.zip
+
+# TIBCO EBX Add-ons 6.2.3
+https://docs.tibco.com/pub/ebx-addon/tibco-ebx-add-ons-5-6-0_documentation.zip
+https://docs.tibco.com/pub/ebx-addon/tibco-ebx-add-ons-5-5-1_documentation.zip
+
+# TIBCO BusinessEvents Enterprise Edition 6.4.0
+# https://docs.tibco.com/pub/businessevents-enterprise/6.4.0/doc/tibco-businessevents-enterprise-6-4-0_documentation.zip
+
