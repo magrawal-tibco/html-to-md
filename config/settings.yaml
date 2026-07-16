@@ -82,6 +82,7 @@ chrome_selectors:
   # EBX chrome elements (EBX-specific IDs; won't match MadCap/DITA pages)
   - div#printHeader
   - div#ebx_breadcrumbTop
+  - div#ebx_breadcrumbBottom
 
 # Additional chrome selectors applied only when version_format == "ebx".
 # Kept separate from chrome_selectors because div#toc is a generic ID that

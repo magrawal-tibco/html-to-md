@@ -34,6 +34,10 @@ _MD_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 # Matches malformed autolinks: <http://> (no host) or <http://...path> (ellipsis placeholder)
 _MALFORMED_AUTOLINK_RE = re.compile(r"<(https?://(?:[^>]*\.\.\..*|))>")
 
+# Strips EBX bottom-breadcrumb lines left by unconverted div#ebx_breadcrumbBottom:
+#   [Home](./index.html)>Page - Table of contents
+_EBX_BREADCRUMB_LINE_RE = re.compile(r"^\[.+?\]\(\.\/index\.html\)[^\n]*\n?", re.MULTILINE)
+
 
 def load_settings(config_path: str) -> dict:
     return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
@@ -200,6 +204,16 @@ def fix_malformed_autolinks(body: str) -> tuple[str, int]:
     return _MALFORMED_AUTOLINK_RE.sub(_replace, body), count[0]
 
 
+def strip_ebx_breadcrumb_lines(body: str) -> tuple[str, int]:
+    count = [0]
+
+    def _replace(m: re.Match) -> str:
+        count[0] += 1
+        return ""
+
+    return _EBX_BREADCRUMB_LINE_RE.sub(_replace, body), count[0]
+
+
 def normalize_heading_levels(body: str) -> tuple[str, int]:
     """Cap heading level jumps so no heading descends more than one level from the previous.
 
@@ -276,6 +290,11 @@ def postprocess_file(
         body, heading_fixes = normalize_heading_levels(body)
         if heading_fixes:
             reporter.count("heading_levels_normalized", heading_fixes)
+
+        # 6. Strip EBX bottom-breadcrumb lines: [Home](./index.html)>...
+        body, breadcrumb_count = strip_ebx_breadcrumb_lines(body)
+        if breadcrumb_count:
+            reporter.count("ebx_breadcrumb_lines_stripped", breadcrumb_count)
 
         if not dry_run:
             md_path.write_text(write_frontmatter(fm, body), encoding="utf-8")
