@@ -50,6 +50,189 @@ LANG_MAP: dict[str, str] = {
 }
 
 PRODUCT_SLUG = "ebx"
+PRODUCT_NAME = "TIBCO EBX®"
+SLUG_MAPPINGS_FILE = Path("config/pdf_slug_mappings.yaml")
+
+# Parses TIB_<prod>_<version>_<slug> (standard) or TIB_<prod>_<slug> (no version)
+_SLUG_RE = re.compile(r"^TIB_[^_]+_\d[\d.]+_(.+)$")
+_SLUG_NOVERSION_RE = re.compile(r"^TIB_[^_]+_(.+)$")
+
+
+def load_slug_mappings(path: Path) -> dict[str, str]:
+    if path.is_file():
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return {k: (v or "") for k, v in data.items()}
+    return {}
+
+
+def save_slug_mappings(path: Path, mappings: dict[str, str]) -> None:
+    # Preserve any existing comments by writing a fresh file with a header comment.
+    lines = [
+        "# PDF / doc filename slug → guide label (without product name or version prefix).\n",
+        "# Display name is constructed as: \"<product_name> <version> <label>\"\n",
+        "#\n",
+        "# Auto-populated from PDF Title metadata during conversion.\n",
+        "# Manual corrections here take precedence and apply to all future runs.\n",
+        "# Slugs with an empty value (\"\") were discovered but not yet resolved — fill them in.\n",
+        "\n",
+    ]
+    for slug in sorted(mappings):
+        label = mappings[slug]
+        lines.append(f'{slug}: "{label}"\n')
+    path.write_text("".join(lines), encoding="utf-8")
+
+
+def _extract_slug(stem: str) -> str | None:
+    m = _SLUG_RE.match(stem)
+    if m:
+        return m.group(1)
+    m = _SLUG_NOVERSION_RE.match(stem)
+    if m:
+        return m.group(1)
+    return None
+
+
+def _read_pdf_title(pdf_path: Path) -> str | None:
+    try:
+        doc = fitz.open(str(pdf_path))
+        meta = doc.metadata
+        doc.close()
+        return (meta.get("title") or "").strip() or None
+    except Exception:
+        return None
+
+
+def resolve_display_name(
+    filepath: Path,
+    product_name: str,
+    product_version: str,
+    slug_mappings: dict[str, str],
+) -> str:
+    """
+    Resolve a human-readable display name for a PDF/doc asset file.
+
+    Resolution order:
+      1. PDF Title metadata → strip "<product_name> <product_version> " prefix → label
+      2. Slug mapping lookup
+      3. Title-case the slug (underscores → spaces)
+      4. Raw filename as last resort
+
+    Updates slug_mappings in-place with newly discovered entries.
+    """
+    stem = filepath.stem
+    ext = filepath.suffix.lower()
+    slug = _extract_slug(stem)
+
+    # 1. PDF metadata
+    if ext == ".pdf" and slug:
+        title = _read_pdf_title(filepath)
+        if title:
+            prefix = f"{product_name} {product_version} "
+            if title.startswith(prefix):
+                label = title[len(prefix):]
+                if slug not in slug_mappings:
+                    slug_mappings[slug] = label
+                return f"{product_name} {product_version} {label}"
+
+    # 2. Slug mapping
+    if slug and slug_mappings.get(slug):
+        return f"{product_name} {product_version} {slug_mappings[slug]}"
+
+    # Flag unknown slug for manual review
+    if slug and slug not in slug_mappings:
+        slug_mappings[slug] = ""
+
+    # 3. Title-case fallback
+    if slug:
+        label = slug.replace("_", " ").title()
+        return f"{product_name} {product_version} {label}"
+
+    # 4. Raw filename
+    return filepath.name
+
+
+def _write_index_md(
+    dest_dir: Path,
+    subfolder: str,
+    product_name: str,
+    product_version: str,
+    files: list[Path],
+    slug_mappings: dict[str, str],
+) -> None:
+    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Additional Documents"
+    title = f"{product_name} {product_version} {doc_type_label}"
+
+    lines = [
+        "---\n",
+        f'title: "{title}"\n',
+        f'product_name: "{product_name}"\n',
+        f'product_version: "{product_version}"\n',
+        f'doc_type: "{subfolder}"\n',
+        "---\n",
+        "\n",
+        f"# {title}\n",
+        "\n",
+    ]
+    for f in sorted(files):
+        display = resolve_display_name(f, product_name, product_version, slug_mappings)
+        lines.append(f"- [{display}]({f.name})\n")
+
+    (dest_dir / "index.md").write_text("".join(lines), encoding="utf-8")
+
+
+def _write_toc_yml(dest_dir: Path, subfolder: str, product_name: str, product_version: str) -> None:
+    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Additional Documents"
+    title = f"{product_name} {product_version} {doc_type_label}"
+    content = (
+        f"docs_list_title: {title}\n"
+        "docs:\n"
+        f"- title: {doc_type_label}\n"
+        "  url: index.md\n"
+    )
+    (dest_dir / "toc.yml").write_text(content, encoding="utf-8")
+
+
+def copy_asset_folder(
+    cache_doc_dir: Path,
+    subfolder: str,
+    dst: Path,
+    version_dashed: str,
+    product_name: str,
+    product_version: str,
+    slug_mappings: dict[str, str],
+) -> int:
+    """Copy pdf/ or doc/ assets from cache to output, generate index.md and toc.yml.
+    Returns number of files copied."""
+    src_dir = cache_doc_dir / subfolder
+    if not src_dir.is_dir():
+        return 0
+
+    files = [f for f in sorted(src_dir.iterdir()) if f.is_file()]
+    if not files:
+        return 0
+
+    dest_dir = dst / "en-us" / PRODUCT_SLUG / subfolder / version_dashed
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    for f in files:
+        shutil.copy2(f, dest_dir / f.name)
+
+    _write_index_md(dest_dir, subfolder, product_name, product_version, files, slug_mappings)
+    _write_toc_yml(dest_dir, subfolder, product_name, product_version)
+
+    return len(files)
+
+
+def discover_asset_versions(cache_src: Path) -> list[tuple[str, str]]:
+    """Return [(version, version_dashed)] for cache versions with pdf/ or doc/ assets."""
+    results = []
+    for ver_dir in sorted(cache_src.iterdir()):
+        if not ver_dir.is_dir():
+            continue
+        doc_dir = ver_dir / "doc"
+        if (doc_dir / "pdf").is_dir() or (doc_dir / "doc").is_dir():
+            results.append((ver_dir.name, ver_dir.name.replace(".", "-")))
+    return results
 
 
 def _norm_lang(lang: str) -> str:
@@ -230,6 +413,8 @@ def main() -> int:
                         help="Source directory (default: output/pub/ebx)")
     parser.add_argument("--dst", default="output/ebx",
                         help="Destination directory (default: output/ebx)")
+    parser.add_argument("--cache-src", default="cache/pub/ebx",
+                        help="Cache directory with raw EBX archives (default: cache/pub/ebx)")
     parser.add_argument("--preflight-only", action="store_true",
                         help="Run pre-flight scan only — no files written")
     parser.add_argument("--exclude-java-api", action="store_true",
@@ -238,6 +423,7 @@ def main() -> int:
 
     src = Path(args.src)
     dst = Path(args.dst)
+    cache_src = Path(args.cache_src)
 
     if not src.exists():
         print(f"Error: source not found: {src}", file=sys.stderr)
@@ -322,9 +508,37 @@ def main() -> int:
 
     print(f"  Patched {patched} / {len(lang_roots)} _toc.json files")
 
-    # ── Phase 4: report ───────────────────────────────────────────────────────
+    # ── Phase 4: copy PDF and doc assets ─────────────────────────────────────
+    print("\n=== Phase 4: Copying PDF and doc assets ===")
+    slug_mappings = load_slug_mappings(SLUG_MAPPINGS_FILE)
+    asset_total = 0
+
+    if not cache_src.is_dir():
+        print(f"  WARNING: cache source not found ({cache_src}) — skipping asset copy")
+    else:
+        asset_versions = discover_asset_versions(cache_src)
+        print(f"  {len(asset_versions)} versions with PDF/doc assets found")
+        for version, version_dashed in tqdm(asset_versions, desc="Asset versions", unit="ver"):
+            cache_doc_dir = cache_src / version / "doc"
+            asset_total += copy_asset_folder(
+                cache_doc_dir, "pdf", dst, version_dashed, PRODUCT_NAME, version, slug_mappings
+            )
+            asset_total += copy_asset_folder(
+                cache_doc_dir, "doc", dst, version_dashed, PRODUCT_NAME, version, slug_mappings
+            )
+
+        save_slug_mappings(SLUG_MAPPINGS_FILE, slug_mappings)
+        needs_review = sum(1 for v in slug_mappings.values() if not v)
+        print(f"  Asset files copied : {asset_total}")
+        print(f"  Slug mappings      : {len(slug_mappings)} total, {needs_review} needing review")
+        if needs_review:
+            unfilled = [k for k, v in slug_mappings.items() if not v]
+            print(f"  Review slugs       : {', '.join(unfilled)}")
+
+    # ── Phase 5: report ───────────────────────────────────────────────────────
     print("\n=== Done ===")
     print(f"  Files copied : {len(mapping) - errors}")
+    print(f"  Assets copied: {asset_total}")
     print(f"  Errors       : {errors}")
     if cross_links:
         print(f"  Cross-lang   : {len(cross_links)} links need manual review")

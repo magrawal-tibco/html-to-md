@@ -1,0 +1,24 @@
+# PDF / doc filename slug → guide label (without product name or version prefix).
+# Display name is constructed as: "<product_name> <version> <label>"
+#
+# Auto-populated from PDF Title metadata during conversion.
+# Manual corrections here take precedence and apply to all future runs.
+# Slugs with an empty value ("") were discovered but not yet resolved — fill them in.
+
+ReminderNotice: "Reminder Notice"
+admin-guide: "Administration Guide"
+advanced_documentation: "Advanced Documentation"
+com-tutorial: "COM Tutorial"
+container_edition: "Container Edition Guide"
+dev-guide: "Developer Guide"
+installation: "Installation Guide"
+introduction: "Introduction"
+license: "License Agreement"
+pdriver-tutorial: "Process Driver Tutorial"
+readme: "Readme"
+relnotes: "Release Notes"
+security-guide: "Security Guide"
+service-tutorial: "Service Tutorial"
+speedlink-guide: "SpeedLink Guide"
+upgrade-guide: "Upgrade Guide"
+vpat: "VPAT (Accessibility)"

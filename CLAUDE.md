@@ -31,11 +31,15 @@ html-to-md/
 │   ├── 04_build_csh_maps.py      # alias.xml → csh_map.json + frontmatter injection
 │   ├── 05_postprocess.py         # Rewrite .htm links → .md, strip variable tokens
 │   ├── 06_build_toc.py           # Reconstruct TOC from toc_path breadcrumbs → _toc.json
+│   ├── 07_restructure_ebx_addon.py  # EBX add-on: version-first → addon-first layout
+│   ├── 08_restructure_ebx.py     # EBX main: URL-mirror → language-first AEM layout + PDF/doc assets
+│   ├── 09_copy_assets.py         # Generic: copy PDF/doc assets + generate index.md + toc.yml
 │   └── lib/
 │       ├── sitemap_parser.py     # 3-level sitemap crawl functions
 │       ├── preprocessor.py       # 8 BeautifulSoup transform passes
 │       ├── table_classifier.py   # Tier 1/2/3 table classification
-│       └── reporter.py           # Structured logging + JSON report writing
+│       ├── reporter.py           # Structured logging + JSON report writing
+│       └── asset_copy.py         # Shared PDF/doc asset copy + slug resolution utilities
 ├── manifests/                    # Generated JSON manifests — commit these
 ├── cache/                        # Downloaded HTML + images — gitignore
 ├── output/                       # Converted Markdown files — gitignore
@@ -306,6 +310,104 @@ logs/<phase>/<YYYYMMDD-HHMMSS>/
 ```
 
 Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-completed URLs.
+
+---
+
+## EBX-Specific Post-Processing
+
+EBX documentation ZIPs have a richer structure than standard MadCap products and require
+additional post-processing steps run after the standard pipeline (Steps 1–6).
+
+### Archive structure (cache/pub/ebx/<version>/doc/)
+```
+doc/
+├── html/
+│   ├── en/      → webhelp (converted by Steps 1-6)
+│   ├── fr/      → webhelp (French, 6.1.1+)
+│   └── ja/      → webhelp (Japanese, 6.1.1+)
+├── relnotes/    → relnotes.md (generated separately)
+├── pdf/         → PDF files (copied as-is by Step 08/09)
+└── doc/         → Other documents, e.g. readme.txt (copied as-is by Step 08/09)
+```
+
+### Step 08 — EBX restructure (`scripts/08_restructure_ebx.py`)
+
+Transforms the URL-mirroring output layout into the AEM Guides language-first layout, and
+copies PDF/doc assets alongside the restructured webhelp output.
+
+**Webhelp restructure:**
+```
+output/pub/ebx/<version>/doc/html/<lang>/<content>
+  → output/ebx/<lang-norm>/ebx/webhelp/<ver-dashed>/<content>
+```
+
+**PDF/doc asset copy (Phase 4 of the script):**
+```
+cache/pub/ebx/<version>/doc/pdf/   → output/ebx/en-us/ebx/pdf/<ver-dashed>/
+cache/pub/ebx/<version>/doc/doc/   → output/ebx/en-us/ebx/doc/<ver-dashed>/
+```
+
+Each version folder under `pdf/` and `doc/` gets two generated files:
+- `index.md` — frontmatter + heading + sorted hyperlinked file list with resolved display names
+- `toc.yml` — `docs_list_title` + single entry pointing to `index.md`
+
+Usage:
+```bash
+python scripts/08_restructure_ebx.py [--src output/pub/ebx] [--dst output/ebx] \
+                                      [--cache-src cache/pub/ebx] \
+                                      [--preflight-only] [--exclude-java-api]
+```
+
+### Step 09 — Generic asset copy (`scripts/09_copy_assets.py`)
+
+Runs the same PDF/doc asset copy for any product (not EBX-specific). Used for products
+whose archives contain `<version>/doc/pdf/` and `<version>/doc/doc/` subfolders.
+
+```bash
+python scripts/09_copy_assets.py \
+  --cache-src cache/pub/<product> \
+  --dst       output/<product> \
+  --product-slug <slug> \
+  --product-name "<Full Product Name>" \
+  [--lang en-us]
+```
+
+**Output structure produced by both scripts:**
+```
+output/<product>/<lang>/<slug>/
+├── webhelp/<ver-dashed>/    ← existing converted Markdown
+├── pdf/<ver-dashed>/
+│   ├── TIB_*.pdf            ← copied as-is
+│   ├── index.md             ← generated listing page
+│   └── toc.yml              ← generated TOC pointer
+└── doc/<ver-dashed>/
+    ├── TIB_*.txt            ← copied as-is
+    ├── index.md             ← generated listing page
+    └── toc.yml              ← generated TOC pointer
+```
+
+### PDF slug mapping (`config/pdf_slug_mappings.yaml`)
+
+Maps filename slugs (the part after `TIB_<product>_<version>_`) to human-readable guide labels.
+Display name = `"<product_name> <version> <label>"`.
+
+```yaml
+admin-guide: "Administration Guide"
+installation: "Installation Guide"
+relnotes: "Release Notes"
+# ...
+```
+
+Resolution order per file:
+1. PDF `Title` metadata via PyMuPDF — strips `<product_name> <version>` prefix; auto-populates mapping
+2. Slug mapping lookup (`config/pdf_slug_mappings.yaml`)
+3. Title-case the slug as fallback
+4. Raw filename as last resort
+
+The script auto-adds newly discovered slugs to the mapping file (empty value = needs manual review).
+Manual corrections persist across all future runs since the file is committed.
+
+Shared utilities live in `scripts/lib/asset_copy.py` and are used by both scripts 08 and 09.
 
 ---
 
