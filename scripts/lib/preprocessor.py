@@ -115,6 +115,14 @@ def fake_list_tables(content: Tag) -> int:
         is_ordered = any(
             kw in class_str for kw in ("_Number", "_Step", "_Procedure", "_Numbered")
         )
+        # Tiebreaker: MadCap occasionally labels a numbered step table as AutoNumber_p_Bullet.
+        # The data-mc-autonum attribute on the content <td> is the ground truth.
+        if not is_ordered:
+            for td in table.find_all("td", attrs={"data-mc-autonum": True}):
+                val = (td.get("data-mc-autonum") or "").strip()
+                if val and val[0].isdigit():
+                    is_ordered = True
+                    break
         list_tag = "ol" if is_ordered else "ul"
         soup_stub = BeautifulSoup(f"<{list_tag}></{list_tag}>", "lxml")
         new_list = soup_stub.find(list_tag)
