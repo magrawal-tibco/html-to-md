@@ -331,10 +331,13 @@ def node_to_yaml(node: dict, version_root: str) -> dict:
 
     file_path = node.get("file")
     if file_path:
-        posix = Path(file_path).as_posix()
-        root  = version_root.replace("\\", "/").rstrip("/") + "/"
-        rel   = posix[len(root):] if posix.startswith(root) else posix
-        result["url"] = rel
+        if file_path.startswith(("http://", "https://")):
+            result["url"] = file_path  # external URL — use as-is
+        else:
+            posix = Path(file_path).as_posix()
+            root  = version_root.replace("\\", "/").rstrip("/") + "/"
+            rel   = posix[len(root):] if posix.startswith(root) else posix
+            result["url"] = rel
 
     children = node.get("children", [])
     if children:
@@ -483,6 +486,32 @@ def generate_section_pages(
     return count
 
 
+# Map of TOC node titles to external URL templates.
+# {version} is replaced with the product version in dot-to-dash form (e.g. "6-2-3").
+# All languages use the same English URL (en/us).
+_EXTERNAL_TOC_URLS: dict[str, str] = {
+    "Java API": "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{version}/",
+}
+
+
+def inject_external_urls(nodes: list, version_dashed: str) -> int:
+    """
+    Walk the TOC tree and assign external URLs to known placeholder nodes
+    (nodes that have no file and no children but correspond to off-site content).
+    Returns the number of nodes patched.
+    """
+    count = 0
+    for node in nodes:
+        if node.get("children"):
+            count += inject_external_urls(node["children"], version_dashed)
+        if not node.get("file") and not node.get("children"):
+            template = _EXTERNAL_TOC_URLS.get(node["title"])
+            if template:
+                node["file"] = template.format(version=version_dashed)
+                count += 1
+    return count
+
+
 def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
     """Group manifest entries by version_html_root."""
     versions: dict[str, list[dict]] = defaultdict(list)
@@ -549,6 +578,13 @@ def main():
         if n_generated:
             reporter.info(f"  Generated {n_generated} section index page(s) for {version_root}")
             reporter.count("section_pages_generated", n_generated)
+
+        # Inject external URLs for known off-site placeholder nodes (e.g. Java API).
+        version_dashed = meta.get("product_version", "").replace(".", "-")
+        n_external = inject_external_urls(toc["tree"], version_dashed)
+        if n_external:
+            reporter.info(f"  Injected {n_external} external URL(s) for {version_root}")
+            reporter.count("external_urls_injected", n_external)
 
         toc_path = output_dir / version_root / "_toc.json"
 

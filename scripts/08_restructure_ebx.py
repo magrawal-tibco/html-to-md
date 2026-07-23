@@ -37,6 +37,7 @@ import shutil
 import sys
 from pathlib import Path
 
+import yaml
 from tqdm import tqdm
 
 # Matches Markdown links: [text](url)
