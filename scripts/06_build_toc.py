@@ -15,6 +15,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from collections import defaultdict
 from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse
@@ -350,6 +351,138 @@ def toc_to_yaml(toc: dict) -> dict:
     }
 
 
+def slugify_title(title: str) -> str:
+    """Convert a section title to a filesystem-safe ASCII slug."""
+    s = unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode()
+    s = re.sub(r"[^\w\s-]", "", s).strip().lower()
+    return re.sub(r"[\s_-]+", "_", s) or "section"
+
+
+def render_subtree(children: list, version_root: str, indent: int = 0) -> list[str]:
+    """
+    Render a TOC subtree as a nested markdown unordered list.
+
+    - Nodes with a file become hyperlinks relative to the version root.
+    - Nodes without a file (section headings) are plain text items.
+    """
+    lines = []
+    prefix = "  " * indent
+    root_prefix = version_root.replace("\\", "/").rstrip("/") + "/"
+    for child in children:
+        title = child.get("title", "")
+        file_path = child.get("file")
+        if file_path:
+            rel = Path(file_path).as_posix()
+            if rel.startswith(root_prefix):
+                rel = rel[len(root_prefix):]
+            lines.append(f"{prefix}- [{title}]({rel})")
+        else:
+            lines.append(f"{prefix}- {title}")
+        sub = child.get("children", [])
+        if sub:
+            lines.extend(render_subtree(sub, version_root, indent + 1))
+    return lines
+
+
+def _version_meta(version_entries: list[dict], output_dir: Path) -> dict:
+    """Return {product_name, product_version, lang} from the first readable entry."""
+    for entry in version_entries:
+        md_path = output_dir / entry["output_path"]
+        if md_path.exists():
+            fm = read_frontmatter(md_path)
+            name = fm.get("product_name", "")
+            if name:
+                return {
+                    "product_name": name,
+                    "product_version": fm.get("product_version", ""),
+                    "lang": fm.get("lang", "en-us"),
+                }
+    return {}
+
+
+def generate_section_pages(
+    nodes: list,
+    version_root: str,
+    version_dir: Path,
+    meta: dict,
+    seen_slugs: set | None = None,
+    breadcrumb: list[str] | None = None,
+    dry_run: bool = False,
+) -> int:
+    """
+    Walk the TOC tree and synthesize a listing page for every node that has
+    children but no file (pure structural/grouping headings from MadCap).
+
+    Recurses depth-first (bottom-up) so child sections are assigned files before
+    parent sections render their subtree listing.
+
+    Writes _section_<slug>.md files at the version root directory.
+    Updates node["file"] in place so the caller can re-emit _toc.json and toc.yml.
+
+    Returns the number of pages generated.
+    """
+    if seen_slugs is None:
+        seen_slugs = set()
+    if breadcrumb is None:
+        breadcrumb = []
+
+    count = 0
+    for node in nodes:
+        children = node.get("children", [])
+        node_breadcrumb = breadcrumb + [node["title"]]
+
+        # Recurse FIRST (bottom-up) — child sections get files before parent renders them
+        if children:
+            count += generate_section_pages(
+                children, version_root, version_dir, meta,
+                seen_slugs, node_breadcrumb, dry_run,
+            )
+
+        # Skip nodes that already have a page or have no children at all
+        if node.get("file") or not children:
+            continue
+
+        # Derive a unique slug for this section
+        base = slugify_title(node["title"])
+        slug = base
+        n = 2
+        while slug in seen_slugs:
+            slug = f"{base}_{n}"
+            n += 1
+        seen_slugs.add(slug)
+
+        # Build frontmatter — toc_path = the PARENT breadcrumb (excluding this node's title)
+        fm: dict = {
+            "title": node["title"],
+            "product_name": meta.get("product_name", ""),
+            "product_version": meta.get("product_version", ""),
+            "lang": meta.get("lang", "en-us"),
+        }
+        if len(node_breadcrumb) > 1:
+            fm["toc_path"] = "|".join(node_breadcrumb[:-1])
+
+        fm_yaml = yaml.dump(fm, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        body_lines = render_subtree(children, version_root)
+        content = (
+            f"---\n{fm_yaml}---\n\n"
+            f"# {node['title']}\n\n"
+            + "\n".join(body_lines)
+            + "\n"
+        )
+
+        out_path = version_dir / f"_section_{slug}.md"
+        if not dry_run:
+            out_path.write_text(content, encoding="utf-8")
+
+        # Update node["file"] using the same path convention as converted pages:
+        # version_root (e.g. "pub/ebx/6.2.3/doc/html/en/") + filename
+        vr_prefix = version_root.replace("\\", "/").rstrip("/") + "/"
+        node["file"] = vr_prefix + f"_section_{slug}.md"
+        count += 1
+
+    return count
+
+
 def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
     """Group manifest entries by version_html_root."""
     versions: dict[str, list[dict]] = defaultdict(list)
@@ -405,6 +538,17 @@ def main():
 
     for version_root, entries in tqdm(versions.items(), desc="Versions"):
         toc = build_version_toc(entries, output_dir, version_root, reporter, cache_dir)
+
+        # Generate synthetic index pages for url-less structural TOC nodes.
+        # Recurses bottom-up so child sections have files before parents render them.
+        meta = _version_meta(entries, output_dir)
+        version_dir = output_dir / version_root
+        n_generated = generate_section_pages(
+            toc["tree"], version_root, version_dir, meta, dry_run=args.dry_run
+        )
+        if n_generated:
+            reporter.info(f"  Generated {n_generated} section index page(s) for {version_root}")
+            reporter.count("section_pages_generated", n_generated)
 
         toc_path = output_dir / version_root / "_toc.json"
 
