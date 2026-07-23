@@ -267,8 +267,7 @@ def discover_relnotes(src: Path) -> list[tuple[str, Path]]:
     return results
 
 
-def build_path_mapping(src: Path, dst: Path,
-                       exclude_java_api: bool = False) -> dict[Path, Path]:
+def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
     """
     Return {old_abs_path: new_abs_path} for every file to restructure.
 
@@ -277,8 +276,7 @@ def build_path_mapping(src: Path, dst: Path,
     Addon:    src/<ver>/doc/<addon>/<rest>      → dst/en-us/ebx-addon/<addon>/<ver-dashed>/<rest>
               where <addon> is one of the known EBX add-on module names (not html/relnotes/java)
 
-    Java_API/ subdirectories are included by default (copied as-is, no markdown conversion).
-    Pass exclude_java_api=True to omit them entirely.
+    Java_API/ subdirectories are always excluded — the API is now hosted externally.
     """
     _ADDON_MODULES = {"adix", "common", "dama", "daqa", "dint", "dmdv", "dpra", "dqid", "mame", "moda", "tese"}
     mapping: dict[Path, Path] = {}
@@ -290,8 +288,8 @@ def build_path_mapping(src: Path, dst: Path,
 
         # Webhelp: <ver>/doc/html/<lang>/<rest…>  — at least 5 parts
         if len(parts) >= 5 and parts[1] == "doc" and parts[2] == "html" and parts[3] != "_toc.json":
-            if exclude_java_api and len(parts) >= 6 and parts[4] == "Java_API":
-                continue
+            if len(parts) >= 6 and parts[4] == "Java_API":
+                continue  # Java API is hosted externally
             ver, lang = parts[0], parts[3]
             if not lang.startswith("_") and (Path(src / ver / "doc" / "html" / lang)).is_dir():
                 lang_norm = _norm_lang(lang)
@@ -310,8 +308,8 @@ def build_path_mapping(src: Path, dst: Path,
 
         # Addon WebWorks: <ver>/doc/<addon>/<rest…>  — addon modules only
         elif len(parts) >= 4 and parts[1] == "doc" and parts[2] in _ADDON_MODULES:
-            if exclude_java_api and len(parts) >= 5 and parts[3] == "Java_API":
-                continue
+            if len(parts) >= 5 and parts[3] == "Java_API":
+                continue  # Java API is hosted externally
             ver, addon = parts[0], parts[2]
             ver_dashed = ver.replace(".", "-")
             rest = Path(*parts[3:])
@@ -418,8 +416,6 @@ def main() -> int:
                         help="Cache directory with raw EBX archives (default: cache/pub/ebx)")
     parser.add_argument("--preflight-only", action="store_true",
                         help="Run pre-flight scan only — no files written")
-    parser.add_argument("--exclude-java-api", action="store_true",
-                        help="Omit Java_API/ subdirectories from output (default: include as-is)")
     args = parser.parse_args()
 
     src = Path(args.src)
@@ -460,9 +456,8 @@ def main() -> int:
 
     # ── Phase 1: build path mapping ──────────────────────────────────────────
     print("\n=== Phase 1: Building path mapping ===")
-    mapping = build_path_mapping(src, dst, exclude_java_api=args.exclude_java_api)
-    java_api_note = " (Java_API excluded)" if args.exclude_java_api else " (Java_API included)"
-    print(f"  {len(mapping)} files mapped{java_api_note}")
+    mapping = build_path_mapping(src, dst)
+    print(f"  {len(mapping)} files mapped (Java_API excluded — hosted externally)")
 
     # ── Phase 2: copy files ──────────────────────────────────────────────────
     print("\n=== Phase 2: Copying files ===")
