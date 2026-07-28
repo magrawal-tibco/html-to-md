@@ -1,0 +1,9 @@
+{
+  "https://docs.tibco.com/products/tibco-datasynapse-gridserver-manager-7-1-1": {
+    "zip_url": "https://docs.tibco.com/pub/dsp_gridserver/7.1.1/tibco-datasynapse-gridserver-manager-7-1-1_documentation.zip",
+    "html_root": "pub/dsp_gridserver/7.1.1/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}

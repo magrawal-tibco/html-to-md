@@ -38,6 +38,13 @@ _MALFORMED_AUTOLINK_RE = re.compile(r"<(https?://(?:[^>]*\.\.\..*|))>")
 #   [Home](./index.html)>Page - Table of contents
 _EBX_BREADCRUMB_LINE_RE = re.compile(r"^\[.+?\]\(\.\/index\.html\)[^\n]*\n?", re.MULTILINE)
 
+# Matches relative Java_API links in Markdown body — all prefix variants:
+#   ../Java_API/...   ../../../../Java_API/...   Java_API/...
+# Handles method-signature parens in fragment: foo.html#setByDelta(boolean)
+_JAVA_API_LINK_RE = re.compile(
+    r"\[([^\]]*)\]\(((?:\.\.\/)*|)Java_API/([^()]*(?:\([^)]*\)[^()]*)*)\)"
+)
+
 
 def load_settings(config_path: str) -> dict:
     return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
@@ -249,6 +256,21 @@ def normalize_heading_levels(body: str) -> tuple[str, int]:
     return "\n".join(out), fixes
 
 
+def rewrite_java_api_links(body: str, version_dashed: str) -> tuple[str, int]:
+    """Replace relative Java_API/... links with the external EBX Java API hosting URL."""
+    base = f"https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{version_dashed}/"
+    count = 0
+
+    def replace_java_link(m: re.Match) -> str:
+        nonlocal count
+        text, path = m.group(1), m.group(3)
+        count += 1
+        return f"[{text}]({base}{path})"
+
+    updated = _JAVA_API_LINK_RE.sub(replace_java_link, body)
+    return updated, count
+
+
 def postprocess_file(
     md_path: Path,
     output_path_rel: str,
@@ -295,6 +317,14 @@ def postprocess_file(
         body, breadcrumb_count = strip_ebx_breadcrumb_lines(body)
         if breadcrumb_count:
             reporter.count("ebx_breadcrumb_lines_stripped", breadcrumb_count)
+
+        # 7. Rewrite relative Java_API links to external EBX Java API hosting
+        product_version = fm.get("product_version", "")
+        if product_version:
+            version_dashed = str(product_version).replace(".", "-")
+            body, java_api_count = rewrite_java_api_links(body, version_dashed)
+            if java_api_count:
+                reporter.count("java_api_links_rewritten", java_api_count)
 
         if not dry_run:
             md_path.write_text(write_frontmatter(fm, body), encoding="utf-8")

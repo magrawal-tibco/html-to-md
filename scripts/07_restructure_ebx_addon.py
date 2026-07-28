@@ -6,15 +6,18 @@ writing a *separate* copy without touching the original.
 
 Old layout (mirrors source URL):
   output/pub/ebx-addon/<version>/doc/<addon>/<content>
-  output/pub/ebx-addon/<version>/<addon>/Java_API/
+  output/pub/ebx-addon/<version>/doc/<addon>/Java_API/
 
-New layout (addon-first, doc/ removed):
-  output/pub/ebx-addon-reorg/<addon>/<version>/<content>
-  output/pub/ebx-addon-reorg/<addon>/<version>/Java_API/
+New webhelp layout (addon-first, Java_API excluded):
+  <dst>/en-us/ebx-addon/<addon>/<ver-dashed>/<content>
+
+New javadocs layout (separate tree for separate repo):
+  <javadocs-dst>/en-us/ebx-addons/<addon>/javadocs/<ver-dashed>/<Java_API content>
 
 Usage:
   python scripts/07_restructure_ebx_addon.py [--src output/pub/ebx-addon]
-                                              [--dst output/pub/ebx-addon-reorg]
+                                              [--dst output/ebx-addon]
+                                              [--javadocs-dst output/ebx-addon-javadocs]
                                               [--preflight-only]
 """
 
@@ -48,11 +51,12 @@ def discover_doc_addon_roots(src: Path) -> list[tuple[str, str, Path]]:
 
 def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
     """
-    Return {old_abs_path: new_abs_path} for every file to be restructured.
+    Return {old_abs_path: new_abs_path} for webhelp files (Java_API excluded).
 
-    Two source patterns:
-      src/<ver>/doc/<addon>/<rest>        → dst/<addon>/<ver>/<rest>
-      src/<ver>/<addon>/Java_API/<rest>   → dst/<addon>/<ver>/Java_API/<rest>
+    Source pattern:
+      src/<ver>/doc/<addon>/<rest>  → dst/en-us/ebx-addon/<addon>/<ver-dashed>/<rest>
+
+    Java_API/ subdirectories are excluded — handled by build_javadocs_mapping().
     """
     mapping: dict[Path, Path] = {}
 
@@ -62,16 +66,44 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
         parts = path.relative_to(src).parts
 
         if len(parts) >= 4 and parts[1] == "doc":
-            # <ver>/doc/<addon>/<rest...>  (includes doc/<addon>/Java_API/)
             ver, addon = parts[0], parts[2]
             rest = Path(*parts[3:])
+            if rest.parts[0] == "Java_API":
+                continue  # Java API is handled separately by build_javadocs_mapping()
             new_rel = Path("en-us") / "ebx-addon" / addon / ver.replace(".", "-") / rest
-
         else:
             # Version-level aggregate files (e.g. doc/_toc.json) — skip
             continue
 
         mapping[path] = dst / new_rel
+
+    return mapping
+
+
+def build_javadocs_mapping(src: Path, dst: Path) -> dict[Path, Path]:
+    """
+    Return {old_abs_path: new_abs_path} for Java_API content.
+
+    Source pattern:
+      src/<ver>/doc/<addon>/Java_API/<rest>
+        → dst/en-us/ebx-addons/<addon>/javadocs/<ver-dashed>/<rest>
+    """
+    mapping: dict[Path, Path] = {}
+
+    for path in src.rglob("*"):
+        if not path.is_file():
+            continue
+        parts = path.relative_to(src).parts
+
+        # <ver>/doc/<addon>/Java_API/<rest...>
+        if len(parts) >= 5 and parts[1] == "doc" and parts[3] == "Java_API":
+            ver, addon = parts[0], parts[2]
+            rest = Path(*parts[4:])
+            new_rel = (
+                Path("en-us") / "ebx-addons" / addon
+                / "javadocs" / ver.replace(".", "-") / rest
+            )
+            mapping[path] = dst / new_rel
 
     return mapping
 
@@ -146,21 +178,25 @@ def main() -> int:
     )
     parser.add_argument("--src", default="output/pub/ebx-addon",
                         help="Source directory (default: output/pub/ebx-addon)")
-    parser.add_argument("--dst", default="output/pub/ebx-addon-reorg",
-                        help="Destination directory (default: output/pub/ebx-addon-reorg)")
+    parser.add_argument("--dst", default="output/ebx-addon",
+                        help="Webhelp destination (default: output/ebx-addon)")
+    parser.add_argument("--javadocs-dst", default=None,
+                        help="Javadocs destination (default: same as --dst)")
     parser.add_argument("--preflight-only", action="store_true",
                         help="Run pre-flight scan only — no files written")
     args = parser.parse_args()
 
     src = Path(args.src)
     dst = Path(args.dst)
+    javadocs_dst = Path(args.javadocs_dst) if args.javadocs_dst else dst
 
     if not src.exists():
         print(f"Error: source not found: {src}", file=sys.stderr)
         return 1
 
-    print(f"Source : {src.resolve()}")
-    print(f"Dest   : {dst.resolve()}")
+    print(f"Source       : {src.resolve()}")
+    print(f"Webhelp dest : {dst.resolve()}")
+    print(f"Javadocs dest: {javadocs_dst.resolve()}")
     print()
 
     # ── Phase 0: pre-flight cross-addon link scan ────────────────────────────
@@ -186,34 +222,66 @@ def main() -> int:
         print("\n(--preflight-only: stopping before copy)")
         return 0
 
-    # ── Phase 1: build path mapping ──────────────────────────────────────────
-    print("\n=== Phase 1: Building path mapping ===")
+    # ── Phase 1: build webhelp path mapping ──────────────────────────────────
+    print("\n=== Phase 1: Building webhelp path mapping ===")
     mapping = build_path_mapping(src, dst)
-    print(f"  {len(mapping)} files mapped")
+    print(f"  {len(mapping)} webhelp files mapped (Java_API excluded)")
 
-    # ── Phase 2: copy files ──────────────────────────────────────────────────
-    print("\n=== Phase 2: Copying files ===")
+    # ── Phase 2: build javadocs path mapping ─────────────────────────────────
+    print("\n=== Phase 2: Building javadocs path mapping ===")
+    javadocs_mapping = build_javadocs_mapping(src, javadocs_dst)
+    print(f"  {len(javadocs_mapping)} javadoc files mapped")
+    # Show unique addon/version pairs
+    addon_ver_pairs = {
+        (p.relative_to(javadocs_dst).parts[2], p.relative_to(javadocs_dst).parts[4])
+        for p in javadocs_mapping.values()
+        if len(p.relative_to(javadocs_dst).parts) >= 5
+    }
+    for addon, ver in sorted(addon_ver_pairs):
+        print(f"    {addon}  {ver}")
+
+    # ── Phase 3: copy webhelp files ───────────────────────────────────────────
+    print("\n=== Phase 3: Copying webhelp files ===")
     errors = 0
-    for old_path, new_path in tqdm(mapping.items(), desc="Copying", unit="file"):
+    for old_path, new_path in tqdm(mapping.items(), desc="Webhelp", unit="file"):
         try:
             new_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(old_path, new_path)
         except Exception as exc:
             print(f"\n  Error: {old_path} → {exc}")
             errors += 1
-
     print(f"  Copied {len(mapping) - errors} files ({errors} errors)")
 
-    # ── Phase 3: cross-addon link rewriting (only if needed) ─────────────────
+    # ── Phase 4: copy javadocs files ──────────────────────────────────────────
+    print("\n=== Phase 4: Copying javadocs files ===")
+    jd_errors = 0
+    for old_path, new_path in tqdm(javadocs_mapping.items(), desc="Javadocs", unit="file"):
+        try:
+            new_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(old_path, new_path)
+        except Exception as exc:
+            print(f"\n  Error: {old_path} → {exc}")
+            jd_errors += 1
+    print(f"  Copied {len(javadocs_mapping) - jd_errors} files ({jd_errors} errors)")
+
+    # ── Phase 5: remove Java_API remnants from webhelp tree ───────────────────
+    print("\n=== Phase 5: Removing Java_API from webhelp tree ===")
+    removed_dirs = 0
+    for java_dir in sorted((dst / "en-us" / "ebx-addon").rglob("Java_API")):
+        if java_dir.is_dir():
+            shutil.rmtree(java_dir)
+            removed_dirs += 1
+    print(f"  Removed {removed_dirs} Java_API director{'ies' if removed_dirs != 1 else 'y'}")
+
+    # ── Phase 6: cross-addon link rewriting (only if needed) ──────────────────
     if cross_links:
-        print("\n=== Phase 3: Cross-addon link rewriting ===")
+        print("\n=== Phase 6: Cross-addon link rewriting ===")
         print("  Skipped — cross-addon links detected but rewriting not implemented.")
         print("  See Phase 0 output for the affected files.")
 
-    # ── Phase 4: patch _toc.json root fields ─────────────────────────────────
-    print("\n=== Phase 4: Patching _toc.json root fields ===")
+    # ── Phase 7: patch _toc.json root fields ──────────────────────────────────
+    print("\n=== Phase 7: Patching _toc.json root fields ===")
 
-    # Derive path prefixes relative to "output/" for the root field in _toc.json
     output_dir = Path("output")
     try:
         src_prefix = src.resolve().relative_to(output_dir.resolve()).as_posix()
@@ -236,16 +304,18 @@ def main() -> int:
 
     print(f"  Patched {patched} / {len(addon_roots)} _toc.json files")
 
-    # ── Phase 5: report ───────────────────────────────────────────────────────
+    # ── Phase 7: report ───────────────────────────────────────────────────────
+    total_errors = errors + jd_errors
     print("\n=== Done ===")
-    total = len(mapping)
-    print(f"  Files copied : {total - errors}")
-    print(f"  Errors       : {errors}")
+    print(f"  Webhelp files copied : {len(mapping) - errors}")
+    print(f"  Javadocs files copied: {len(javadocs_mapping) - jd_errors}")
+    print(f"  Errors               : {total_errors}")
     if cross_links:
-        print(f"  Cross-addon  : {len(cross_links)} links need manual review")
-    print(f"  Output       : {dst.resolve()}")
+        print(f"  Cross-addon          : {len(cross_links)} links need manual review")
+    print(f"  Webhelp output       : {dst.resolve()}")
+    print(f"  Javadocs output      : {javadocs_dst.resolve()}")
 
-    return 0 if errors == 0 else 1
+    return 0 if total_errors == 0 else 1
 
 
 if __name__ == "__main__":

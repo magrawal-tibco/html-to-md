@@ -1,10 +1,69 @@
 # TIBCO Docs HTML → Markdown Converter
 
-A Python pipeline that converts TIBCO product documentation (~2000 product versions) from HTML to plain Markdown. The source is MadCap Flare WebHelp2 HTML output published at [docs.tibco.com](https://docs.tibco.com).
+A Python pipeline that converts TIBCO product documentation — 600K+ pages across 584 products,
+1500+ versions, and 4 business units (TIBCO, IBI, DataSynapse, EBX) — from HTML and PDF into
+structured, AI-ready Markdown. Source content originates from multiple authoring tools including
+MadCap Flare, DocBook, FrameMaker (WebWorks ePublisher), DITA, and Word, published at
+[docs.tibco.com](https://docs.tibco.com).
 
 ## Overview
 
-The pipeline downloads documentation HTML (or full documentation ZIPs where available), runs a series of BeautifulSoup preprocessing transforms to clean up MadCap-specific markup, then converts to GitHub-Flavored Markdown using [markdownify](https://github.com/matthewwithanm/python-markdownify). Each Markdown file includes YAML frontmatter with metadata (title, TOC path, product version, context-sensitive help IDs).
+The pipeline downloads documentation ZIPs (or individual HTML pages as fallback), applies a
+series of format-aware BeautifulSoup preprocessing transforms, and converts each topic to
+GitHub-Flavored Markdown using [markdownify](https://github.com/matthewwithanm/python-markdownify).
+Separate sub-pipelines handle DITA WebHelp Responsive (SDL Trisoft), WebWorks ePublisher
+(legacy FrameMaker), and PDF release notes. Every output file includes YAML frontmatter with
+metadata (title, TOC path, product version, context-sensitive help IDs).
+
+## Why This Tool Exists
+
+### The Problem
+
+TIBCO's documentation catalog spans **600,000+ pages** across **584 products**, **1,500+ versions**, and **4 business units** — TIBCO, IBI, DataSynapse, and EBX. Content was authored in a wide range of tools over many years: MadCap Flare, DocBook, FrameMaker (published via WebWorks ePublisher), DITA (SDL Trisoft WebHelp Responsive), and Word. Each tool produces a different HTML or PDF output format, none of which is directly ingestible by Adobe Experience Manager (AEM) Guides — the platform TIBCO uses as its central authoring and publishing hub.
+
+AEM Guides requires structured Markdown with YAML frontmatter, a specific folder layout per language and product version, and machine-readable TOC files (`toc.yml`). Manually converting even a single product version was a multi-day copy-paste exercise. At catalog scale it was not feasible at all: documentation was effectively **trapped in siloed HTML — invisible to AI systems and impossible to reformat consistently**.
+
+### What This Tool Does
+
+The pipeline automates the full conversion lifecycle for all four business units and all supported source formats:
+
+- **Discovers** all product versions from the docs.tibco.com API or sitemap hierarchy — no manual URL lists
+- **Downloads** documentation ZIPs (or individual HTML pages as fallback), along with images, alias.xml CSH mappings, and archive assets, to a local cache
+- **Converts** each HTML topic to clean Markdown with accurate frontmatter (title, language, TOC path, product name/version, CSH IDs), with format-aware transforms per authoring tool
+- **Post-processes** the converted files: rewrites internal `.htm` links to relative `.md` links, strips authoring-tool tokens, normalises heading levels, rewrites external Java API links, and generates synthetic section index pages for TOC grouping nodes that have no source page
+- **Reconstructs the TOC** from authoritative MadCap TOC JS files (when available from ZIPs) or from per-page `data-mc-toc-path` breadcrumbs as fallback, emitting `_toc.json` and `toc.yml` compatible with AEM Guides
+- **Runs sub-pipelines** automatically for DITA WebHelp (SDL Trisoft), WebWorks ePublisher (legacy FrameMaker), and PDF release notes within the same orchestrated run
+- **Restructures** EBX output into the language-first folder layout required by AEM Guides, and copies PDF/doc assets alongside with generated index pages
+
+### Key Benefits
+
+- **Zero manual work per version** — adding a new product or version requires only one URL in a phase YAML; the pipeline handles everything else
+- **Format-agnostic** — a single orchestrator handles MadCap Flare, DocBook, DITA, WebWorks ePublisher, and PDF source formats through dedicated sub-pipelines
+- **Idempotent and resumable** — each step is independently re-runnable; a SQLite progress database checkpoints completed URLs so interrupted runs pick up where they left off
+- **Auditable output** — every converted page carries frontmatter linking it back to its source URL, language, product, and version; structured JSON reports and a persistent `conversion_log.csv` give per-run statistics
+- **Handles real-world messiness** — dozens of product-specific quirks (fake-list tables, DITA task markup, encoding artifacts, missing alias files, multi-language variants) are handled declaratively through preprocessor passes and settings, not manual cleanup
+
+---
+
+## How This Tool Was Developed
+
+This pipeline is built and maintained using **[Claude Code](https://claude.ai/code)** — Anthropic's agentic CLI that operates directly on the codebase. The development workflow is:
+
+1. **Discover** — a product-specific quirk is observed in the output (e.g. a numbered list rendered as bullets, a broken link, a missing TOC entry). The problem is described in plain language.
+2. **Investigate** — Claude Code reads the relevant source HTML, traces through the preprocessor and converter code, and identifies the exact line or transform responsible.
+3. **Fix** — a minimal, surgical change is made to the correct script without touching unrelated code.
+4. **Verify** — the affected step is re-run against real data; the output is inspected to confirm the fix without regressions.
+5. **Document** — `CLAUDE.md` (the AI context file) and this README are updated to record the new behaviour.
+
+`CLAUDE.md` acts as the **persistent memory** for Claude Code across sessions: it describes the HTML source structure, what each script does, which quirks have already been handled, and what conventions the pipeline follows. This means:
+
+- **No onboarding cost** — a new Claude Code session immediately understands the architecture and can make precise, targeted changes
+- **Incremental, safe evolution** — the modular phase/step design means each fix is contained; unrelated behaviour is not disturbed
+- **Self-updating documentation** — every structural change is reflected in both `CLAUDE.md` and this README in the same session that made the change
+
+This approach has made it practical for a small team to build and evolve a production-grade documentation pipeline covering thousands of product versions, across multiple languages and output formats, without dedicated engineering time per product.
+
+---
 
 ## Requirements
 
@@ -510,9 +569,12 @@ Use `rclone sync` instead of `rclone copy` to mirror exactly (deletes files on D
 | Product | Variation | Handling |
 |---------|-----------|----------|
 | BusinessWorks | `AutoNumber_p_*` table classes as fake lists | `fake_list_tables` transform |
+| BusinessWorks | `AutoNumber_p_Bullet` class occasionally used on numbered-step tables | `data-mc-autonum` attribute checked as tiebreaker; digit value → `<ol>` |
 | BusinessEvents 6.4.0 | DITA task/concept/reference structure | `task_sections` + `definition_lists` transforms |
 | SDL Trisoft / DITA products | GUID-based filenames (`GUID-xxx.html`) | Filtered in Step 1 as `dita`; written to `dita_versions_<phase>.json` |
 | Javadoc products | `/api/javadoc/` path segment | Filtered in Step 1 as `non-madcap-html` |
+| EBX | Relative `Java_API/` links in converted Markdown | Rewritten in Step 5 to `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/` |
+| EBX | TOC grouping nodes with no source page (`"file": null`) | Step 6 generates `_section_<slug>.md` index pages; TOC node gets a `url:` in `toc.yml` |
 | All products | MadCap variable tokens in TOC path (`[%=System.LinkedHeader%]`) | Stripped in Step 5 |
 | All products | Empty or 404 `alias.xml` | Handled silently (not an error) |
 | All products | ZIP unavailable (HTTP 404) | Logged to `zip_missing_<phase>.json`; Step 2 falls back to web crawl |

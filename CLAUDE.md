@@ -12,6 +12,97 @@ a 3-level sitemap hierarchy.
 
 ---
 
+## Why This Tool Exists
+
+### The Problem
+
+TIBCO's documentation catalog spans **600,000+ pages** across **584 products**, **1,500+ versions**,
+and **4 business units** — TIBCO, IBI, DataSynapse, and EBX. Content was authored over many years
+in MadCap Flare, DocBook, FrameMaker (published via WebWorks ePublisher), DITA (SDL Trisoft
+WebHelp Responsive), and Word. Each tool produces a different HTML or PDF output format, none of
+which is directly ingestible by Adobe Experience Manager (AEM) Guides — the platform used as the
+central authoring and publishing hub.
+
+AEM Guides requires structured Markdown with YAML frontmatter, a specific folder layout per
+language and product version, and machine-readable TOC files (`toc.yml`). Manually converting
+even a single product version was a multi-day exercise. At catalog scale, documentation was
+effectively trapped in siloed HTML — invisible to AI systems and impossible to reformat
+consistently by hand.
+
+### What This Tool Does
+
+The pipeline automates the full conversion lifecycle for all four business units and all
+supported source formats:
+
+- **Discovers** all product versions from the docs.tibco.com API or sitemap hierarchy (no manual
+  URL lists)
+- **Downloads** documentation ZIPs (or individual HTML pages as fallback), along with images,
+  alias.xml CSH mappings, and archive assets to a local cache
+- **Converts** each HTML topic to clean Markdown with accurate frontmatter (title, language, TOC
+  path, product name/version, CSH IDs), with format-aware transforms per authoring tool
+- **Post-processes** the converted files: rewrites internal `.htm` links to relative `.md` links,
+  strips authoring-tool tokens, normalises heading levels, rewrites external Java API links, and
+  generates synthetic section index pages for TOC grouping nodes that have no source page
+- **Reconstructs the TOC** from authoritative MadCap TOC JS files (when available from ZIPs) or
+  from per-page `data-mc-toc-path` breadcrumbs as fallback, emitting `_toc.json` and `toc.yml`
+  compatible with AEM Guides
+- **Runs sub-pipelines** automatically for DITA WebHelp (SDL Trisoft), WebWorks ePublisher
+  (legacy FrameMaker), and PDF release notes within the same orchestrated run
+- **Restructures** EBX output into the language-first folder layout required by AEM Guides, and
+  copies PDF/doc assets alongside with generated index pages
+
+### Key Benefits
+
+- **Zero manual work per version** — adding a new product or version requires only one URL added
+  to a phase YAML; the pipeline handles everything else
+- **Format-agnostic** — a single orchestrator handles MadCap Flare, DocBook, DITA, WebWorks
+  ePublisher, and PDF source formats through dedicated sub-pipelines
+- **Idempotent and resumable** — each step is independently re-runnable; a SQLite progress
+  database checkpoints completed URLs so interrupted runs pick up where they left off
+- **Auditable output** — every converted page carries frontmatter linking it back to its source
+  URL, language, product, and version; structured JSON reports and a persistent
+  `conversion_log.csv` give per-run statistics
+- **Handles real-world messiness** — dozens of product-specific quirks (fake-list tables, DITA
+  task markup, encoding artifacts, missing alias files, multi-language variants) are handled
+  declaratively through preprocessor passes and settings, not manual cleanup
+
+---
+
+## How This Tool Was Developed (and How Claude Code Evolves It)
+
+This pipeline was built and is maintained **entirely through Claude Code** — Anthropic's
+agentic CLI that operates directly on the codebase. The development workflow is:
+
+1. **Discovery via conversation** — a product-specific quirk is observed in the output (e.g.
+   a numbered list rendered as bullets, a broken link, a missing TOC entry). The problem is
+   described in plain language to Claude Code.
+2. **Root-cause investigation** — Claude Code reads the relevant source HTML, traces through the
+   preprocessor and converter code, and identifies the exact line or transform responsible.
+3. **Targeted fix** — a minimal, surgical change is made to the correct script. Claude Code
+   writes the fix, explains the reasoning, and leaves the surrounding code untouched.
+4. **Verification** — the affected step is re-run against real data; the output is inspected to
+   confirm the fix without regressions.
+5. **Documentation update** — CLAUDE.md is updated to record the new behaviour, so the next
+   session starts with full context.
+
+Because CLAUDE.md is loaded at the start of every Claude Code session, it acts as the
+**persistent memory** for the project: what the HTML source looks like, what each script does,
+what quirks have already been handled, and what conventions the pipeline follows. This means:
+
+- **No onboarding cost** — a new Claude Code session immediately understands the architecture
+  and can make precise changes without re-exploring the codebase
+- **Incremental evolution** — each fix or feature is added to the right layer of the pipeline
+  without breaking unrelated behaviour; the modular phase/step design makes this safe
+- **Self-improving documentation** — every structural change (new script, removed flag, new
+  output convention) is reflected in CLAUDE.md in the same session that made the change,
+  keeping documentation and code in sync automatically
+
+This approach has made it practical for a small team to build and evolve a production-grade
+documentation pipeline covering thousands of product versions, across multiple languages and
+output formats, without dedicated engineering time per product.
+
+---
+
 ## Folder Structure
 
 ```
@@ -57,7 +148,7 @@ html-to-md/
 | 3 | `03_convert.py` | Manifest + cache/ | `output/**/*.md` + images |
 | 4 | `04_build_csh_maps.py` | cache/ alias.xml files | `output/.../csh_map.json` + updated frontmatter |
 | 5 | `05_postprocess.py` | output/**/*.md | Updated .md files (in-place) |
-| 6 | `06_build_toc.py` | output/**/*.md frontmatter | `output/.../_toc.json` per version |
+| 6 | `06_build_toc.py` | output/**/*.md frontmatter | `output/.../_toc.json` + `toc.yml` + `_section_*.md` per version |
 
 ---
 
@@ -137,6 +228,13 @@ These paths appear in the version URL base but contain auxiliary MadCap files, n
 - Only reliable TOC data is the `data-mc-toc-path` attribute on each page's `<html>` tag
 - Step 6 reconstructs the tree from these breadcrumbs; manifest URL order = page sort order
 - Pages with empty/missing toc_path go into `_orphans` list in `_toc.json`
+- **Section index pages:** After building `_toc.json`, Step 6 generates `_section_<slug>.md` for
+  every TOC node that has children but no source page (`"file": null`). Each file gets a
+  frontmatter + `# Title` heading + nested `- [child](rel.md)` listing of its subtree. The node's
+  `file` field is updated in-place so `toc.yml` emits a `url:` for it (required by AEM Guides).
+- **External URL injection:** TOC nodes matching known external titles (currently "Java API") have
+  their `file` set to the external URL (e.g. `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/`).
+  `node_to_yaml()` detects `http://`/`https://` prefixes and emits `url:` directly.
 
 ### Tables (3 tiers — see table_classifier.py)
 - **Tier 1:** Text-only cells → GFM pipe table
@@ -355,8 +453,12 @@ Usage:
 ```bash
 python scripts/08_restructure_ebx.py [--src output/pub/ebx] [--dst output/ebx] \
                                       [--cache-src cache/pub/ebx] \
-                                      [--preflight-only] [--exclude-java-api]
+                                      [--preflight-only]
 ```
+
+**Note:** The `Java_API/` folder is unconditionally excluded from the restructure — Java API
+is now hosted externally. Relative `Java_API/` links in `.md` files are rewritten to the
+external URL by Step 5 (`05_postprocess.py`).
 
 ### Step 09 — Generic asset copy (`scripts/09_copy_assets.py`)
 
@@ -419,3 +521,10 @@ Shared utilities live in `scripts/lib/asset_copy.py` and are used by both script
 - BE 6.4.0 HTML uses DITA task/concept/reference structure — handled by preprocessor
 - coveo:metadata product name fields may contain encoding artifacts (e.g. `â„¢` for `™`) —
   always open sitemap XML with explicit utf-8 encoding
+- `AutoNumber_p_Bullet` class is sometimes used on numbered-step tables in MadCap — the
+  `data-mc-autonum` attribute on the content `<td>` is the ground truth: if its value starts
+  with a digit the table is treated as `<ol>`, not `<ul>` (tiebreaker in `preprocessor.py`)
+- EBX Java API is hosted externally at
+  `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/` — Step 5 rewrites all
+  relative `Java_API/` links to this URL; Step 8 excludes the `Java_API/` folder from the
+  restructured output

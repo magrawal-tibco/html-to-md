@@ -123,16 +123,18 @@ Versions use dashes instead of dots (e.g. `6.2.3` → `6-2-3`).
 
 ---
 
-## Java_API Content
+## Java API
 
-Javadoc content under `Java_API/` subdirectories is copied as-is into the output tree without
-any Markdown conversion. It is included by default.
+EBX Java API (Javadoc) is hosted externally at:
 
-To omit Java_API content entirely:
-
-```bash
-python scripts/08_restructure_ebx.py --exclude-java-api
 ```
+https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/
+```
+
+The `Java_API/` folder is **excluded** from the restructured output — it is not copied.
+Step 5 (`05_postprocess.py`) automatically rewrites all relative `Java_API/` links in converted
+Markdown files to the external URL above (with the correct version substituted). The "Java API"
+TOC node in `toc.yml` points to the external URL directly.
 
 ---
 
@@ -151,7 +153,7 @@ python run.py --phase ebx --dry-run
 # Skip the PDF release notes sub-pipeline
 python run.py --phase ebx --skip-pdf
 
-# Pre-flight scan only (checks cross-language links, writes nothing)
+# Pre-flight scan only (checks path mapping, writes nothing)
 python scripts/08_restructure_ebx.py --preflight-only
 ```
 

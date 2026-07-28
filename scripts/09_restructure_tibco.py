@@ -13,16 +13,22 @@ New layout (language-first, doc/html removed):
   output/<product>/en-us/<product>/webhelp/<version>/<content>
   output/<product>/en-us/<product>/relnotes/<version>/<content>
 
+Phase 5 copies PDF/doc assets from cache/pub/<product>/<version>/doc/pdf/ and
+doc/doc/ into the new layout alongside the webhelp output, generating index.md
+and toc.yml for each version folder.
+
 Original source is left untouched. EBX-family products are excluded (already
 reorganized by scripts 07 and 08).
 
 Usage:
   python scripts/09_restructure_tibco.py [--src output/pub]
                                           [--dst output]
+                                          [--cache cache/pub]
                                           [--products bwpluginas bwplugincassandra ...]
                                           [--lang en-us]
                                           [--preflight-only]
                                           [--dry-run]
+                                          [--skip-assets]
 """
 
 import argparse
@@ -34,11 +40,43 @@ from pathlib import Path
 
 from tqdm import tqdm
 
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from lib.asset_copy import (
+        SLUG_MAPPINGS_FILE,
+        copy_asset_folder,
+        discover_asset_versions,
+        load_slug_mappings,
+        save_slug_mappings,
+    )
+    _ASSET_COPY_AVAILABLE = True
+except ImportError:
+    _ASSET_COPY_AVAILABLE = False
+
 # Products to skip — already reorganized by scripts 07 / 08
 SKIP_PRODUCTS = {"ebx", "ebx-addon", "ebx-addon-reorg", "ebx-reorg"}
 
 # Matches Markdown links: [text](url)
 _MD_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
+
+
+def _lookup_product_name(product_slug: str, version: str) -> str | None:
+    """Search manifest_*.json files for a product_name matching product_slug + version."""
+    manifests_dir = Path("manifests")
+    if not manifests_dir.is_dir():
+        return None
+    for mf in manifests_dir.glob("manifest_*.json"):
+        try:
+            entries = json.loads(mf.read_text(encoding="utf-8"))
+            for e in entries:
+                if (e.get("product_version") == version
+                        and product_slug in (e.get("output_path") or e.get("url") or "")):
+                    name = e.get("product_name", "").strip()
+                    if name:
+                        return name
+        except Exception:
+            continue
+    return None
 
 
 def discover_products(src: Path, filter_products: list[str]) -> list[str]:
@@ -173,6 +211,8 @@ def main() -> int:
                         help="Source base directory (default: output/pub)")
     parser.add_argument("--dst", default="output",
                         help="Destination base directory (default: output)")
+    parser.add_argument("--cache", default="cache/pub",
+                        help="Cache root for PDF/doc assets (default: cache/pub)")
     parser.add_argument("--products", nargs="+", metavar="PRODUCT",
                         help="Restrict to specific product(s); default = all non-EBX products")
     parser.add_argument("--lang", default="en-us",
@@ -181,6 +221,8 @@ def main() -> int:
                         help="Run pre-flight scan only — no files written")
     parser.add_argument("--dry-run", action="store_true",
                         help="Build mapping and report counts, but do not copy files")
+    parser.add_argument("--skip-assets", action="store_true",
+                        help="Skip Phase 5 PDF/doc asset copy")
     args = parser.parse_args()
 
     src = Path(args.src)
@@ -289,11 +331,53 @@ def main() -> int:
 
     print(f"  Patched {patched} / {toc_candidates} _toc.json files")
 
-    # ── Phase 5: report ───────────────────────────────────────────────────────
+    # ── Phase 5: copy PDF/doc assets ─────────────────────────────────────────
+    total_asset_files = 0
+    if args.skip_assets:
+        print("\n=== Phase 5: PDF/doc asset copy skipped (--skip-assets) ===")
+    elif not _ASSET_COPY_AVAILABLE:
+        print("\n=== Phase 5: PDF/doc asset copy skipped (lib.asset_copy not available) ===")
+    else:
+        print("\n=== Phase 5: Copying PDF/doc assets ===")
+        cache_root = Path(args.cache)
+        if not cache_root.exists():
+            print(f"  Cache root not found: {cache_root} — skipping")
+        else:
+            slug_mappings = load_slug_mappings(SLUG_MAPPINGS_FILE)
+            for product in products:
+                cache_src = cache_root / product
+                if not cache_src.is_dir():
+                    continue
+                asset_versions = discover_asset_versions(cache_src)
+                if not asset_versions:
+                    continue
+                dest_base = dst / product / args.lang / product
+                product_total = 0
+                for version, version_dashed in asset_versions:
+                    product_name = _lookup_product_name(product, version) or product
+                    cache_doc_dir = cache_src / version / "doc"
+                    n_pdf = copy_asset_folder(
+                        cache_doc_dir, "pdf", dest_base, version_dashed,
+                        product_name, version, slug_mappings,
+                    )
+                    n_doc = copy_asset_folder(
+                        cache_doc_dir, "doc", dest_base, version_dashed,
+                        product_name, version, slug_mappings,
+                    )
+                    product_total += n_pdf + n_doc
+                if product_total:
+                    print(f"  {product}: {product_total} asset files copied")
+                total_asset_files += product_total
+            save_slug_mappings(slug_mappings, SLUG_MAPPINGS_FILE)
+            print(f"  Total: {total_asset_files} asset files copied")
+
+    # ── Phase 6: report ───────────────────────────────────────────────────────
     print("\n=== Done ===")
     print(f"  Products  : {len(products)}")
     print(f"  Files     : {len(mapping) - errors} copied, {errors} errors")
     print(f"  _toc.json : {patched} patched")
+    if total_asset_files:
+        print(f"  Assets    : {total_asset_files} PDF/doc files copied")
     if cross_links:
         print(f"  Cross-link: {len(cross_links)} links need manual review")
     print(f"  Output    : {dst.resolve()}")
