@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 import warnings
 import yaml
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-from markdownify import markdownify as md
+from markdownify import markdownify as md, MarkdownConverter
 
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 from tqdm import tqdm
@@ -36,6 +36,17 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.lib.preprocessor import run_all as run_preprocessor
 from scripts.lib.reporter import Reporter
 from scripts.lib.version_registry import record_converted_versions
+
+
+class _TibcoMarkdownConverter(MarkdownConverter):
+    """markdownify subclass that preserves heading id attributes as named anchors."""
+
+    def convert_hN(self, n, el, text, parent_tags):
+        result = super().convert_hN(n, el, text, parent_tags)
+        hid = (el.get("id") or "").strip()
+        if hid and "_inline" not in parent_tags:
+            result = result.rstrip("\n") + f' <a name="{hid}"></a>' + "\n\n"
+        return result
 
 
 def load_settings(config_path: str) -> dict:
@@ -362,6 +373,9 @@ def clean_markdown(text: str) -> str:
     # so opening markers like "**word" are not affected.
     text = re.sub(r'(?<=\S)\*\*(?=[a-zA-Z0-9])', '** ', text)
     text = re.sub(r'(?<=\S)`(?=[a-zA-Z0-9])', '` ', text)
+    # Fix markdownify chomp artifact: spurious space after opening ** bold marker.
+    # CommonMark requires no space between ** and the content; "** word**" is not bold.
+    text = re.sub(r'\*\* +(\S)', r'**\1', text)
     return text.strip() + "\n"
 
 
@@ -429,7 +443,10 @@ def convert_entry(
 ) -> bool:
     """Convert one manifest entry from HTML to Markdown. Returns True on success."""
     url        = entry["url"]
-    cache_path = cache_path or url_to_cache_path(url, cache_dir)
+    cache_path = cache_path or (
+        (cache_dir / entry["cache_path"]) if "cache_path" in entry
+        else url_to_cache_path(url, cache_dir)
+    )
     out_path   = output_dir / entry["output_path"]
 
     if not cache_path.exists():
@@ -485,12 +502,11 @@ def convert_entry(
             reporter.count("transform_tier3_passthrough", len(passthrough_tables))
 
         # Convert to Markdown
-        md_body = md(
-            str(content),
+        md_body = _TibcoMarkdownConverter(
             heading_style="ATX",
             bullets="-",
             newline_style="backslash",
-        )
+        ).convert(str(content))
         md_body = clean_markdown(md_body)
 
         # Restore passthrough tables as raw HTML blocks

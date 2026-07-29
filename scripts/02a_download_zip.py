@@ -375,6 +375,7 @@ def process_versions(
 def _scan_ebx_from_nav(
     html_dir: Path,
     cache_dir: Path,
+    html_root: str,
     version_url: str,
     zip_url: str,
     product_name: str,
@@ -438,10 +439,13 @@ def _scan_ebx_from_nav(
                         if key not in seen and resolved.exists():
                             seen.add(key)
                             rel = resolved.relative_to(abs_cache_dir)
+                            rel_to_html_dir = resolved.relative_to(html_dir.resolve())
+                            url = f"https://docs.tibco.com/{html_root}/{rel_to_html_dir.as_posix()}"
                             results.append({
-                                "url":             "https://docs.tibco.com/" + rel.as_posix(),
+                                "url":             url,
                                 "lastmod":         "",
                                 "output_path":     str(rel.with_suffix(".md")),
+                                "cache_path":      rel.as_posix(),
                                 "product_name":    product_name,
                                 "product_version": product_version,
                                 "doc_name":        "",
@@ -491,7 +495,7 @@ def scan_extracted_pages(
     # EBX: derive page list from index.html nav tree (TOC-first)
     if version_format == "ebx":
         return _scan_ebx_from_nav(
-            html_dir, cache_dir, version_url, zip_url,
+            html_dir, cache_dir, html_root, version_url, zip_url,
             product_name, product_version, alias_xml_url, version_format, settings,
         )
 
@@ -499,7 +503,7 @@ def scan_extracted_pages(
     for suffix in ("*.htm", "*.html"):
         for htm in sorted(html_dir.rglob(suffix)):
             rel = htm.relative_to(cache_dir)
-            url = "https://docs.tibco.com/" + rel.as_posix()
+            url = f"https://docs.tibco.com/{html_root}/{htm.relative_to(html_dir).as_posix()}"
             skip, _ = should_skip_url(url, settings)
             if skip:
                 continue
@@ -507,6 +511,7 @@ def scan_extracted_pages(
                 "url":             url,
                 "lastmod":         "",
                 "output_path":     str(rel.with_suffix(".md")),
+                "cache_path":      rel.as_posix(),
                 "product_name":    product_name,
                 "product_version": product_version,
                 "doc_name":        "",
