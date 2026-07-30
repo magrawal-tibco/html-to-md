@@ -44,8 +44,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 try:
     from lib.asset_copy import (
         SLUG_MAPPINGS_FILE,
+        RELEASE_DOC_SLUGS,
         copy_asset_folder,
         discover_asset_versions,
+        extract_slug,
         load_slug_mappings,
         save_slug_mappings,
     )
@@ -72,6 +74,10 @@ def _lookup_product_name(product_slug: str, version: str) -> str | None:
                 if (e.get("product_version") == version
                         and product_slug in (e.get("output_path") or e.get("url") or "")):
                     name = e.get("product_name", "").strip()
+                    # WebWorks manifests include the version in product_name — strip it.
+                    version_suffix = " " + version
+                    if name.endswith(version_suffix):
+                        name = name[: -len(version_suffix)].rstrip()
                     if name:
                         return name
         except Exception:
@@ -356,13 +362,25 @@ def main() -> int:
                 for version, version_dashed in asset_versions:
                     product_name = _lookup_product_name(product, version) or product
                     cache_doc_dir = cache_src / version / "doc"
+
+                    # Collect release-doc PDFs to cross-link into doc/index.md.
+                    pdf_src_dir = cache_doc_dir / "pdf"
+                    release_pdf_files = []
+                    if pdf_src_dir.is_dir():
+                        for f in sorted(pdf_src_dir.iterdir()):
+                            if f.is_file() and extract_slug(f.stem) in RELEASE_DOC_SLUGS:
+                                link_href = f"../../pdf/{version_dashed}/{f.name}"
+                                release_pdf_files.append((f, link_href))
+
                     n_pdf = copy_asset_folder(
                         cache_doc_dir, "pdf", dest_base, version_dashed,
                         product_name, version, slug_mappings,
+                        exclude_slugs=RELEASE_DOC_SLUGS,
                     )
                     n_doc = copy_asset_folder(
                         cache_doc_dir, "doc", dest_base, version_dashed,
                         product_name, version, slug_mappings,
+                        extra_files=release_pdf_files or None,
                     )
                     product_total += n_pdf + n_doc
                 if product_total:

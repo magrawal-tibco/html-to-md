@@ -15,6 +15,9 @@ import yaml
 
 SLUG_MAPPINGS_FILE = Path("config/pdf_slug_mappings.yaml")
 
+# PDF slugs that are "release documents" — listed in doc/index.md, excluded from pdf/index.md.
+RELEASE_DOC_SLUGS = {"relnotes", "license", "vpat"}
+
 # Anchors on the version number to handle product codes with underscores (e.g. dsp_gridserver).
 # Captures everything after the version as the slug.
 _VERSION_ANCHOR_RE = re.compile(r"_\d+[\d.]*_(.+)$")
@@ -125,8 +128,14 @@ def write_index_md(
     product_version: str,
     files: list[Path],
     slug_mappings: dict[str, str],
+    extra_files: list[tuple[Path, str]] | None = None,
 ) -> None:
-    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Additional Documents"
+    """Write index.md for a pdf/ or doc/ asset folder.
+
+    extra_files: list of (source_path, link_href) for cross-folder entries — used to
+    include relnotes/license/vpat links in doc/index.md pointing into pdf/<ver>/.
+    """
+    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
     title = f"{product_name} {product_version} {doc_type_label}"
 
     lines = [
@@ -143,12 +152,15 @@ def write_index_md(
     for f in sorted(files):
         display = resolve_display_name(f, product_name, product_version, slug_mappings)
         lines.append(f"- [{display}]({f.name})\n")
+    for f, link_href in sorted(extra_files or [], key=lambda x: x[0].name):
+        display = resolve_display_name(f, product_name, product_version, slug_mappings)
+        lines.append(f"- [{display}]({link_href})\n")
 
     (dest_dir / "index.md").write_text("".join(lines), encoding="utf-8")
 
 
 def write_toc_yml(dest_dir: Path, subfolder: str, product_name: str, product_version: str) -> None:
-    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Additional Documents"
+    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
     title = f"{product_name} {product_version} {doc_type_label}"
     content = (
         f"docs_list_title: {title}\n"
@@ -167,11 +179,17 @@ def copy_asset_folder(
     product_name: str,
     product_version: str,
     slug_mappings: dict[str, str],
+    exclude_slugs: set[str] | None = None,
+    extra_files: list[tuple[Path, str]] | None = None,
 ) -> int:
     """Copy pdf/ or doc/ assets from cache to dest_base/<subfolder>/<version_dashed>/.
 
     Generates index.md and toc.yml alongside the copied files.
     Returns the number of asset files copied (excluding generated files).
+
+    exclude_slugs: slugs to omit from the index.md listing (files are still copied).
+    extra_files: (source_path, link_href) pairs to append to index.md — used to list
+                 release-doc PDFs in doc/index.md with cross-folder relative links.
     """
     src_dir = cache_doc_dir / subfolder
     if not src_dir.is_dir():
@@ -187,7 +205,10 @@ def copy_asset_folder(
     for f in files:
         shutil.copy2(f, dest_dir / f.name)
 
-    write_index_md(dest_dir, subfolder, product_name, product_version, files, slug_mappings)
+    list_files = [f for f in files
+                  if extract_slug(f.stem) not in (exclude_slugs or set())]
+    write_index_md(dest_dir, subfolder, product_name, product_version,
+                   list_files, slug_mappings, extra_files)
     write_toc_yml(dest_dir, subfolder, product_name, product_version)
 
     return len(files)

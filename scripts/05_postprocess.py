@@ -160,7 +160,11 @@ def rewrite_links(
             unresolvable += 1
             reporter.count("links_unresolvable")
             reporter.debug(f"Unresolvable link: {url}")
-            return m.group(0)  # leave as-is, don't break the doc
+            # Relative .htm links that couldn't be resolved: rewrite as their
+            # absolute URL so they're not left as broken relative paths in the MD output.
+            if not m.group(2).startswith("http"):
+                return f"[{text}]({url})"
+            return m.group(0)  # already absolute — leave unchanged
 
         target_md = url_to_md[norm_path].replace("\\", "/")
         # Compute relative path from current .md to target .md

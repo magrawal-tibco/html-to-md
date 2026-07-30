@@ -127,8 +127,20 @@ def fake_list_tables(content: Tag) -> int:
         soup_stub = BeautifulSoup(f"<{list_tag}></{list_tag}>", "lxml")
         new_list = soup_stub.find(list_tag)
 
-        for row in table.find_all("tr"):
-            cells = row.find_all(["td", "th"])
+        # Collect only direct-level rows — do NOT use find_all("tr") which recursively
+        # descends into nested tables and would extract their rows as extra list items.
+        direct_rows = []
+        for child in table.children:
+            cname = getattr(child, "name", None)
+            if cname == "tr":
+                direct_rows.append(child)
+            elif cname in ("thead", "tbody", "tfoot"):
+                for tr in child.children:
+                    if getattr(tr, "name", None) == "tr":
+                        direct_rows.append(tr)
+
+        for row in direct_rows:
+            cells = row.find_all(["td", "th"], recursive=False)
             if not cells:
                 continue
             # Take content of first cell (ignore autonumber cell if two columns)

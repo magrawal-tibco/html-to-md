@@ -21,6 +21,8 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse
 
 import yaml
+from bs4 import BeautifulSoup
+from markdownify import markdownify as md
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -522,6 +524,122 @@ def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
     return dict(versions)
 
 
+# ---------------------------------------------------------------------------
+# What's New generation
+# ---------------------------------------------------------------------------
+
+_TOKEN_RE   = re.compile(r"\[%=[\w.\s]+%\]")
+_HTM_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
+
+
+def _rewrite_whats_new_links(md_text: str) -> str:
+    """Rewrite links from _templates/ context to version-root-relative .md paths."""
+    def replace(m):
+        text, url = m.group(1), m.group(2)
+        if url.startswith(("http://", "https://")):
+            return m.group(0)
+        if url.startswith("../"):
+            url = url[3:]  # strip ../ — now version-root-relative
+        elif "/" not in url:
+            return text    # same-dir link (e.g. Whats-New.htm) — drop href, keep text
+        url = re.sub(r"\.html?(\#.*)?$", lambda e: ".md" + (e.group(1) or ""), url)
+        return f"[{text}]({url})"
+    return _HTM_LINK_RE.sub(replace, md_text)
+
+
+def generate_whats_new(
+    version_root: str,
+    cache_dir: Path,
+    output_dir: Path,
+    meta: dict,
+    base_url: str = "https://docs.tibco.com",
+    dry_run: bool = False,
+) -> dict | None:
+    """
+    Extract What's New content from _templates/ and write Whats-New.md at the
+    version root.  Returns a TOC node dict on success, None if no content found.
+
+    Source preference:
+      1. _templates/Whats-New.htm  — full page with detailed descriptions
+      2. _templates/Home.htm       — Key New Features dropdown (brief fallback)
+      3. Neither found             — returns None, no file written
+    """
+    templates_dir = cache_dir / version_root / "_templates"
+    whats_new_htm = templates_dir / "Whats-New.htm"
+    home_htm      = templates_dir / "Home.htm"
+
+    html_text     = None
+    source_url    = None
+    use_full_page = False
+
+    vr_for_url = version_root.replace("\\", "/").rstrip("/")
+    if whats_new_htm.exists():
+        html_text     = whats_new_htm.read_text(encoding="utf-8", errors="replace")
+        source_url    = f"{base_url}/{vr_for_url}/_templates/Whats-New.htm"
+        use_full_page = True
+    elif home_htm.exists():
+        html_text  = home_htm.read_text(encoding="utf-8", errors="replace")
+        source_url = f"{base_url}/{vr_for_url}/_templates/Home.htm"
+        use_full_page = False
+    else:
+        return None
+
+    soup = BeautifulSoup(html_text, "lxml")
+
+    if use_full_page:
+        content = soup.find("div", attrs={"role": "main", "id": "mc-main-content"})
+        if not content:
+            return None
+        for sel in ["#prdnm", ".toolbar", ".breadcrumbs", "#feedback-survey",
+                    ".MCWebHelpFramesetLink", ".Copyright"]:
+            for el in content.select(sel):
+                el.decompose()
+    else:
+        whats_new_div = soup.find("div", class_="dropDownwhats-new")
+        if not whats_new_div:
+            return None
+        body = whats_new_div.find("div", class_="MCDropDownBody")
+        if not body:
+            return None
+        content = soup.new_tag("div")
+        h1 = soup.new_tag("h1")
+        h1.string = "What's New"
+        content.append(h1)
+        content.extend(list(body.children))
+
+    md_body = md(str(content), heading_style="ATX", bullets="-")
+    md_body = _TOKEN_RE.sub("", md_body)
+    md_body = _rewrite_whats_new_links(md_body)
+    md_body = md_body.strip()
+
+    if not md_body:
+        return None
+
+    frontmatter = {
+        "title": "What's New",
+        "source_url": source_url,
+        "lang": meta.get("lang", "en-us"),
+        "topic_type": "",
+        "toc_path": "",
+        "product_name": meta.get("product_name", ""),
+        "product_version": meta.get("product_version", ""),
+    }
+    fm_str       = yaml.dump(
+        frontmatter, default_flow_style=False, allow_unicode=True, sort_keys=False
+    )
+    file_content = f"---\n{fm_str}---\n\n{md_body}\n"
+
+    out_path = output_dir / version_root / "Whats-New.md"
+    if not dry_run:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(file_content, encoding="utf-8")
+
+    # Use the same path convention as section pages: version_root prefix + filename,
+    # without the output_dir prefix so node_to_yaml strips it correctly.
+    vr_prefix = version_root.replace("\\", "/").rstrip("/") + "/"
+    return {"title": "What's New", "file": vr_prefix + "Whats-New.md", "children": []}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Step 6: Build TOC JSON per version")
     parser.add_argument("--phase",   required=False)
@@ -585,6 +703,17 @@ def main():
         if n_external:
             reporter.info(f"  Injected {n_external} external URL(s) for {version_root}")
             reporter.count("external_urls_injected", n_external)
+
+        # Generate What's New page from _templates/Whats-New.htm (or Home.htm fallback).
+        whats_new_node = generate_whats_new(
+            version_root, cache_dir, output_dir, meta,
+            base_url=settings.get("base_url", "https://docs.tibco.com"),
+            dry_run=args.dry_run,
+        )
+        if whats_new_node:
+            toc["tree"].insert(0, whats_new_node)
+            reporter.count("whats_new_pages_generated")
+            reporter.info(f"  Generated Whats-New.md for {version_root}")
 
         toc_path = output_dir / version_root / "_toc.json"
 

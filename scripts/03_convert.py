@@ -481,10 +481,15 @@ def convert_entry(
 
         reporter.count(f"selector:{selector_used}")
 
-        # Update title from first h1 if <title> tag was empty
-        if not meta["title"]:
-            h1 = content.find("h1")
-            meta["title"] = h1.get_text(strip=True) if h1 else Path(url).stem
+        # Title: prefer first h1 in main content over the <title> tag.
+        # MadCap <title> tags sometimes omit spaces or punctuation
+        # (e.g. "BrokerRouting" vs h1 "Broker Routing", "Task A Prepare..." vs "Task A: Prepare...").
+        # separator=' ' prevents adjacent inline elements from concatenating without a space.
+        h1 = content.find("h1")
+        if h1:
+            meta["title"] = re.sub(r"\s+", " ", h1.get_text(separator=" ", strip=True)).strip()
+        elif not meta["title"]:
+            meta["title"] = Path(url).stem
 
         # Run preprocessor transforms
         page_url_path = urlparse(url).path
