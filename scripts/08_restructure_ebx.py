@@ -54,6 +54,9 @@ PRODUCT_SLUG = "ebx"
 PRODUCT_NAME = "TIBCO EBX®"
 SLUG_MAPPINGS_FILE = Path("config/pdf_slug_mappings.yaml")
 
+# PDF slugs that are "release documents" — listed in doc/index.md, excluded from pdf/index.md.
+RELEASE_DOC_SLUGS = {"relnotes", "license", "vpat"}
+
 # Parses TIB_<prod>_<version>_<slug> (standard) or TIB_<prod>_<slug> (no version)
 _SLUG_RE = re.compile(r"^TIB_[^_]+_\d[\d.]+_(.+)$")
 _SLUG_NOVERSION_RE = re.compile(r"^TIB_[^_]+_(.+)$")
@@ -159,8 +162,9 @@ def _write_index_md(
     product_version: str,
     files: list[Path],
     slug_mappings: dict[str, str],
+    extra_files: list[tuple[Path, str]] | None = None,
 ) -> None:
-    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Additional Documents"
+    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
     title = f"{product_name} {product_version} {doc_type_label}"
 
     lines = [
@@ -177,12 +181,15 @@ def _write_index_md(
     for f in sorted(files):
         display = resolve_display_name(f, product_name, product_version, slug_mappings)
         lines.append(f"- [{display}]({f.name})\n")
+    for f, link_href in sorted(extra_files or [], key=lambda x: x[0].name):
+        display = resolve_display_name(f, product_name, product_version, slug_mappings)
+        lines.append(f"- [{display}]({link_href})\n")
 
     (dest_dir / "index.md").write_text("".join(lines), encoding="utf-8")
 
 
 def _write_toc_yml(dest_dir: Path, subfolder: str, product_name: str, product_version: str) -> None:
-    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Additional Documents"
+    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
     title = f"{product_name} {product_version} {doc_type_label}"
     content = (
         f"docs_list_title: {title}\n"
@@ -201,9 +208,16 @@ def copy_asset_folder(
     product_name: str,
     product_version: str,
     slug_mappings: dict[str, str],
+    exclude_slugs: set[str] | None = None,
+    extra_files: list[tuple[Path, str]] | None = None,
 ) -> int:
     """Copy pdf/ or doc/ assets from cache to output, generate index.md and toc.yml.
-    Returns number of files copied."""
+
+    exclude_slugs: slugs to omit from the index.md listing (files are still copied).
+    extra_files: (source_path, link_href) pairs to append to index.md — used to list
+                 release-doc PDFs in doc/index.md with cross-folder relative links.
+    Returns number of files copied.
+    """
     src_dir = cache_doc_dir / subfolder
     if not src_dir.is_dir():
         return 0
@@ -218,7 +232,10 @@ def copy_asset_folder(
     for f in files:
         shutil.copy2(f, dest_dir / f.name)
 
-    _write_index_md(dest_dir, subfolder, product_name, product_version, files, slug_mappings)
+    list_files = [f for f in files
+                  if _extract_slug(f.stem) not in (exclude_slugs or set())]
+    _write_index_md(dest_dir, subfolder, product_name, product_version,
+                    list_files, slug_mappings, extra_files)
     _write_toc_yml(dest_dir, subfolder, product_name, product_version)
 
     return len(files)
@@ -551,11 +568,23 @@ def main() -> int:
         print(f"  {len(asset_versions)} versions with PDF/doc assets found")
         for version, version_dashed in tqdm(asset_versions, desc="Asset versions", unit="ver"):
             cache_doc_dir = cache_src / version / "doc"
+
+            # Collect release-doc PDFs to cross-link into doc/index.md.
+            pdf_src_dir = cache_doc_dir / "pdf"
+            release_pdf_files = []
+            if pdf_src_dir.is_dir():
+                for f in sorted(pdf_src_dir.iterdir()):
+                    if f.is_file() and _extract_slug(f.stem) in RELEASE_DOC_SLUGS:
+                        link_href = f"../../pdf/{version_dashed}/{f.name}"
+                        release_pdf_files.append((f, link_href))
+
             asset_total += copy_asset_folder(
-                cache_doc_dir, "pdf", dst, version_dashed, PRODUCT_NAME, version, slug_mappings
+                cache_doc_dir, "pdf", dst, version_dashed, PRODUCT_NAME, version, slug_mappings,
+                exclude_slugs=RELEASE_DOC_SLUGS,
             )
             asset_total += copy_asset_folder(
-                cache_doc_dir, "doc", dst, version_dashed, PRODUCT_NAME, version, slug_mappings
+                cache_doc_dir, "doc", dst, version_dashed, PRODUCT_NAME, version, slug_mappings,
+                extra_files=release_pdf_files or None,
             )
 
         save_slug_mappings(SLUG_MAPPINGS_FILE, slug_mappings)
