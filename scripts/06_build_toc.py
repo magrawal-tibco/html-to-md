@@ -493,6 +493,7 @@ def generate_section_pages(
 # All languages use the same English URL (en/us).
 _EXTERNAL_TOC_URLS: dict[str, str] = {
     "Java API": "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{version}/",
+    "Java API (英語)": "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{version}/",
 }
 
 
