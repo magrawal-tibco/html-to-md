@@ -38,11 +38,17 @@ _MALFORMED_AUTOLINK_RE = re.compile(r"<(https?://(?:[^>]*\.\.\..*|))>")
 #   [Home](./index.html)>Page - Table of contents
 _EBX_BREADCRUMB_LINE_RE = re.compile(r"^\[.+?\]\(\.\/index\.html\)[^\n]*\n?", re.MULTILINE)
 
-# Matches relative Java_API links in Markdown body — all prefix variants:
+# Matches Java_API links in Markdown body — both relative and absolute docs.tibco.com forms:
 #   ../Java_API/...   ../../../../Java_API/...   Java_API/...
+#   https://docs.tibco.com/.../Java_API/...
 # Handles method-signature parens in fragment: foo.html#setByDelta(boolean)
+# Non-capturing prefix group so group(1)=text, group(2)=path-after-Java_API/.
 _JAVA_API_LINK_RE = re.compile(
-    r"\[([^\]]*)\]\(((?:\.\.\/)*|)Java_API/([^()]*(?:\([^)]*\)[^()]*)*)\)"
+    r"\[([^\]]*)\]\("
+    r"(?:https?://docs\.tibco\.com/[^)]*?/|(?:\.\.\/)*)"
+    r"Java_API/"
+    r"([^()]*(?:\([^)]*\)[^()]*)*)"
+    r"\)"
 )
 
 
@@ -139,6 +145,10 @@ def rewrite_links(
             suffix = PurePosixPath(url_no_frag).suffix.lower()
             if suffix not in (".htm", ".html"):
                 return m.group(0)
+            # Java_API/ links are handled by rewrite_java_api_links — leave them unchanged
+            # so that pass can rewrite them to the external EBX hosting URL.
+            if "Java_API/" in url_no_frag:
+                return m.group(0)
             url = urljoin(source_url, url_no_frag)
             if frag:
                 url = f"{url}#{frag}"
@@ -160,11 +170,7 @@ def rewrite_links(
             unresolvable += 1
             reporter.count("links_unresolvable")
             reporter.debug(f"Unresolvable link: {url}")
-            # Relative .htm links that couldn't be resolved: rewrite as their
-            # absolute URL so they're not left as broken relative paths in the MD output.
-            if not m.group(2).startswith("http"):
-                return f"[{text}]({url})"
-            return m.group(0)  # already absolute — leave unchanged
+            return m.group(0)  # leave as-is, don't break the doc
 
         target_md = url_to_md[norm_path].replace("\\", "/")
         # Compute relative path from current .md to target .md
@@ -267,7 +273,7 @@ def rewrite_java_api_links(body: str, version_dashed: str) -> tuple[str, int]:
 
     def replace_java_link(m: re.Match) -> str:
         nonlocal count
-        text, path = m.group(1), m.group(3)
+        text, path = m.group(1), m.group(2)
         count += 1
         return f"[{text}]({base}{path})"
 
