@@ -404,6 +404,38 @@ def patch_toc_json(toc_path: Path, old_root: str, new_root: str,
     return True
 
 
+def _check_postprocessed(src: Path) -> None:
+    """Warn if Step 5 appears not to have been run since the last Step 3 conversion.
+
+    Scans for relative .html links in standard Markdown link syntax [text](url)
+    whose .md counterpart exists — Step 5 rewrites these to .md. A hit is a strong
+    signal that Step 5 was not run. Links whose targets don't exist (unresolvable)
+    are left as .html by Step 5 on purpose and are not flagged here.
+
+    This is a warning, not a hard error, because some edge-case link patterns
+    (e.g. link text containing `]`) are intentionally skipped by Step 5.
+    """
+    # Match only simple [text](relative.html) Markdown links — text must not contain ]
+    rel_html_re = re.compile(r'\[([^\]\[]*)\]\((?!https?://)((?:[^)#"\']*?)\.html)(?:[#)"\'>\s])', re.IGNORECASE)
+    for md in src.rglob("*.md"):
+        try:
+            content = md.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        for m in rel_html_re.finditer(content):
+            target_md = (md.parent / m.group(2)).resolve().with_suffix(".md")
+            if target_md.is_file():
+                print(
+                    f"\nWARNING: Raw .html links detected — Step 5 may not have been run.\n"
+                    f"  File : {md}\n"
+                    f"  Link : {m.group(2)} (target .md exists but link not rewritten)\n"
+                    f"\n  If Step 5 has not been run, do so before restructuring:\n"
+                    f"    python scripts/05_postprocess.py --phase ebx\n",
+                    file=sys.stderr,
+                )
+                return  # warn once and continue
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Restructure EBX output: version-first → language-first AEM layout"
@@ -453,6 +485,9 @@ def main() -> int:
     if args.preflight_only:
         print("\n(--preflight-only: stopping before copy)")
         return 0
+
+    # ── Guard: ensure Step 5 has been run ────────────────────────────────────
+    _check_postprocessed(src)
 
     # ── Phase 1: build path mapping ──────────────────────────────────────────
     print("\n=== Phase 1: Building path mapping ===")
