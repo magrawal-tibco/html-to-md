@@ -496,6 +496,10 @@ _EXTERNAL_TOC_URLS: dict[str, str] = {
 }
 
 
+def _slugify(title: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "-", title).strip("-")
+
+
 def inject_external_urls(nodes: list, version_dashed: str) -> int:
     """
     Walk the TOC tree and assign external URLs to known placeholder nodes
@@ -511,6 +515,68 @@ def inject_external_urls(nodes: list, version_dashed: str) -> int:
             if template:
                 node["file"] = template.format(version=version_dashed)
                 count += 1
+    return count
+
+
+def create_external_url_pages(
+    nodes: list,
+    version_root: str,
+    output_dir: Path,
+    meta: dict,
+    dry_run: bool = False,
+) -> int:
+    """
+    For each TOC node whose file is an external URL (set by inject_external_urls),
+    write a synthetic .md that links to it and replace node["file"] with the .md path.
+
+    This allows toc.yml to emit a relative url: instead of an absolute https:// value,
+    which is required by AEM Guides.
+    Returns the number of pages created.
+    """
+    count = 0
+    vr_prefix = version_root.replace("\\", "/").rstrip("/") + "/"
+
+    for node in nodes:
+        if node.get("children"):
+            count += create_external_url_pages(
+                node["children"], version_root, output_dir, meta, dry_run
+            )
+        file_val = node.get("file") or ""
+        if not file_val.startswith(("http://", "https://")):
+            continue
+
+        title      = node["title"]
+        page_title = f"{title} Reference"
+        filename   = f"{_slugify(page_title)}.md"
+        ext_url    = file_val
+
+        product_name    = meta.get("product_name", "")
+        product_version = meta.get("product_version", "")
+        link_text = (f"{product_name} {product_version} {title}"
+                     if product_name else title)
+
+        frontmatter = {
+            "title": page_title,
+            "source_url": "",
+            "lang": meta.get("lang", "en-us"),
+            "topic_type": "",
+            "toc_path": "",
+            "product_name": product_name,
+            "product_version": product_version,
+        }
+        fm_str = yaml.dump(frontmatter, default_flow_style=False,
+                           allow_unicode=True, sort_keys=False)
+        body = f"# {page_title}\n\n- [{link_text}]({ext_url})\n"
+        file_content = f"---\n{fm_str}---\n\n{body}"
+
+        out_path = output_dir / version_root / filename
+        if not dry_run:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(file_content, encoding="utf-8")
+
+        node["file"] = vr_prefix + filename
+        count += 1
+
     return count
 
 
@@ -703,6 +769,15 @@ def main():
         if n_external:
             reporter.info(f"  Injected {n_external} external URL(s) for {version_root}")
             reporter.count("external_urls_injected", n_external)
+
+        # Create synthetic .md pages for any external-URL nodes, replacing the URL with
+        # a relative path so toc.yml emits a relative url: (required by AEM Guides).
+        n_ext_pages = create_external_url_pages(
+            toc["tree"], version_root, output_dir, meta, dry_run=args.dry_run
+        )
+        if n_ext_pages:
+            reporter.count("external_url_pages_created", n_ext_pages)
+            reporter.info(f"  Created {n_ext_pages} external-URL page(s) for {version_root}")
 
         # Generate What's New page from _templates/Whats-New.htm (or Home.htm fallback).
         whats_new_node = generate_whats_new(
