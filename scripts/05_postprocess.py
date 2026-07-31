@@ -71,6 +71,8 @@ def build_url_to_md_index(manifest: list[dict], base_url: str) -> dict[str, str]
     """
     index = {}
     for entry in manifest:
+        if "url" not in entry:
+            continue
         url_path = urlparse(entry["url"]).path.lower().rstrip("/")
         index[url_path] = entry["output_path"]
     return index
@@ -371,6 +373,8 @@ def main():
     reporter.info(f"Link index built: {len(url_to_md)} URLs")
 
     for entry in tqdm(manifest, desc="Postprocessing"):
+        if "url" not in entry:
+            continue
         md_path = output_dir / entry["output_path"]
         if not md_path.exists():
             reporter.skip(entry["url"], "md-file-not-found")

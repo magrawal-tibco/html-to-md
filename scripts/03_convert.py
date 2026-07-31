@@ -387,9 +387,6 @@ def clean_markdown(text: str) -> str:
     # so opening markers like "**word" are not affected.
     text = re.sub(r'(?<=\S)\*\*(?=[a-zA-Z0-9])', '** ', text)
     text = re.sub(r'(?<=\S)`(?=[a-zA-Z0-9])', '` ', text)
-    # Fix markdownify chomp artifact: spurious space after opening ** bold marker.
-    # CommonMark requires no space between ** and the content; "** word**" is not bold.
-    text = re.sub(r'\*\* +(\S)', r'**\1', text)
     return text.strip() + "\n"
 
 

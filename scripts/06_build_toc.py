@@ -585,6 +585,8 @@ def collect_versions(manifest: list[dict]) -> dict[str, list[dict]]:
     """Group manifest entries by version_html_root."""
     versions: dict[str, list[dict]] = defaultdict(list)
     for entry in manifest:
+        if "url" not in entry:
+            continue
         fmt  = entry.get("version_format", "")
         root = version_html_root(entry["output_path"], fmt)
         versions[root].append(entry)
