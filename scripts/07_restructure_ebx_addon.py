@@ -304,26 +304,34 @@ def main() -> int:
 
     print(f"  Patched {patched} / {len(addon_roots)} _toc.json files")
 
-    # ── Phase 8: patch Java-API-Reference.md URLs ─────────────────────────────
-    print("\n=== Phase 8: Patching Java-API-Reference.md URLs ===")
+    # ── Phase 8: rewrite EBX-main javadoc URLs → addon-specific URLs ──────────
+    # Step 5 converts relative Java_API/ links to the EBX main javadoc URL.
+    # After restructuring, replace every occurrence in each addon/version tree
+    # with the correct addon-specific URL and strip MadCap popup-link duplicates.
+    print("\n=== Phase 8: Patching Java API URLs ===")
 
-    _JAVA_API_OLD_PREFIX = "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/"
-    _JAVA_API_NEW_TMPL   = "https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/"
+    _EBX_MAIN_JAVADOC_PREFIX = "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/"
+    _ADDON_JAVADOC_TMPL      = "https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/"
+    _POPUP_LINK_RE           = re.compile(r"\[open JavaAPI in popup\]\([^)]+\)")
 
     patched_java = 0
     for ver, addon, _addon_root in addon_roots:
         folder_ver = ver.replace(".", "-")
-        java_ref = dst / "en-us" / "ebx-addon" / addon / folder_ver / "Java-API-Reference.md"
-        if not java_ref.exists():
-            continue
-        text = java_ref.read_text(encoding="utf-8")
-        old_url = f"{_JAVA_API_OLD_PREFIX}{folder_ver}/"
-        new_url = _JAVA_API_NEW_TMPL.format(addon=addon, ver=folder_ver)
-        if old_url in text:
-            java_ref.write_text(text.replace(old_url, new_url), encoding="utf-8")
+        addon_dir  = dst / "en-us" / "ebx-addon" / addon / folder_ver
+        old_prefix = f"{_EBX_MAIN_JAVADOC_PREFIX}{folder_ver}/"
+        new_url    = _ADDON_JAVADOC_TMPL.format(addon=addon, ver=folder_ver)
+        old_url_re = re.compile(re.escape(old_prefix) + r'[^)\s"]*')
+
+        for md_file in addon_dir.rglob("*.md"):
+            text = md_file.read_text(encoding="utf-8")
+            if old_prefix not in text:
+                continue
+            text = old_url_re.sub(new_url, text)
+            text = _POPUP_LINK_RE.sub("", text)
+            md_file.write_text(text, encoding="utf-8")
             patched_java += 1
 
-    print(f"  Patched {patched_java} / {len(addon_roots)} Java-API-Reference.md files")
+    print(f"  Patched {patched_java} files")
 
     # ── Summary ───────────────────────────────────────────────────────────────
     total_errors = errors + jd_errors
