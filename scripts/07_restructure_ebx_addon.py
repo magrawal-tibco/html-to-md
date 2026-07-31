@@ -304,7 +304,28 @@ def main() -> int:
 
     print(f"  Patched {patched} / {len(addon_roots)} _toc.json files")
 
-    # ── Phase 7: report ───────────────────────────────────────────────────────
+    # ── Phase 8: patch Java-API-Reference.md URLs ─────────────────────────────
+    print("\n=== Phase 8: Patching Java-API-Reference.md URLs ===")
+
+    _JAVA_API_OLD_PREFIX = "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/"
+    _JAVA_API_NEW_TMPL   = "https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/"
+
+    patched_java = 0
+    for ver, addon, _addon_root in addon_roots:
+        folder_ver = ver.replace(".", "-")
+        java_ref = dst / "en-us" / "ebx-addon" / addon / folder_ver / "Java-API-Reference.md"
+        if not java_ref.exists():
+            continue
+        text = java_ref.read_text(encoding="utf-8")
+        old_url = f"{_JAVA_API_OLD_PREFIX}{folder_ver}/"
+        new_url = _JAVA_API_NEW_TMPL.format(addon=addon, ver=folder_ver)
+        if old_url in text:
+            java_ref.write_text(text.replace(old_url, new_url), encoding="utf-8")
+            patched_java += 1
+
+    print(f"  Patched {patched_java} / {len(addon_roots)} Java-API-Reference.md files")
+
+    # ── Summary ───────────────────────────────────────────────────────────────
     total_errors = errors + jd_errors
     print("\n=== Done ===")
     print(f"  Webhelp files copied : {len(mapping) - errors}")
