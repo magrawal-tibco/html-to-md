@@ -87,7 +87,9 @@ chrome_selectors:
 # Additional chrome selectors applied only when version_format == "ebx".
 # Kept separate from chrome_selectors because div#toc is a generic ID that
 # could legitimately appear as content in non-EBX products.
-ebx_chrome_selectors: []
+ebx_chrome_selectors:
+  # Navigation footer: search icon + "User guide [table of contents]" link
+  - p.noPrint
 
 # Image src prefixes to skip when downloading images
 image_skip_prefixes:

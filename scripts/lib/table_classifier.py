@@ -43,6 +43,10 @@ def classify_table(table: Tag, block_tags: set[str] | None = None) -> int:
     """
     if block_tags is None:
         block_tags = DEFAULT_BLOCK_TAGS
+    # EBX definition-list tables are property-value pairs with no column headers.
+    # Tier 3 passthrough prevents false header-row promotion by _promote_first_row_as_header.
+    if "ebx_definitionList" in (table.get("class") or []):
+        return 3
     tier = 1
     for cell in table.find_all(["td", "th"]):
         cell_t = _cell_tier(cell, block_tags)

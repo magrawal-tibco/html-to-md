@@ -39,7 +39,7 @@ from scripts.lib.version_registry import record_converted_versions
 
 
 class _TibcoMarkdownConverter(MarkdownConverter):
-    """markdownify subclass that preserves heading id attributes as named anchors."""
+    """markdownify subclass with TIBCO-specific conversion overrides."""
 
     def convert_hN(self, n, el, text, parent_tags):
         result = super().convert_hN(n, el, text, parent_tags)
@@ -47,6 +47,20 @@ class _TibcoMarkdownConverter(MarkdownConverter):
         if hid and "_inline" not in parent_tags:
             result = result.rstrip("\n") + f' <a name="{hid}"></a>' + "\n\n"
         return result
+
+    def convert_img(self, el, text, parent_tags):
+        """Always emit proper Markdown image syntax, even inside table cells.
+
+        Markdownify's default table-cell handling strips images to alt text only.
+        This override ensures ![alt](src) is always produced.
+        """
+        alt = el.get("alt", "")
+        src = el.get("src", "")
+        if not src:
+            return alt or ""
+        # Sanitise: strip newlines/pipes that would break GFM pipe tables
+        alt = alt.replace("\n", " ").replace("|", "&#124;")
+        return f"![{alt}]({src})"
 
 
 def load_settings(config_path: str) -> dict:
