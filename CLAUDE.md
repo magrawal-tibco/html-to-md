@@ -460,6 +460,11 @@ python scripts/08_restructure_ebx.py [--src output/pub/ebx] [--dst output/ebx] \
 is now hosted externally. Relative `Java_API/` links in `.md` files are rewritten to the
 external URL by Step 5 (`05_postprocess.py`).
 
+**Sequencing requirement:** Step 5 must be run before Step 8. If Step 3 is re-run (e.g.
+force-rerun), always follow it with Step 5 before running Step 8 — otherwise Step 8 copies
+un-postprocessed files (still containing `.html` links) into `output/ebx/`. Step 8 emits a
+warning if it detects this condition.
+
 ### Step 09 — Generic asset copy (`scripts/09_copy_assets.py`)
 
 Runs the same PDF/doc asset copy for any product (not EBX-specific). Used for products
