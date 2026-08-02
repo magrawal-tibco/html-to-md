@@ -32,19 +32,8 @@ warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import load_manifest, load_settings
 from scripts.lib.reporter import Reporter
-
-
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
-
-
-def load_manifest(phase: str, settings: dict) -> list[dict]:
-    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    path = manifests_dir / f"manifest_{phase}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Manifest not found: {path}. Run Step 1 first.")
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def load_zip_registry(phase: str, settings: dict) -> set[str]:
@@ -117,9 +106,12 @@ async def download_one(
                 dest.write_bytes(resp.content)
             return True
         except httpx.HTTPStatusError as e:
+            status = e.response.status_code
             if attempt == max_retries:
-                _record_failure(f"HTTP {e.response.status_code}")
+                _record_failure(f"HTTP {status}")
                 return False
+            if status in (429, 503):
+                await asyncio.sleep(backoff ** attempt)
         except (httpx.ConnectError, httpx.ReadTimeout, httpx.TimeoutException) as e:
             if attempt == max_retries:
                 _record_failure(f"Network error: {type(e).__name__}")

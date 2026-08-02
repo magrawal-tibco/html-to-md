@@ -26,19 +26,8 @@ from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import load_manifest, load_settings, read_frontmatter, write_frontmatter
 from scripts.lib.reporter import Reporter
-
-
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
-
-
-def load_manifest(phase: str, settings: dict) -> list[dict]:
-    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    path = manifests_dir / f"manifest_{phase}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Manifest not found: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def url_to_cache_path(loc: str, cache_dir: Path) -> Path:
@@ -51,11 +40,9 @@ def parse_alias_xml(xml_path: Path) -> list[dict]:
     Parse a CatapultAliasFile and return list of:
       { "name": str, "resolved_id": int, "link": str }
     Returns empty list for empty or malformed files.
+    Raises OSError if the file cannot be read (caller decides how to report).
     """
-    try:
-        content = xml_path.read_text(encoding="utf-8", errors="replace").strip()
-    except Exception:
-        return []
+    content = xml_path.read_text(encoding="utf-8", errors="replace").strip()
 
     if not content or "<Map " not in content:
         return []
@@ -78,32 +65,6 @@ def parse_alias_xml(xml_path: Path) -> list[dict]:
             resolved_id = None
         entries.append({"name": name, "resolved_id": resolved_id, "link": link})
     return entries
-
-
-def read_frontmatter(md_path: Path) -> tuple[dict, str]:
-    """
-    Read a .md file and return (frontmatter_dict, body_text).
-    If no frontmatter, returns ({}, full_content).
-    """
-    content = md_path.read_text(encoding="utf-8")
-    if not content.startswith("---"):
-        return {}, content
-    end = content.find("\n---\n", 3)
-    if end == -1:
-        return {}, content
-    fm_text = content[3:end]
-    body    = content[end + 5:]
-    try:
-        fm = yaml.safe_load(fm_text) or {}
-    except yaml.YAMLError:
-        fm = {}
-    return fm, body
-
-
-def write_frontmatter(md_path: Path, fm: dict, body: str):
-    """Overwrite a .md file with updated frontmatter + body."""
-    fm_text = yaml.dump(fm, allow_unicode=True, default_flow_style=False)
-    md_path.write_text(f"---\n{fm_text}---\n\n{body.lstrip()}", encoding="utf-8")
 
 
 def collect_versions(manifest: list[dict]) -> dict[str, dict]:
@@ -138,7 +99,12 @@ def process_version(
         reporter.count("versions_no_alias")
         return
 
-    maps = parse_alias_xml(alias_cache)
+    try:
+        maps = parse_alias_xml(alias_cache)
+    except OSError as e:
+        reporter.warning(f"Cannot read alias XML {alias_cache}: {e}")
+        reporter.count("versions_alias_read_error")
+        return
     if not maps:
         reporter.count("versions_alias_empty")
         return
@@ -173,7 +139,13 @@ def process_version(
     # alias_xml_url: .../pub/foo/1.0/doc/html/Data/Alias.xml
     # → version_html_root: pub/foo/1.0/doc/html/
     alias_url_path = urlparse(alias_xml_url).path.lstrip("/")
-    version_html_root = Path(alias_url_path).parent.parent.as_posix() + "/"
+    alias_path = Path(alias_url_path)
+    if alias_path.name.lower() != "alias.xml" or alias_path.parent.name != "Data":
+        reporter.warning(
+            f"Unexpected Alias.xml path depth: {alias_xml_url} — "
+            f"CSH map location may be incorrect"
+        )
+    version_html_root = alias_path.parent.parent.as_posix() + "/"
 
     csh_map_path = output_dir / version_html_root / "csh_map.json"
 
@@ -192,7 +164,14 @@ def process_version(
             continue
 
         # Normalise output_path relative to version_html_root to match alias link
-        rel_to_html = entry["output_path"].replace("\\", "/")[len(version_html_root):]
+        out_posix = entry["output_path"].replace("\\", "/")
+        if not out_posix.startswith(version_html_root):
+            reporter.warning(
+                f"output_path '{out_posix}' does not start with version root "
+                f"'{version_html_root}' — skipping CSH injection for this entry"
+            )
+            continue
+        rel_to_html = out_posix[len(version_html_root):]
         # Convert .md → .htm for lookup (forward slashes to match link_to_csh keys)
         rel_htm = Path(rel_to_html).with_suffix(".htm").as_posix()
 

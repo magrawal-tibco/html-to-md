@@ -24,15 +24,12 @@ import yaml
 # Allow running from project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import load_settings
 from scripts.lib.reporter import Reporter
 from scripts.lib.sitemap_parser import build_http_client, iter_product_versions, iter_version_entries
 from scripts.lib.version_registry import load_registry
 
 PRODUCTS_API = "https://docs.tibco.com/api/products/{slug}"
-
-
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
 
 
 def load_phase(phase_name: str, settings: dict) -> dict:
@@ -200,7 +197,10 @@ def load_checkpoint(manifests_dir: Path, phase: str) -> dict:
     """Load the crawl checkpoint for a phase, or return {} if none exists."""
     path = manifests_dir / f"crawl_checkpoint_{phase}.json"
     if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return {}
     return {}
 
 
@@ -507,14 +507,6 @@ def main():
             save_checkpoint(manifests_dir, args.phase, version_meta)
             reporter.info(f"Checkpoint written: {len(version_meta)} version(s) → "
                           f"manifests/crawl_checkpoint_{args.phase}.json")
-
-        if dita_versions:
-            dita_path = manifests_dir / f"dita_versions_{args.phase}.json"
-            dita_path.write_text(
-                json.dumps(dita_versions, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-            reporter.info(f"DITA versions written to {dita_path}")
 
         empty_path = manifests_dir / f"empty_versions_{args.phase}.json"
         empty_path.write_text(

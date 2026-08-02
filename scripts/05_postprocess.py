@@ -23,6 +23,7 @@ from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import format_frontmatter, load_manifest, load_settings, parse_frontmatter
 from scripts.lib.reporter import Reporter
 
 # Matches MadCap variable tokens like [%=System.LinkedHeader%] or [%=productvar.productName%]
@@ -52,18 +53,6 @@ _JAVA_API_LINK_RE = re.compile(
 )
 
 
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
-
-
-def load_manifest(phase: str, settings: dict) -> list[dict]:
-    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    path = manifests_dir / f"manifest_{phase}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Manifest not found: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
 def build_url_to_md_index(manifest: list[dict], base_url: str) -> dict[str, str]:
     """
     Build a lookup: normalised URL path → output_path (.md)
@@ -76,24 +65,6 @@ def build_url_to_md_index(manifest: list[dict], base_url: str) -> dict[str, str]
         url_path = urlparse(entry["url"]).path.lower().rstrip("/")
         index[url_path] = entry["output_path"]
     return index
-
-
-def read_frontmatter(content: str) -> tuple[dict, str]:
-    if not content.startswith("---"):
-        return {}, content
-    end = content.find("\n---\n", 3)
-    if end == -1:
-        return {}, content
-    try:
-        fm = yaml.safe_load(content[3:end]) or {}
-    except yaml.YAMLError:
-        fm = {}
-    return fm, content[end + 5:]
-
-
-def write_frontmatter(fm: dict, body: str) -> str:
-    fm_text = yaml.dump(fm, allow_unicode=True, default_flow_style=False)
-    return f"---\n{fm_text}---\n\n{body.lstrip()}"
 
 
 def clean_toc_path(toc_path: str) -> str:
@@ -242,14 +213,30 @@ def normalize_heading_levels(body: str) -> tuple[str, int]:
     """
     lines = body.split("\n")
     in_fence = False
+    fence_char = ""
+    fence_len = 0
     prev_level = 0
     fixes = 0
     out = []
 
     for line in lines:
         stripped = line.lstrip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            in_fence = not in_fence
+
+        if not in_fence:
+            # Opening fence: 3+ backticks or tildes; info string is allowed after the run.
+            m_fence = re.match(r"^(`{3,}|~{3,})", stripped)
+            if m_fence:
+                fence_char = stripped[0]
+                fence_len = len(m_fence.group(1))
+                in_fence = True
+                out.append(line)
+                continue
+        else:
+            # Closing fence: same character, at least as long, no content after.
+            if stripped and stripped[0] == fence_char:
+                closing_run = len(stripped) - len(stripped.lstrip(fence_char))
+                if closing_run >= fence_len and not stripped[closing_run:].strip():
+                    in_fence = False
             out.append(line)
             continue
 
@@ -294,7 +281,7 @@ def postprocess_file(
 ) -> bool:
     try:
         content = md_path.read_text(encoding="utf-8")
-        fm, body = read_frontmatter(content)
+        fm, body = parse_frontmatter(content)
 
         # 1. Clean toc_path in frontmatter
         if "toc_path" in fm:
@@ -339,7 +326,7 @@ def postprocess_file(
                 reporter.count("java_api_links_rewritten", java_api_count)
 
         if not dry_run:
-            md_path.write_text(write_frontmatter(fm, body), encoding="utf-8")
+            md_path.write_text(format_frontmatter(fm, body), encoding="utf-8")
 
         reporter.count("pages_postprocessed")
         return True

@@ -74,7 +74,16 @@ def _promote_first_row_as_header(table: Tag) -> bool:
             td.name = "th"
         return bool(tds)
 
-    first_row = table.find("tr")
+    # table.find("tr") descends into nested tables — limit to direct tbody children
+    # or direct tr children to avoid promoting a nested table's row as the header.
+    tbody = table.find("tbody", recursive=False)
+    if tbody:
+        first_row = tbody.find("tr", recursive=False)
+    else:
+        first_row = next(
+            (c for c in table.children if getattr(c, "name", None) == "tr"),
+            None,
+        )
     if not first_row:
         return False
 

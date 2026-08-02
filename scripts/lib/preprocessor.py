@@ -682,26 +682,34 @@ def anchor_only_links(content: Tag) -> int:
 
 # ── Transform 7: split colspan tables ────────────────────────────────────────
 
+def _safe_colspan(cell: Tag) -> int:
+    """Return colspan as int, defaulting to 1 for missing or non-integer values."""
+    try:
+        return int(cell.get("colspan", 1))
+    except (ValueError, TypeError):
+        return 1
+
+
 def _table_column_count(table: Tag) -> int:
     """Count the number of columns in a table from its header or first data row."""
     thead = table.find("thead")
     if thead:
         header_row = thead.find("tr")
         if header_row:
-            return sum(int(c.get("colspan", 1)) for c in header_row.find_all(["th", "td"]))
+            return sum(_safe_colspan(c) for c in header_row.find_all(["th", "td"]))
     tbody = table.find("tbody")
     if tbody:
         for row in tbody.find_all("tr", recursive=False):
             cells = row.find_all(["td", "th"])
             if cells:
-                return sum(int(c.get("colspan", 1)) for c in cells)
+                return sum(_safe_colspan(c) for c in cells)
     return 0
 
 
 def _is_full_width_row(row: Tag, ncols: int) -> bool:
     """Return True if the row is a single cell spanning all columns."""
     cells = row.find_all(["td", "th"])
-    return len(cells) == 1 and int(cells[0].get("colspan", 1)) >= ncols
+    return len(cells) == 1 and _safe_colspan(cells[0]) >= ncols
 
 
 def split_colspan_tables(content: Tag) -> int:
@@ -938,21 +946,10 @@ def rewrite_image_src(content: Tag, page_url_path: str) -> int:
       ../Resources/Images/foo.png  (relative to the .htm file)
     We rewrite them to be relative from the .md file's directory.
     """
-    rewritten = 0
-    page_dir = PurePosixPath(page_url_path).parent
-
-    for img in content.find_all("img"):
-        src = img.get("src", "")
-        if not src or src.startswith("http://") or src.startswith("https://"):
-            continue
-        # Resolve relative to the page's directory, then make it a simple relative path
-        try:
-            resolved = (page_dir / src).resolve() if False else src  # keep relative
-            img["src"] = src  # leave as-is; postprocessor can adjust if needed
-            rewritten += 1
-        except Exception:
-            pass
-    return rewritten
+    # Relative image src paths are preserved as-is because the output directory
+    # mirrors the source URL structure, so relative paths remain valid.
+    # Step 2 downloads images to the same relative location they occupy in the source.
+    return 0
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────

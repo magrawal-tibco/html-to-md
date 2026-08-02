@@ -27,37 +27,9 @@ from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import load_manifest, load_settings, read_frontmatter
 from scripts.lib.reporter import Reporter
 from scripts.lib.toc_parser import build_toc_tree_from_js
-
-
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
-
-
-def load_manifest(phase: str, settings: dict) -> list[dict]:
-    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    path = manifests_dir / f"manifest_{phase}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Manifest not found: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def read_frontmatter(md_path: Path) -> dict:
-    """Read YAML frontmatter from a .md file. Returns {} on failure."""
-    try:
-        content = md_path.read_text(encoding="utf-8")
-    except Exception:
-        return {}
-    if not content.startswith("---"):
-        return {}
-    end = content.find("\n---\n", 3)
-    if end == -1:
-        return {}
-    try:
-        return yaml.safe_load(content[3:end]) or {}
-    except yaml.YAMLError:
-        return {}
 
 
 def version_html_root(output_path: str, version_format: str = "") -> str:
@@ -121,6 +93,13 @@ def insert_into_tree(tree: dict, segments: list[str], page_entry: dict):
 
     if not rest:
         # This is the leaf — assign file
+        if child["file"] is not None and child["file"] != page_entry["output_path"]:
+            import warnings
+            warnings.warn(
+                f"TOC title collision at '{title}': "
+                f"'{child['file']}' overwritten by '{page_entry['output_path']}'",
+                stacklevel=2,
+            )
         child["file"] = page_entry["output_path"]
     else:
         insert_into_tree(child, rest, page_entry)
@@ -131,7 +110,7 @@ def _version_label_from_entries(version_entries: list[dict], output_dir: Path) -
     for entry in version_entries:
         md_path = output_dir / entry["output_path"]
         if md_path.exists():
-            fm = read_frontmatter(md_path)
+            fm, _ = read_frontmatter(md_path)
             name    = fm.get("product_name", "")
             version = fm.get("product_version", "")
             label = f"{name} {version}".strip()
@@ -267,7 +246,7 @@ def build_version_toc(
         md_path = output_dir / entry["output_path"]
         if not md_path.exists():
             continue
-        fm = read_frontmatter(md_path)
+        fm, _ = read_frontmatter(md_path)
         toc_path = fm.get("toc_path", "")
         segs = [s.strip() for s in toc_path.split("|") if s.strip()]
         if segs:
@@ -279,14 +258,14 @@ def build_version_toc(
     dir_fallback: dict[str, list[str]] = {}
     for directory, counter in dir_toc_paths.items():
         best = counter.most_common(1)[0][0]
-        dir_fallback[directory] = [s.strip() for s in best.split("|") if s.strip()]
+        dir_fallback[directory] = [s.strip() for s in best.split("|") if s.strip()][:-1]
 
     for entry in version_entries:
         md_path = output_dir / entry["output_path"]
         if not md_path.exists():
             continue
 
-        fm = read_frontmatter(md_path)
+        fm, _ = read_frontmatter(md_path)
         toc_path = fm.get("toc_path", "")
         # Normalize whitespace — <title> tags sometimes contain embedded newlines.
         page_title = " ".join(fm.get("title", "").split())
@@ -394,7 +373,7 @@ def _version_meta(version_entries: list[dict], output_dir: Path) -> dict:
     for entry in version_entries:
         md_path = output_dir / entry["output_path"]
         if md_path.exists():
-            fm = read_frontmatter(md_path)
+            fm, _ = read_frontmatter(md_path)
             name = fm.get("product_name", "")
             if name:
                 return {
@@ -720,17 +699,25 @@ def main():
 
     if args.from_json:
         json_path = Path(args.from_json)
-        toc = json.loads(json_path.read_text(encoding="utf-8"))
+        try:
+            toc = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"Error reading {json_path}: {e}", file=sys.stderr)
+            return 1
         yml_path = json_path.parent / "toc.yml"
-        yml_path.write_text(
-            yaml.dump(
-                toc_to_yaml(toc),
-                default_flow_style=False,
-                allow_unicode=True,
-                sort_keys=False,
-            ),
-            encoding="utf-8",
-        )
+        try:
+            yml_path.write_text(
+                yaml.dump(
+                    toc_to_yaml(toc),
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+        except OSError as e:
+            print(f"Error writing {yml_path}: {e}", file=sys.stderr)
+            return 1
         print(f"Written: {yml_path}")
         return 0
 
@@ -768,10 +755,15 @@ def main():
 
         # Inject external URLs for known off-site placeholder nodes (e.g. Java API).
         version_dashed = meta.get("product_version", "").replace(".", "-")
-        n_external = inject_external_urls(toc["tree"], version_dashed)
-        if n_external:
-            reporter.info(f"  Injected {n_external} external URL(s) for {version_root}")
-            reporter.count("external_urls_injected", n_external)
+        if not version_dashed:
+            reporter.warning(
+                f"No product_version in metadata for {version_root} — skipping external URL injection"
+            )
+        else:
+            n_external = inject_external_urls(toc["tree"], version_dashed)
+            if n_external:
+                reporter.info(f"  Injected {n_external} external URL(s) for {version_root}")
+                reporter.count("external_urls_injected", n_external)
 
         # Create synthetic .md pages for any external-URL nodes, replacing the URL with
         # a relative path so toc.yml emits a relative url: (required by AEM Guides).

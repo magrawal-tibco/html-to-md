@@ -1,7 +1,7 @@
 """
 run.py — Pipeline orchestrator for TIBCO Docs HTML → Markdown converter.
 
-Runs all 6 steps in sequence for a given phase. Each step is a separate script
+Runs all pipeline steps in sequence for a given phase. Each step is a separate script
 invoked as a subprocess so it has its own clean Python environment.
 
 Usage:
@@ -22,6 +22,9 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+
+sys.path.insert(0, str(Path(__file__).parent))
+from scripts.lib.io_utils import load_settings
 
 # Force UTF-8 output on Windows consoles
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
@@ -46,8 +49,18 @@ STEPS = [
 ]
 
 
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+def _parse_step(value: str) -> float:
+    """Convert a step display ID (e.g. '1', '2a', '3') to its sort key for range comparisons."""
+    for display_id, sort_key, _, _ in STEPS:
+        if str(display_id) == value:
+            return sort_key
+    try:
+        return float(value)
+    except ValueError:
+        valid = ", ".join(str(s[0]) for s in STEPS)
+        raise argparse.ArgumentTypeError(
+            f"Invalid step '{value}'. Valid step IDs: {valid}"
+        )
 
 
 def run_step(
@@ -66,24 +79,25 @@ def run_step(
 ) -> tuple[int, float]:
     """Run a single pipeline step as a subprocess. Returns (exit_code, duration_seconds)."""
     cmd = [sys.executable, script, f"--phase={phase}", f"--config={config}"]
+    script_name = Path(script).name
     if dry_run:
         cmd.append("--dry-run")
-    if force_rerun and "02_download.py" not in script and "01_build_manifest" not in script:
+    if force_rerun and script_name not in {"02_download.py", "01_build_manifest.py"}:
         cmd.append("--force-rerun")
     # --force-refresh is only used by Step 2; treat --force-rerun as equivalent
-    if "02_download.py" in script and (force_refresh or force_rerun):
+    if script_name == "02_download.py" and (force_refresh or force_rerun):
         cmd.append("--force-refresh")
     # --ignore-registry is only used by Step 1
-    if ignore_registry and "01_build_manifest" in script:
+    if ignore_registry and script_name == "01_build_manifest.py":
         cmd.append("--ignore-registry")
     # --delta is only used by Step 1
-    if delta and "01_build_manifest" in script:
+    if delta and script_name == "01_build_manifest.py":
         cmd.append("--delta")
     # --scan-cache is only used by Step 3
-    if scan_cache and "03_convert.py" in script:
+    if scan_cache and script_name == "03_convert.py":
         cmd.append("--scan-cache")
     # --total-seconds is only used by Step 7
-    if total_seconds is not None and "07_generate_report" in script:
+    if total_seconds is not None and script_name == "07_generate_report.py":
         cmd.append(f"--total-seconds={total_seconds:.1f}")
 
     print(f"\n{'='*60}")
@@ -230,7 +244,7 @@ def run_restructure_pipeline(
 ) -> tuple[int, float]:
     """Run 09_restructure_tibco.py for the given product slugs."""
     cmd = [
-        sys.executable, "scripts/09_restructure_tibco.py",
+        sys.executable, "scripts/tibco_restructure.py",
         "--products", *pub_slugs,
     ]
     if dry_run:
@@ -324,10 +338,10 @@ def main():
                         help="Phase name, e.g. phase_01")
     parser.add_argument("--config",       default="config/settings.yaml",
                         help="Path to settings.yaml")
-    parser.add_argument("--from-step",    type=int, default=1, metavar="N",
-                        help="Start from step N (1-7, default: 1)")
-    parser.add_argument("--to-step",      type=int, default=7, metavar="N",
-                        help="Stop after step N (1-7, default: 7)")
+    parser.add_argument("--from-step",    type=_parse_step, default=1.0, metavar="N",
+                        help="Start from step N (1, 2a, 2-7, default: 1)")
+    parser.add_argument("--to-step",      type=_parse_step, default=7.0, metavar="N",
+                        help="Stop after step N (1, 2a, 2-7, default: 7)")
     parser.add_argument("--dry-run",      action="store_true",
                         help="Parse and plan but write no files")
     parser.add_argument("--force-rerun",  action="store_true",
@@ -347,7 +361,7 @@ def main():
     parser.add_argument("--skip-webworks", action="store_true",
                         help="Skip the WebWorks ePublisher sub-pipeline")
     parser.add_argument("--skip-restructure", action="store_true",
-                        help="Skip the restructure sub-pipeline (09_restructure_tibco.py)")
+                        help="Skip the restructure sub-pipeline (tibco_restructure.py)")
     args = parser.parse_args()
 
     settings  = load_settings(args.config)

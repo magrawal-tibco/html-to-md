@@ -29,33 +29,43 @@ class Reporter:
 
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        # Root logger writes to run.log (shared across all steps in a run)
-        self._logger = logging.getLogger(step_name)
-        if not self._logger.handlers:
-            self._logger.setLevel(logging.DEBUG)
+        # Use a unique logger name per instance so two Reporter instances for the same
+        # step_name (e.g. from force-rerun) don't share handlers and pollute each other's logs.
+        self._logger = logging.getLogger(f"{step_name}__{id(self)}")
+        self._logger.setLevel(logging.DEBUG)
 
-            fmt = logging.Formatter("%(asctime)s [%(name)s] %(levelname)s %(message)s",
-                                    datefmt="%H:%M:%S")
+        fmt = logging.Formatter("%(asctime)s [%(name)s] %(levelname)s %(message)s",
+                                datefmt="%H:%M:%S")
 
-            # Console handler
-            ch = logging.StreamHandler()
-            ch.setLevel(logging.INFO)
-            ch.setFormatter(fmt)
-            self._logger.addHandler(ch)
+        # Console handler — show step_name without the id suffix
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch.setFormatter(logging.Formatter(
+            f"%(asctime)s [{step_name}] %(levelname)s %(message)s",
+            datefmt="%H:%M:%S",
+        ))
+        self._logger.addHandler(ch)
 
-            # run.log — all messages
-            fh = logging.FileHandler(run_dir / "run.log", encoding="utf-8")
-            fh.setLevel(logging.DEBUG)
-            fh.setFormatter(fmt)
-            self._logger.addHandler(fh)
+        # run.log — all messages
+        fh = logging.FileHandler(run_dir / "run.log", encoding="utf-8")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(fmt)
+        self._logger.addHandler(fh)
 
-            # errors.log — ERROR and above only
-            eh = logging.FileHandler(run_dir / "errors.log", encoding="utf-8")
-            eh.setLevel(logging.ERROR)
-            eh.setFormatter(fmt)
-            self._logger.addHandler(eh)
+        # errors.log — ERROR and above only
+        eh = logging.FileHandler(run_dir / "errors.log", encoding="utf-8")
+        eh.setLevel(logging.ERROR)
+        eh.setFormatter(fmt)
+        self._logger.addHandler(eh)
 
         self._skipped_log = open(run_dir / "skipped.log", "a", encoding="utf-8")
+
+    def __del__(self):
+        try:
+            if hasattr(self, "_skipped_log") and not self._skipped_log.closed:
+                self._skipped_log.close()
+        except Exception:
+            pass
 
     # ── logging shortcuts ──────────────────────────────────────────────────
 

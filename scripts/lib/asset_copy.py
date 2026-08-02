@@ -44,7 +44,9 @@ def save_slug_mappings(mappings: dict[str, str], path: Path = SLUG_MAPPINGS_FILE
     ]
     for slug in sorted(mappings):
         label = mappings[slug]
-        lines.append(f'{slug}: "{label}"\n')
+        # Use yaml.dump for the value to safely quote strings with special characters
+        label_yaml = yaml.dump(label, allow_unicode=True, default_flow_style=True).strip()
+        lines.append(f"{slug}: {label_yaml}\n")
     path.write_text("".join(lines), encoding="utf-8")
 
 
@@ -138,12 +140,17 @@ def write_index_md(
     doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
     title = f"{product_name} {product_version} {doc_type_label}"
 
+    # Serialize each frontmatter value via yaml.dump to safely quote special characters
+    # (colons, brackets, quotes, etc. in product names/versions would break raw f-string YAML)
+    def _ys(v: str) -> str:
+        return yaml.dump(v, allow_unicode=True, default_flow_style=True).strip()
+
     lines = [
         "---\n",
-        f'title: "{title}"\n',
-        f'product_name: "{product_name}"\n',
-        f'product_version: "{product_version}"\n',
-        f'doc_type: "{subfolder}"\n',
+        f"title: {_ys(title)}\n",
+        f"product_name: {_ys(product_name)}\n",
+        f"product_version: {_ys(product_version)}\n",
+        f"doc_type: {_ys(subfolder)}\n",
         "---\n",
         "\n",
         f"# {title}\n",
@@ -162,10 +169,15 @@ def write_index_md(
 def write_toc_yml(dest_dir: Path, subfolder: str, product_name: str, product_version: str) -> None:
     doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
     title = f"{product_name} {product_version} {doc_type_label}"
+    # Use yaml.dump for string values to safely handle special characters
+    # (product names may contain ®, colons, or other YAML-significant characters)
+    def _ys(v: str) -> str:
+        return yaml.dump(v, allow_unicode=True, default_flow_style=True).strip()
+
     content = (
-        f"docs_list_title: {title}\n"
+        f"docs_list_title: {_ys(title)}\n"
         "docs:\n"
-        f"- title: {doc_type_label}\n"
+        f"- title: {_ys(doc_type_label)}\n"
         "  url: index.md\n"
     )
     (dest_dir / "toc.yml").write_text(content, encoding="utf-8")

@@ -33,6 +33,7 @@ from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import load_manifest, load_settings
 from scripts.lib.preprocessor import run_all as run_preprocessor
 from scripts.lib.reporter import Reporter
 from scripts.lib.version_registry import record_converted_versions
@@ -61,18 +62,6 @@ class _TibcoMarkdownConverter(MarkdownConverter):
         # Sanitise: strip newlines/pipes that would break GFM pipe tables
         alt = alt.replace("\n", " ").replace("|", "&#124;")
         return f"![{alt}]({src})"
-
-
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
-
-
-def load_manifest(phase: str, settings: dict) -> list[dict]:
-    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    path = manifests_dir / f"manifest_{phase}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Manifest not found: {path}. Run Step 1 first.")
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def load_dita_versions(phase: str, settings: dict) -> set[str]:
@@ -633,8 +622,9 @@ def main():
 
     for entry in tqdm(work_entries, desc="Converting"):
         vs = entry.get("version_sitemap", "")
-        # In manifest mode, DITA skip is applied here (already filtered in scan-cache mode)
-        if not args.scan_cache and vs in dita_versions:
+        # Skip DITA versions in both manifest and scan-cache modes.
+        # (In manifest mode, work_entries is already pre-filtered, so this is a no-op there.)
+        if vs in dita_versions:
             reporter.count("pages_dita_skipped")
             continue
         ok = convert_entry(entry, settings, cache_dir, output_dir, reporter, args.dry_run, force_rerun)

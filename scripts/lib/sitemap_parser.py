@@ -158,12 +158,13 @@ def iter_version_entries(
     """
     root = _fetch_xml(client, version_sitemap_url)
     if _is_sitemapindex(root):
-        # Caller passed an L2 sitemapindex by mistake — parse the first version under it
         version_urls = _get_locs(root, "sitemap")
-        if not version_urls:
-            return version_sitemap_url, []
-        root = _fetch_xml(client, version_urls[0])
-        version_sitemap_url = version_urls[0]
+        raise ValueError(
+            f"iter_version_entries received an L2 sitemapindex URL with "
+            f"{len(version_urls)} version(s): {version_sitemap_url}. "
+            f"Use iter_product_versions to iterate all versions, or pass a "
+            f"specific L3 version URL (e.g. {version_urls[0] if version_urls else '<none>'})."
+        )
     entries = _parse_urlset(root)
     return version_sitemap_url, entries
 

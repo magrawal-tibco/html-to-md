@@ -33,20 +33,9 @@ from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.lib.io_utils import load_manifest, load_settings
 from scripts.lib.manifest_utils import infer_alias_xml_url, should_skip_url
 from scripts.lib.reporter import Reporter
-
-
-def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
-
-
-def load_manifest(phase: str, settings: dict) -> list[dict]:
-    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
-    path = manifests_dir / f"manifest_{phase}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Manifest not found: {path}. Run Step 1 first.")
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def alias_xml_to_html_root(alias_xml_url: str) -> str:

@@ -155,8 +155,32 @@ def preflight_scan(addon_roots: list[tuple[str, str, Path]], src: Path) -> list[
     return cross_links
 
 
+def _rewrite_toc_file_path(file_path: str, old_prefix: str, new_prefix: str) -> str:
+    """Rewrite a single file path in a _toc.json tree node."""
+    if not file_path:
+        return file_path
+    normalised = file_path.replace("\\", "/")
+    old_norm = old_prefix.replace("\\", "/").rstrip("/") + "/"
+    if normalised.startswith(old_norm):
+        rest = normalised[len(old_norm):]
+        return (new_prefix.rstrip("/") + "/" + rest).replace("/", "\\")
+    return file_path
+
+
+def _walk_tree(node, old_prefix: str, new_prefix: str) -> None:
+    """Recursively rewrite 'file' fields in a _toc.json tree."""
+    if isinstance(node, dict):
+        if "file" in node and node["file"]:
+            node["file"] = _rewrite_toc_file_path(node["file"], old_prefix, new_prefix)
+        for child in node.get("children", []):
+            _walk_tree(child, old_prefix, new_prefix)
+    elif isinstance(node, list):
+        for item in node:
+            _walk_tree(item, old_prefix, new_prefix)
+
+
 def patch_toc_json(toc_path: Path, old_root: str, new_root: str) -> bool:
-    """Update the 'root' field in a _toc.json. Returns True if patched."""
+    """Update 'root' and all 'file' paths in a _toc.json. Returns True if patched."""
     try:
         data = json.loads(toc_path.read_text(encoding="utf-8"))
     except Exception:
@@ -165,6 +189,8 @@ def patch_toc_json(toc_path: Path, old_root: str, new_root: str) -> bool:
     # Normalise separators for comparison
     if current_root.replace("\\", "/").rstrip("/") == old_root.rstrip("/"):
         data["root"] = new_root
+        if "tree" in data:
+            _walk_tree(data["tree"], old_root, new_root)
         toc_path.write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
         )
@@ -264,23 +290,8 @@ def main() -> int:
             jd_errors += 1
     print(f"  Copied {len(javadocs_mapping) - jd_errors} files ({jd_errors} errors)")
 
-    # ── Phase 5: remove Java_API remnants from webhelp tree ───────────────────
-    print("\n=== Phase 5: Removing Java_API from webhelp tree ===")
-    removed_dirs = 0
-    for java_dir in sorted((dst / "en-us" / "ebx-addon").rglob("Java_API")):
-        if java_dir.is_dir():
-            shutil.rmtree(java_dir)
-            removed_dirs += 1
-    print(f"  Removed {removed_dirs} Java_API director{'ies' if removed_dirs != 1 else 'y'}")
-
-    # ── Phase 6: cross-addon link rewriting (only if needed) ──────────────────
-    if cross_links:
-        print("\n=== Phase 6: Cross-addon link rewriting ===")
-        print("  Skipped — cross-addon links detected but rewriting not implemented.")
-        print("  See Phase 0 output for the affected files.")
-
-    # ── Phase 7: patch _toc.json root fields ──────────────────────────────────
-    print("\n=== Phase 7: Patching _toc.json root fields ===")
+    # ── Phase 5: patch _toc.json root fields ──────────────────────────────────
+    print("\n=== Phase 5: Patching _toc.json root fields ===")
 
     output_dir = Path("output")
     try:
@@ -304,11 +315,11 @@ def main() -> int:
 
     print(f"  Patched {patched} / {len(addon_roots)} _toc.json files")
 
-    # ── Phase 8: rewrite EBX-main javadoc URLs → addon-specific URLs ──────────
+    # ── Phase 6: rewrite EBX-main javadoc URLs → addon-specific URLs ──────────
     # Step 5 converts relative Java_API/ links to the EBX main javadoc URL.
     # After restructuring, replace every occurrence in each addon/version tree
     # with the correct addon-specific URL and strip MadCap popup-link duplicates.
-    print("\n=== Phase 8: Patching Java API URLs ===")
+    print("\n=== Phase 6: Patching Java API URLs ===")
 
     _EBX_MAIN_JAVADOC_PREFIX = "https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/"
     _ADDON_JAVADOC_TMPL      = "https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/"
