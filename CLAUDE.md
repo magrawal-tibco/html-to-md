@@ -533,3 +533,20 @@ Shared utilities live in `scripts/lib/asset_copy.py` and are used by both script
   `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/` — Step 5 rewrites all
   relative `Java_API/` links to this URL; Step 8 excludes the `Java_API/` folder from the
   restructured output
+- EBX pages carry an in-page mini TOC in `<div id="toc">` (nested `<ul class="toc1/toc2">`
+  anchor links to headings). This is **retained** — `ebx_chrome_selectors` is now empty so
+  markdownify converts it to a nested Markdown link list. The links resolve because EBX heading
+  `id` attributes are preserved as `<a name="id"></a>` anchors (see next point).
+- EBX HTML headings carry `id` attributes (e.g. `<h2 id="overview">`). Step 3 uses
+  `_TibcoMarkdownConverter` (a `MarkdownConverter` subclass in `scripts/03_convert.py`) that
+  overrides `convert_hN` to append `<a name="id"></a>` after each heading that has an `id`,
+  producing e.g. `## Overview <a name="overview"></a>`. This makes mini TOC anchor links resolve.
+- markdownify's `chomp()` function can introduce a spurious space after opening `**` bold markers
+  when `<strong>` content starts with whitespace (e.g. `** word**` instead of `**word**`).
+  `clean_markdown()` in `scripts/03_convert.py` fixes this with
+  `re.sub(r'\*\* +(\S)', r'**\1', text)`.
+- EBX addon ZIP archives store HTML at `doc/<addon>/` (no `/html/` in path), but the canonical
+  URL must include `/html/` (e.g. `doc/html/<addon>/`). Manifest entries for ZIP-based products
+  now carry a `cache_path` field (actual filesystem path relative to cache root) separate from
+  the canonical `url`. `convert_entry` in `scripts/03_convert.py` uses `entry["cache_path"]`
+  when present to locate the file, falling back to URL-derived path for non-ZIP products.
