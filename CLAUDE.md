@@ -125,6 +125,7 @@ html-to-md/
 │   ├── 07_restructure_ebx_addon.py  # EBX add-on: version-first → addon-first layout
 │   ├── 08_restructure_ebx.py     # EBX main: URL-mirror → language-first AEM layout + PDF/doc assets
 │   ├── 09_copy_assets.py         # Generic: copy PDF/doc assets + generate index.md + toc.yml
+│   ├── 10_copy_ebx_addon_pdfs.py # EBX add-on: copy all PDFs from cache → ebx-addons repo + index.md + toc.yml
 │   └── lib/
 │       ├── sitemap_parser.py     # 3-level sitemap crawl functions
 │       ├── preprocessor.py       # 8 BeautifulSoup transform passes
@@ -515,6 +516,38 @@ The script auto-adds newly discovered slugs to the mapping file (empty value = n
 Manual corrections persist across all future runs since the file is committed.
 
 Shared utilities live in `scripts/lib/asset_copy.py` and are used by both scripts 08 and 09.
+
+### Step 10 — EBX add-on PDF copy (`scripts/10_copy_ebx_addon_pdfs.py`)
+
+Standalone script that copies all PDFs from the EBX add-on cache into the
+`en-us-onebx-ebx-addons` publishing repo and generates `index.md` + `toc.yml` per version.
+
+**Source:** `cache/pub/ebx-addon/<version>/pdf/` (root level, present in all versions).
+Falls back to `cache/pub/ebx-addon/<version>/doc/pdf/` for versions (e.g. 6.2.3) that only
+have the nested path.
+
+**Destination:**
+```
+C:\github\ebx\en-us-onebx-ebx-addons\en-us\ebx-addon\pdf\<version-dashed>\
+  TIB_ebx-*.pdf          ← copied as-is
+  index.md               ← generated listing page (all PDFs as bullet links)
+  toc.yml                ← generated TOC pointer
+```
+
+**Title derivation** — filenames follow `TIB_ebx-<addon>_<addon_version>[_<slug>].pdf`:
+- Addon code (`adix`, `common`, `moda`, etc.) maps to a hardcoded TIBCO EBX product name
+- Guide slug (`relnotes`, `license`, `versioning_and_packaging_guide`, etc.) maps to a label
+- No slug → append "Documentation" to the product name
+- `addon` code (package-level files like license, vpat) maps to "TIBCO EBX Add-ons"
+
+```bash
+python scripts/10_copy_ebx_addon_pdfs.py [--dry-run] \
+  [--cache-src cache/pub/ebx-addon] \
+  [--dest C:\github\ebx\en-us-onebx-ebx-addons\en-us\ebx-addon\pdf]
+```
+
+Uses only stdlib (`pathlib`, `shutil`, `argparse`) — no dependency on `scripts/lib/`.
+Processes all 42 versions (4.5.7 → 6.2.3). Safe to re-run (overwrites existing output).
 
 ---
 
