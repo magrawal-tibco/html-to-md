@@ -123,7 +123,8 @@ def preflight_scan(addon_roots: list[tuple[str, str, Path]], src: Path) -> list[
         for md_file in addon_root.rglob("*.md"):
             try:
                 content = md_file.read_text(encoding="utf-8")
-            except Exception:
+            except OSError as exc:
+                print(f"  Warning: unreadable file {md_file.relative_to(src)}: {exc}", file=sys.stderr)
                 continue
 
             for m in _MD_LINK_RE.finditer(content):
@@ -326,6 +327,7 @@ def main() -> int:
     _POPUP_LINK_RE           = re.compile(r"\[open JavaAPI in popup\]\([^)]+\)")
 
     patched_java = 0
+    java_errors = 0
     for ver, addon, _addon_root in addon_roots:
         folder_ver = ver.replace(".", "-")
         addon_dir  = dst / "en-us" / "ebx-addon" / addon / folder_ver
@@ -334,15 +336,25 @@ def main() -> int:
         old_url_re = re.compile(re.escape(old_prefix) + r'[^)\s"]*')
 
         for md_file in addon_dir.rglob("*.md"):
-            text = md_file.read_text(encoding="utf-8")
+            try:
+                text = md_file.read_text(encoding="utf-8")
+            except OSError as exc:
+                print(f"\n  Error reading {md_file}: {exc}")
+                java_errors += 1
+                continue
             if old_prefix not in text:
                 continue
             text = old_url_re.sub(new_url, text)
             text = _POPUP_LINK_RE.sub("", text)
-            md_file.write_text(text, encoding="utf-8")
+            try:
+                md_file.write_text(text, encoding="utf-8")
+            except OSError as exc:
+                print(f"\n  Error writing {md_file}: {exc}")
+                java_errors += 1
+                continue
             patched_java += 1
 
-    print(f"  Patched {patched_java} files")
+    print(f"  Patched {patched_java} files" + (f" ({java_errors} errors)" if java_errors else ""))
 
     # ── Summary ───────────────────────────────────────────────────────────────
     total_errors = errors + jd_errors

@@ -21,7 +21,12 @@ import yaml
 
 
 def load_settings(config_path: str) -> dict:
-    return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+    try:
+        return yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Settings file not found: {config_path}") from None
+    except yaml.YAMLError as exc:
+        raise ValueError(f"Malformed settings file {config_path}: {exc}") from exc
 
 
 def load_manifest(phase: str, settings: dict) -> list[dict]:

@@ -87,6 +87,7 @@ def main() -> int:
     print()
 
     total_files = 0
+    copy_errors = 0
     for version, version_dashed in asset_versions:
         product_name = args.product_name or _product_name_from_manifest(cache_src, version)
         if not product_name:
@@ -96,19 +97,29 @@ def main() -> int:
 
         cache_doc_dir = cache_src / version / "doc"
 
-        n_pdf = copy_asset_folder(
-            cache_doc_dir, "pdf", dest_base, version_dashed,
-            product_name, version, slug_mappings
-        )
-        n_doc = copy_asset_folder(
-            cache_doc_dir, "doc", dest_base, version_dashed,
-            product_name, version, slug_mappings
-        )
+        try:
+            n_pdf = copy_asset_folder(
+                cache_doc_dir, "pdf", dest_base, version_dashed,
+                product_name, version, slug_mappings
+            )
+            n_doc = copy_asset_folder(
+                cache_doc_dir, "doc", dest_base, version_dashed,
+                product_name, version, slug_mappings
+            )
+        except Exception as exc:
+            print(f"  ERROR: {version}: {exc}", file=sys.stderr)
+            copy_errors += 1
+            continue
+
         total = n_pdf + n_doc
         total_files += total
         print(f"  {version}: {n_pdf} PDF files, {n_doc} doc files copied")
 
-    save_slug_mappings(slug_mappings, SLUG_MAPPINGS_FILE)
+    try:
+        save_slug_mappings(slug_mappings, SLUG_MAPPINGS_FILE)
+    except Exception as exc:
+        print(f"ERROR: could not save slug mappings: {exc}", file=sys.stderr)
+        copy_errors += 1
 
     needs_review = [k for k, v in slug_mappings.items() if not v]
     print(f"\nTotal asset files copied : {total_files}")
@@ -117,7 +128,7 @@ def main() -> int:
         print(f"Slugs needing review     : {', '.join(needs_review)}")
         print(f"  -> Edit config/pdf_slug_mappings.yaml and re-run to apply corrections")
 
-    return 0
+    return 0 if copy_errors == 0 else 1
 
 
 if __name__ == "__main__":

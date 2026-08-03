@@ -176,6 +176,9 @@ async def download_phase(
                 return
             url  = entry["url"]
             dest = url_to_cache_path(url, cache_dir)
+
+            # Page download — holds one semaphore slot for the duration.
+            ok = False
             async with semaphore:
                 if entry.get("version_sitemap", "") in zip_versions:
                     reporter.count("pages_zip_extracted")
@@ -188,20 +191,23 @@ async def download_phase(
                     reporter.count("pages_downloaded")
                     await asyncio.sleep(delay)
 
-                    # Download images found in this page
-                    if not dry_run and dest.exists():
-                        html_bytes = dest.read_bytes()
-                        img_urls = extract_image_urls(html_bytes, url, skip_prefixes)
-                        for img_url in img_urls:
-                            img_dest = url_to_cache_path(img_url, cache_dir)
-                            if img_dest.exists() and not force_refresh:
-                                reporter.count("images_cached")
-                                continue
-                            img_ok = await download_one(
-                                client, img_url, img_dest, max_retries, backoff, reporter, dry_run
-                            )
-                            if img_ok:
-                                reporter.count("images_downloaded")
+            # Image downloads happen after the page semaphore slot is released so
+            # the slot is available for the next page.  Each image acquires the
+            # semaphore independently, keeping concurrency correctly bounded.
+            if ok and not dry_run and dest.exists():
+                html_bytes = dest.read_bytes()
+                img_urls = extract_image_urls(html_bytes, url, skip_prefixes)
+                for img_url in img_urls:
+                    img_dest = url_to_cache_path(img_url, cache_dir)
+                    if img_dest.exists() and not force_refresh:
+                        reporter.count("images_cached")
+                        continue
+                    async with semaphore:
+                        img_ok = await download_one(
+                            client, img_url, img_dest, max_retries, backoff, reporter, dry_run
+                        )
+                    if img_ok:
+                        reporter.count("images_downloaded")
 
         tasks = [fetch_page(entry) for entry in manifest]
         for coro in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Pages"):

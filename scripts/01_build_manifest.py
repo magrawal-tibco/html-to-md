@@ -263,7 +263,9 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                 # New format: product version page URL — resolve via products API
                 entry = _resolve_version_entry(client, product_url)
                 if entry:
-                    zip_lm = _get_zip_last_modified(client, entry["zip_url"])
+                    # Only fetch last-modified when --delta is active; skip the
+                    # HEAD request entirely otherwise to avoid unnecessary network I/O.
+                    zip_lm = _get_zip_last_modified(client, entry["zip_url"]) if delta else ""
                     entry["zip_last_modified"] = zip_lm
                     if delta:
                         stored_lm = checkpoint.get("versions", {}).get(product_url, {}).get("zip_last_modified", "")

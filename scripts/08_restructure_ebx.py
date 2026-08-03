@@ -404,7 +404,8 @@ def main() -> int:
     asset_total = 0
 
     if not cache_src.is_dir():
-        print(f"  WARNING: cache source not found ({cache_src}) — skipping asset copy")
+        print(f"  WARNING: cache source not found ({cache_src}) — skipping asset copy", file=sys.stderr)
+        errors += 1
     else:
         asset_versions = discover_asset_versions(cache_src)
         print(f"  {len(asset_versions)} versions with PDF/doc assets found")
