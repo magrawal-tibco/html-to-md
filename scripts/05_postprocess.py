@@ -52,6 +52,12 @@ _JAVA_API_LINK_RE = re.compile(
     r"\)"
 )
 
+# Matches .htm/.html href attributes inside raw HTML passthrough blocks
+_HTML_HREF_RE = re.compile(r'href="([^"]*\.html?(?:#[^"]*)?)"')
+
+# Matches Java_API href attributes inside raw HTML passthrough blocks
+_HTML_JAVA_API_HREF_RE = re.compile(r'href="(?:\.\.\/)*Java_API/([^"]+)"')
+
 
 def build_url_to_md_index(manifest: list[dict], base_url: str) -> dict[str, str]:
     """
@@ -255,6 +261,75 @@ def normalize_heading_levels(body: str) -> tuple[str, int]:
     return "\n".join(out), fixes
 
 
+def rewrite_html_hrefs(
+    body: str,
+    current_output_path: str,
+    url_to_md: dict[str, str],
+    base_url: str,
+    source_url: str,
+    reporter: Reporter,
+) -> tuple[str, int, int]:
+    """Rewrite .htm/.html href attributes inside raw HTML passthrough blocks to .md links."""
+    rewritten = 0
+    unresolvable = 0
+    current_output_path = current_output_path.replace("\\", "/")
+    current_md_dir = PurePosixPath(current_output_path).parent
+
+    def replace_href(m: re.Match) -> str:
+        nonlocal rewritten, unresolvable
+        url = m.group(1)
+        if url.startswith("#") or url.startswith("mailto:") or url.startswith("data:"):
+            return m.group(0)
+        if "#" in url:
+            url_no_frag, frag = url.split("#", 1)
+        else:
+            url_no_frag, frag = url, ""
+        # Java_API/ hrefs are handled by rewrite_java_api_html_hrefs — leave them
+        if "Java_API/" in url_no_frag:
+            return m.group(0)
+        if not url_no_frag.startswith("http"):
+            suffix = PurePosixPath(url_no_frag).suffix.lower()
+            if suffix not in (".htm", ".html"):
+                return m.group(0)
+            abs_url = urljoin(source_url, url_no_frag)
+        else:
+            abs_url = url_no_frag
+        parsed = urlparse(abs_url)
+        if parsed.netloc and parsed.netloc not in ("docs.tibco.com", "stag-docs.tibco.com"):
+            return m.group(0)
+        suffix = PurePosixPath(parsed.path).suffix.lower()
+        if suffix and suffix not in (".htm", ".html", ""):
+            return m.group(0)
+        norm_path = parsed.path.lower().rstrip("/")
+        if norm_path not in url_to_md:
+            unresolvable += 1
+            reporter.count("html_hrefs_unresolvable")
+            reporter.debug(f"Unresolvable HTML href: {abs_url}")
+            return m.group(0)
+        target_md = url_to_md[norm_path].replace("\\", "/")
+        target_posix = PurePosixPath(target_md)
+        try:
+            rel = target_posix.relative_to(current_md_dir)
+        except ValueError:
+            parts_current = current_md_dir.parts
+            parts_target = target_posix.parent.parts
+            common_len = sum(1 for a, b in zip(parts_current, parts_target) if a == b)
+            up = len(parts_current) - common_len
+            down = parts_target[common_len:]
+            rel_str = ("../" * up) + "/".join(down)
+            if rel_str and not rel_str.endswith("/"):
+                rel_str += "/"
+            rel_str += target_posix.name
+            rel = PurePosixPath(rel_str)
+        fragment = f"#{frag}" if frag else ""
+        rewritten += 1
+        reporter.count("html_hrefs_rewritten")
+        return f'href="{rel}{fragment}"'
+
+    updated = _HTML_HREF_RE.sub(replace_href, body)
+    return updated, rewritten, unresolvable
+
+
 def rewrite_java_api_links(body: str, version_dashed: str) -> tuple[str, int]:
     """Replace relative Java_API/... links with the external EBX Java API hosting URL."""
     base = f"https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{version_dashed}/"
@@ -268,6 +343,19 @@ def rewrite_java_api_links(body: str, version_dashed: str) -> tuple[str, int]:
 
     updated = _JAVA_API_LINK_RE.sub(replace_java_link, body)
     return updated, count
+
+
+def rewrite_java_api_html_hrefs(body: str, version_dashed: str) -> tuple[str, int]:
+    """Replace relative Java_API href attributes in raw HTML blocks with the external EBX Java API URL."""
+    base = f"https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{version_dashed}/"
+    count = 0
+
+    def replace_java_href(m: re.Match) -> str:
+        nonlocal count
+        count += 1
+        return f'href="{base}{m.group(1)}"'
+
+    return _HTML_JAVA_API_HREF_RE.sub(replace_java_href, body), count
 
 
 def postprocess_file(
@@ -324,6 +412,15 @@ def postprocess_file(
             body, java_api_count = rewrite_java_api_links(body, version_dashed)
             if java_api_count:
                 reporter.count("java_api_links_rewritten", java_api_count)
+            # 7b. Same rewrite for href attributes inside raw HTML passthrough blocks
+            body, java_api_html_count = rewrite_java_api_html_hrefs(body, version_dashed)
+            if java_api_html_count:
+                reporter.count("java_api_html_hrefs_rewritten", java_api_html_count)
+
+        # 8. Rewrite .htm/.html href attributes inside raw HTML passthrough blocks
+        body, html_rewritten, _ = rewrite_html_hrefs(
+            body, output_path_rel, url_to_md, base_url, source_url, reporter
+        )
 
         if not dry_run:
             md_path.write_text(format_frontmatter(fm, body), encoding="utf-8")
