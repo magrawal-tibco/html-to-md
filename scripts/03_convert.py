@@ -374,8 +374,8 @@ def clean_markdown(text: str) -> str:
     # <strong>Enter </strong>to  →  **Enter**to  (space lost).
     # Lookbehind (?<=\S) targets only *closing* markers (preceded by content),
     # so opening markers like "**word" are not affected.
-    text = re.sub(r'(?<=\S)\*\*(?=[a-zA-Z0-9])', '** ', text)
-    text = re.sub(r'(?<=\S)`(?=[a-zA-Z0-9])', '` ', text)
+    text = re.sub(r'(?<=\S)(?<!\[)\*\*(?=[a-zA-Z0-9])', '** ', text)
+    text = re.sub(r'(?<=\S)(?<!\[)`(?=[a-zA-Z0-9])', '` ', text)
     return text.strip() + "\n"
 
 

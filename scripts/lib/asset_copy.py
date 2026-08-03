@@ -44,8 +44,10 @@ def save_slug_mappings(mappings: dict[str, str], path: Path = SLUG_MAPPINGS_FILE
     ]
     for slug in sorted(mappings):
         label = mappings[slug]
-        # Use yaml.dump for the value to safely quote strings with special characters
-        label_yaml = yaml.dump(label, allow_unicode=True, default_flow_style=True).strip()
+        # Use yaml.dump for the value to safely quote strings with special characters.
+        # Take only the first line — yaml.dump on a bare scalar appends a trailing `\n...\n`
+        # document-end marker that must not appear in a single-document YAML file.
+        label_yaml = yaml.dump(label, allow_unicode=True, default_flow_style=True).split("\n")[0]
         lines.append(f"{slug}: {label_yaml}\n")
     path.write_text("".join(lines), encoding="utf-8")
 

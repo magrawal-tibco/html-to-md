@@ -281,8 +281,12 @@ def process_versions(
                 }
                 continue
 
-            # Disk-space guard
-            if not has_enough_disk_space(min_free_gb):
+            zip_url_path = urlparse(zip_url).path.lstrip("/")
+            zip_path     = zip_cache_dir / zip_url_path
+
+            # Disk-space guard — skip when the ZIP is already cached locally
+            zip_already_cached = zip_path.exists() and zipfile.is_zipfile(zip_path)
+            if not zip_already_cached and not has_enough_disk_space(min_free_gb):
                 free_gb = shutil.disk_usage(".").free / (1024 ** 3)
                 reporter.info(
                     f"    -> SKIP: only {free_gb:.1f} GB free, need {min_free_gb} GB"
@@ -295,9 +299,6 @@ def process_versions(
                 reporter.count("zip_missing")
                 continue
 
-            zip_url_path = urlparse(zip_url).path.lstrip("/")
-            zip_path     = zip_cache_dir / zip_url_path
-
             if dry_run:
                 reporter.info(f"    [dry-run] Would download: {zip_url}")
                 reporter.info(f"    [dry-run] Would extract to: {cache_dir / html_root}")
@@ -305,7 +306,7 @@ def process_versions(
                 continue
 
             # Reuse cached ZIP if already downloaded and valid
-            if zip_path.exists() and zipfile.is_zipfile(zip_path):
+            if zip_already_cached:
                 reporter.info(f"    Reusing cached ZIP: {zip_path}")
                 reporter.count("zip_cached")
                 ok, fail_reason = True, ""

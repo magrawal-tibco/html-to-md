@@ -1,0 +1,16 @@
+{
+  "https://docs.tibco.com/products/tibco-ebx-add-ons-4-6-0": {
+    "zip_url": "https://docs.tibco.com/pub/ebx-addon/4.6.0/tibco-ebx-add-ons-4-6-0_documentation.zip",
+    "html_root": "pub/ebx-addon/4.6.0/doc/html/",
+    "extracted_at": "2026-08-04T00:15:44",
+    "file_count": 8111,
+    "format": "ebx"
+  },
+  "https://docs.tibco.com/products/tibco-ebx-5-10-0": {
+    "zip_url": "https://docs.tibco.com/pub/ebx/5.10.0/tibco-ebx-5-10-0_documentation.zip",
+    "html_root": "pub/ebx/5.10.0/doc/html/",
+    "extracted_at": "2026-08-04T00:15:55",
+    "file_count": 3750,
+    "format": "ebx"
+  }
+}

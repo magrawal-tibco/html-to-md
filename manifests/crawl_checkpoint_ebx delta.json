@@ -1,0 +1,18 @@
+{
+  "phase": "ebx delta",
+  "crawled_at": "2026-08-03T18:36:53Z",
+  "versions": {
+    "https://docs.tibco.com/products/tibco-ebx-add-ons-4-6-0": {
+      "zip_url": "https://docs.tibco.com/pub/ebx-addon/4.6.0/tibco-ebx-add-ons-4-6-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "TIBCO EBX® Add-ons 4.6.0",
+      "product_version": "4.6.0"
+    },
+    "https://docs.tibco.com/products/tibco-ebx-5-10-0": {
+      "zip_url": "https://docs.tibco.com/pub/ebx/5.10.0/tibco-ebx-5-10-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "TIBCO EBX® 5.10.0",
+      "product_version": "5.10.0"
+    }
+  }
+}
