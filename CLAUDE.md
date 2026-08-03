@@ -122,13 +122,14 @@ html-to-md/
 │   ├── 04_build_csh_maps.py      # alias.xml → csh_map.json + frontmatter injection
 │   ├── 05_postprocess.py         # Rewrite .htm links → .md, strip variable tokens
 │   ├── 06_build_toc.py           # Reconstruct TOC from toc_path breadcrumbs → _toc.json
-│   ├── 07_restructure_ebx_addon.py  # EBX add-on: version-first → addon-first layout
+│   ├── ebx_addon_restructure.py  # EBX add-on: version-first → addon-first layout
 │   ├── 08_restructure_ebx.py     # EBX main: URL-mirror → language-first AEM layout + PDF/doc assets
-│   ├── 09_copy_assets.py         # Generic: copy PDF/doc assets + generate index.md + toc.yml
+│   ├── copy_assets.py            # Generic: copy PDF/doc assets + generate index.md + toc.yml
 │   ├── 10_copy_ebx_addon_pdfs.py # EBX add-on: copy all PDFs from cache → ebx-addons repo + index.md + toc.yml
 │   └── lib/
+│       ├── io_utils.py           # Shared I/O helpers: load_settings, load_manifest, read/write_frontmatter
 │       ├── sitemap_parser.py     # 3-level sitemap crawl functions
-│       ├── preprocessor.py       # 8 BeautifulSoup transform passes
+│       ├── preprocessor.py       # BeautifulSoup transform passes
 │       ├── table_classifier.py   # Tier 1/2/3 table classification
 │       ├── reporter.py           # Structured logging + JSON report writing
 │       └── asset_copy.py         # Shared PDF/doc asset copy + slug resolution utilities
@@ -248,10 +249,15 @@ These paths appear in the version URL base but contain auxiliary MadCap files, n
 2. `fake_list_tables` — `AutoNumber_p_*` table class → proper `<ul>`/`<ol>`
 3. `callout_divs` — `div.note/warning/caution/tip/important` → `<blockquote>` with bold label
 4. `task_sections` — DITA task elements (prereq, steps, result, postreq, context, example) → semantic HTML
-5. `inline_spans` — uicontrol/wintitle/option → `<strong>`, filepath/codeph → `<code>`, varname → `<em>`
+5. `inline_spans` — maps span/element classes to inline HTML tags:
+   - `uicontrol`, `wintitle`, `option`, `menucascade` → `<strong>`
+   - `filepath`, `codeph` → `<code>`
+   - `varname`, `parmname`, `term` → `<em>`
+   - `<var>` element → `<em>`
 6. `anchor_only_links` — strip `<a name="...">` with no href (MadCap navigation anchors)
 7. `classify_and_handle_tables` — applies 3-tier logic, calls table_classifier.py
-8. `rewrite_image_src` — make image src relative to output .md location
+8. `rewrite_image_src` — intentional no-op; relative image `src` paths are left unchanged because
+   the output mirrors the source URL directory structure, so relative paths resolve correctly as-is
 
 ### Frontmatter Schema
 ```yaml
@@ -412,6 +418,26 @@ Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-co
 
 ---
 
+## Test Suite
+
+```bash
+# Run all tests
+.venv/Scripts/python -m pytest tests/ -v
+
+# Run a specific test file
+.venv/Scripts/python -m pytest tests/test_preprocessor.py -v
+```
+
+| File | Tests | Coverage |
+|---|---|---|
+| `tests/test_preprocessor.py` | 48 | `strip_chrome`, `fake_list_tables` (incl. `data-mc-autonum` tiebreaker), `callout_divs`, `ebx_callout_divs`, `inline_spans`, `anchor_only_links`, `code_urls_to_links`, `_table_column_count`, `rewrite_image_src` |
+| `tests/test_table_classifier.py` | 22 | `_cell_tier`, `classify_table`, `_promote_first_row_as_header`, `handle_tables` |
+| `tests/test_toc.py` | 19 | `insert_into_tree`, `version_html_root`, `dir_fallback` majority-vote logic |
+
+Total: **89 tests**. All must pass before committing changes to preprocessor, table classifier, or TOC logic.
+
+---
+
 ## EBX-Specific Post-Processing
 
 EBX documentation ZIPs have a richer structure than standard MadCap products and require
@@ -466,13 +492,52 @@ force-rerun), always follow it with Step 5 before running Step 8 — otherwise S
 un-postprocessed files (still containing `.html` links) into `output/ebx/`. Step 8 emits a
 warning if it detects this condition.
 
-### Step 09 — Generic asset copy (`scripts/09_copy_assets.py`)
+### EBX add-on restructure (`scripts/ebx_addon_restructure.py`)
+
+Transforms the version-first URL-mirroring layout of EBX add-on output into an addon-first
+layout, writing a separate copy without touching the original.
+
+**Webhelp restructure:**
+```
+output/pub/ebx-addon/<version>/doc/<addon>/<content>
+  → output/ebx-addon/en-us/ebx-addon/<addon>/<ver-dashed>/<content>
+```
+
+**Java API restructure (separate tree):**
+```
+output/pub/ebx-addon/<version>/doc/<addon>/Java_API/<content>
+  → output/ebx-addon-javadocs/en-us/ebx-addons/<addon>/javadocs/<ver-dashed>/<content>
+```
+
+**Phases:**
+- Phase 0: Pre-flight cross-addon link scan (warns on links that will break after restructure)
+- Phase 1: Build webhelp path mapping (Java_API excluded)
+- Phase 2: Build javadocs path mapping
+- Phase 3: Copy webhelp files
+- Phase 4: Copy javadoc files
+- Phase 5: Patch `_toc.json` root and `file` paths to new locations
+- Phase 6: Rewrite EBX-main javadoc URLs → addon-specific URLs, strip MadCap popup links
+
+Phase 6 corrects a URL mismatch: Step 5 rewrites relative `Java_API/` links to the EBX **main**
+javadoc URL (`https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{ver}/`), which is wrong
+for addon content. Phase 6 replaces these with the per-addon URL
+(`https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/`). Do not fix
+this in Step 5 — Step 5 has no access to the addon slug.
+
+```bash
+python scripts/ebx_addon_restructure.py [--src output/pub/ebx-addon] \
+                                         [--dst output/ebx-addon] \
+                                         [--javadocs-dst output/ebx-addon-javadocs] \
+                                         [--preflight-only]
+```
+
+### Generic asset copy (`scripts/copy_assets.py`)
 
 Runs the same PDF/doc asset copy for any product (not EBX-specific). Used for products
 whose archives contain `<version>/doc/pdf/` and `<version>/doc/doc/` subfolders.
 
 ```bash
-python scripts/09_copy_assets.py \
+python scripts/copy_assets.py \
   --cache-src cache/pub/<product> \
   --dst       output/<product> \
   --product-slug <slug> \
@@ -515,7 +580,7 @@ Resolution order per file:
 The script auto-adds newly discovered slugs to the mapping file (empty value = needs manual review).
 Manual corrections persist across all future runs since the file is committed.
 
-Shared utilities live in `scripts/lib/asset_copy.py` and are used by both scripts 08 and 09.
+Shared utilities live in `scripts/lib/asset_copy.py` and are used by `08_restructure_ebx.py` and `copy_assets.py`.
 
 ### Step 10 — EBX add-on PDF copy (`scripts/10_copy_ebx_addon_pdfs.py`)
 
@@ -564,8 +629,9 @@ Processes all 42 versions (4.5.7 → 6.2.3). Safe to re-run (overwrites existing
   with a digit the table is treated as `<ol>`, not `<ul>` (tiebreaker in `preprocessor.py`)
 - EBX Java API is hosted externally at
   `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/` — Step 5 rewrites all
-  relative `Java_API/` links to this URL; Step 8 excludes the `Java_API/` folder from the
-  restructured output
+  relative `Java_API/` links to this URL; `08_restructure_ebx.py` excludes the `Java_API/` folder
+  from the restructured output. For EBX add-ons, `ebx_addon_restructure.py` Phase 6 further
+  rewrites these URLs to the per-addon javadoc URL.
 - EBX pages carry an in-page mini TOC in `<div id="toc">` (nested `<ul class="toc1/toc2">`
   anchor links to headings). This is **retained** — `ebx_chrome_selectors` is now empty so
   markdownify converts it to a nested Markdown link list. The links resolve because EBX heading
@@ -583,3 +649,9 @@ Processes all 42 versions (4.5.7 → 6.2.3). Safe to re-run (overwrites existing
   now carry a `cache_path` field (actual filesystem path relative to cache root) separate from
   the canonical `url`. `convert_entry` in `scripts/03_convert.py` uses `entry["cache_path"]`
   when present to locate the file, falling back to URL-derived path for non-ZIP products.
+- `01_build_manifest.py` only fires a HEAD request for `zip_last_modified` when `--delta` is
+  set. Without `--delta`, `zip_last_modified` is stored as `""` in the manifest. Do not assume
+  the field is always populated.
+- `02_download.py` image concurrency: each image download acquires the semaphore independently
+  after the parent page's semaphore slot is released. The configured `concurrency` limit applies
+  uniformly to both page and image downloads.
