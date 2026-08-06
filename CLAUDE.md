@@ -433,8 +433,9 @@ Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-co
 | `tests/test_preprocessor.py` | 48 | `strip_chrome`, `fake_list_tables` (incl. `data-mc-autonum` tiebreaker), `callout_divs`, `ebx_callout_divs`, `inline_spans`, `anchor_only_links`, `code_urls_to_links`, `_table_column_count`, `rewrite_image_src` |
 | `tests/test_table_classifier.py` | 22 | `_cell_tier`, `classify_table`, `_promote_first_row_as_header`, `handle_tables` |
 | `tests/test_toc.py` | 19 | `insert_into_tree`, `version_html_root`, `dir_fallback` majority-vote logic |
+| `tests/test_postprocess_blockquote.py` | 12 | `rewrite_blockquotes_in_tables` — single/multiple replacement, inner content preservation (lists, divs), Markdown `> ` blockquotes untouched, idempotency |
 
-Total: **89 tests**. All must pass before committing changes to preprocessor, table classifier, or TOC logic.
+Total: **101 tests**. All must pass before committing changes to preprocessor, table classifier, TOC logic, or postprocessor blockquote rewrite.
 
 ---
 

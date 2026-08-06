@@ -358,6 +358,25 @@ def rewrite_java_api_html_hrefs(body: str, version_dashed: str) -> tuple[str, in
     return _HTML_JAVA_API_HREF_RE.sub(replace_java_href, body), count
 
 
+def rewrite_blockquotes_in_tables(body: str) -> tuple[str, int]:
+    """Replace <blockquote> HTML tags with <div class="note-inline">.
+
+    Raw HTML table passthrough blocks (Tier 3) preserve <blockquote> tags as literal
+    HTML, which AEM publishing drops. This renames the outer tag only; inner content
+    (<p>, <ul>, <div>, etc.) is left completely unchanged.
+
+    Markdown-syntax blockquotes (lines starting with "> ") are never affected because
+    markdownify converts them at step-3 time and they never appear as <blockquote> HTML
+    in the .md output.
+    """
+    count = body.count("<blockquote>")
+    if not count:
+        return body, 0
+    body = body.replace("<blockquote>", '<div class="note-inline">')
+    body = body.replace("</blockquote>", "</div>")
+    return body, count
+
+
 def postprocess_file(
     md_path: Path,
     output_path_rel: str,
@@ -421,6 +440,14 @@ def postprocess_file(
         body, html_rewritten, _ = rewrite_html_hrefs(
             body, output_path_rel, url_to_md, base_url, source_url, reporter
         )
+
+        # 9. Replace <blockquote> HTML tags with <div class="note-inline"> in EBX/EBX-addon files.
+        #    Only HTML <blockquote> tags are affected; these only appear inside raw HTML table
+        #    passthrough blocks (Tier 3). Markdown "> " blockquotes are never touched.
+        if "/pub/ebx" in source_url:
+            body, bq_count = rewrite_blockquotes_in_tables(body)
+            if bq_count:
+                reporter.count("blockquotes_rewritten", bq_count)
 
         if not dry_run:
             md_path.write_text(format_frontmatter(fm, body), encoding="utf-8")
