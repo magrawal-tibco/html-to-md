@@ -358,6 +358,142 @@ def rewrite_java_api_html_hrefs(body: str, version_dashed: str) -> tuple[str, in
     return _HTML_JAVA_API_HREF_RE.sub(replace_java_href, body), count
 
 
+def heading_slug(text: str) -> str:
+    """Compute the GFM heading slug from heading text.
+
+    GitHub-Flavored Markdown algorithm: strip HTML, lowercase, remove anything
+    that is not a word character (letters/digits/underscore), space, or hyphen,
+    then replace whitespace/underscores with a single hyphen.
+    Examples: "Version 6.2.3" → "version-623", "New features" → "new-features"
+    """
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.lower()
+    text = re.sub(r"[^\w\s-]", "", text)   # remove dots, parens, etc.
+    text = re.sub(r"[\s_]+", "-", text)     # spaces/underscores → single hyphen
+    return text.strip("-")
+
+
+# Matches heading lines that carry an <a name="id"> anchor appended by the converter:
+#   ## Version 6.2.3 <a name="id1"></a>
+_HEADING_ANCHOR_RE = re.compile(
+    r'^(#{1,6})\s+(.+?)\s+<a name="([^"]+)"></a>', re.MULTILINE
+)
+
+# In-page fragment link: [text](#anchor)
+_INPAGE_FRAG_RE = re.compile(r'\[([^\]]*)\]\(#([^)]+)\)')
+
+# Cross-file Markdown link with fragment: [text](path.md#anchor)
+# Captured group 1 = path portion, group 2 = anchor ID
+_CROSSFILE_FRAG_RE = re.compile(r'\[([^\]]*)\]\(([^)#][^)]*?)#([^)]+)\)')
+
+# HTML href with fragment inside raw HTML passthrough blocks: href="path#anchor"
+_HTML_HREF_FRAG_RE = re.compile(r'href="([^"#]*?)#([^"]+)"')
+
+
+def build_anchor_slug_map(
+    md_paths: list, output_dir: "Path"
+) -> "dict[str, dict[str, str]]":
+    """Scan .md files and return {norm_rel_path: {anchor_id: slug}}.
+
+    Each file's sub-map covers only the anchors defined within that file, so
+    duplicate anchor IDs across files resolve independently.
+    """
+    result = {}
+    for md_path in md_paths:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        file_map = {}
+        slug_seen = {}  # base_slug → number of prior occurrences in this file
+        for m in _HEADING_ANCHOR_RE.finditer(content):
+            anchor_id = m.group(3)
+            base = heading_slug(m.group(2))
+            n = slug_seen.get(base, 0)
+            slug_seen[base] = n + 1
+            file_map[anchor_id] = base if n == 0 else f"{base}-{n}"
+        if file_map:
+            try:
+                norm = str(md_path.relative_to(output_dir)).replace("\\", "/")
+            except ValueError:
+                norm = str(md_path).replace("\\", "/")
+            result[norm] = file_map
+    return result
+
+
+def rewrite_fragment_anchors(
+    body: str,
+    current_output_path: str,
+    global_anchor_map: "dict[str, dict[str, str]]",
+    output_dir: "Path",
+) -> "tuple[str, int]":
+    """Rewrite HTML anchor IDs in link fragments to Markdown heading slugs.
+
+    Handles three link types:
+      1. In-page:     [text](#old_id) → [text](#slug)
+      2. Cross-file:  [text](other.md#old_id) → [text](other.md#slug)
+      3. HTML href:   href="other.md#old_id" → href="other.md#slug"
+    Unknown anchor IDs are left unchanged (safe fallback).
+    """
+    count = 0
+    norm_current = current_output_path.replace("\\", "/")
+    local_map = global_anchor_map.get(norm_current, {})
+    current_abs_dir = (output_dir / current_output_path).parent
+
+    def _resolve_target_map(rel_path: str) -> "dict[str, str]":
+        """Resolve a relative path from the current file and return its anchor map."""
+        try:
+            abs_target = (current_abs_dir / rel_path).resolve()
+            norm_target = str(abs_target.relative_to(output_dir.resolve())).replace("\\", "/")
+            return global_anchor_map.get(norm_target, {})
+        except (ValueError, Exception):
+            return {}
+
+    # 1. In-page fragment links: [text](#old_id)
+    def _replace_inpage(m: re.Match) -> str:
+        nonlocal count
+        text, anchor_id = m.group(1), m.group(2)
+        slug = local_map.get(anchor_id)
+        if slug and slug != anchor_id:
+            count += 1
+            return f"[{text}](#{slug})"
+        return m.group(0)
+
+    body = _INPAGE_FRAG_RE.sub(_replace_inpage, body)
+
+    # 2. Cross-file Markdown links: [text](path.md#old_id)
+    def _replace_crossfile(m: re.Match) -> str:
+        nonlocal count
+        text, path_part, anchor_id = m.group(1), m.group(2), m.group(3)
+        target_map = _resolve_target_map(path_part)
+        slug = target_map.get(anchor_id)
+        if slug and slug != anchor_id:
+            count += 1
+            return f"[{text}]({path_part}#{slug})"
+        return m.group(0)
+
+    body = _CROSSFILE_FRAG_RE.sub(_replace_crossfile, body)
+
+    # 3. HTML href attributes with fragments inside raw HTML passthrough blocks
+    def _replace_href_frag(m: re.Match) -> str:
+        nonlocal count
+        path_part, anchor_id = m.group(1), m.group(2)
+        if not path_part:
+            # Pure in-page href anchor (#only) — look in local map
+            slug = local_map.get(anchor_id)
+        else:
+            target_map = _resolve_target_map(path_part)
+            slug = target_map.get(anchor_id)
+        if slug and slug != anchor_id:
+            count += 1
+            return f'href="{path_part}#{slug}"'
+        return m.group(0)
+
+    body = _HTML_HREF_FRAG_RE.sub(_replace_href_frag, body)
+
+    return body, count
+
+
 def rewrite_blockquotes_in_tables(body: str) -> tuple[str, int]:
     """Replace <blockquote> HTML tags with <div class="note-inline">.
 
@@ -385,6 +521,8 @@ def postprocess_file(
     source_url: str,
     reporter: Reporter,
     dry_run: bool,
+    anchor_map: dict = None,
+    output_dir: Path = None,
 ) -> bool:
     try:
         content = md_path.read_text(encoding="utf-8")
@@ -449,6 +587,16 @@ def postprocess_file(
             if bq_count:
                 reporter.count("blockquotes_rewritten", bq_count)
 
+        # 10. Rewrite HTML anchor IDs in link fragments → Markdown heading slugs (EBX only).
+        #     Links like [text](#id1) or href="file.md#id1" reference old HTML source IDs;
+        #     AEM generates slugs from heading text, so we rewrite to match.
+        if "/pub/ebx" in source_url and anchor_map is not None and output_dir is not None:
+            body, frag_count = rewrite_fragment_anchors(
+                body, output_path_rel, anchor_map, output_dir
+            )
+            if frag_count:
+                reporter.count("fragment_anchors_rewritten", frag_count)
+
         if not dry_run:
             md_path.write_text(format_frontmatter(fm, body), encoding="utf-8")
 
@@ -483,6 +631,15 @@ def main():
     url_to_md = build_url_to_md_index(manifest, base_url)
     reporter.info(f"Link index built: {len(url_to_md)} URLs")
 
+    # Pre-scan EBX/EBX-addon files to build heading anchor → slug mapping
+    ebx_md_paths = [
+        output_dir / e["output_path"]
+        for e in manifest
+        if "/pub/ebx" in e.get("url", "") and (output_dir / e["output_path"]).exists()
+    ]
+    anchor_map = build_anchor_slug_map(ebx_md_paths, output_dir)
+    reporter.info(f"Anchor map built: {len(anchor_map)} EBX files scanned")
+
     for entry in tqdm(manifest, desc="Postprocessing"):
         if "url" not in entry:
             continue
@@ -490,7 +647,10 @@ def main():
         if not md_path.exists():
             reporter.skip(entry["url"], "md-file-not-found")
             continue
-        postprocess_file(md_path, entry["output_path"], url_to_md, base_url, entry["url"], reporter, args.dry_run)
+        postprocess_file(
+            md_path, entry["output_path"], url_to_md, base_url, entry["url"],
+            reporter, args.dry_run, anchor_map=anchor_map, output_dir=output_dir,
+        )
 
     report = reporter.finish()
     return 0 if report["error_count"] == 0 else 1

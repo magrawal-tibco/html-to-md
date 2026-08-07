@@ -372,10 +372,12 @@ def clean_markdown(text: str) -> str:
     # Fix inline markers running into adjacent text with no space.
     # markdownify strips trailing whitespace inside inline elements, so
     # <strong>Enter </strong>to  →  **Enter**to  (space lost).
-    # Lookbehind (?<=\S) targets only *closing* markers (preceded by content),
-    # so opening markers like "**word" are not affected.
-    text = re.sub(r'(?<=\S)(?<!\[)\*\*(?=[a-zA-Z0-9])', '** ', text)
-    text = re.sub(r'(?<=\S)(?<!\[)`(?=[a-zA-Z0-9])', '` ', text)
+    # (?<=\w) targets only *closing* markers (preceded by word content like
+    # letters/digits), so opening markers are not affected:
+    #   [**bold**](url) — opening ** preceded by [ (not \w) → no match ✓
+    #   ***6.2.3** rest* — opening ** inside *** preceded by * (not \w) → no match ✓
+    text = re.sub(r'(?<=\w)\*\*(?=[a-zA-Z0-9])', '** ', text)
+    text = re.sub(r'(?<=\w)`(?=[a-zA-Z0-9])', '` ', text)
     return text.strip() + "\n"
 
 

@@ -434,8 +434,9 @@ Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-co
 | `tests/test_table_classifier.py` | 22 | `_cell_tier`, `classify_table`, `_promote_first_row_as_header`, `handle_tables` |
 | `tests/test_toc.py` | 19 | `insert_into_tree`, `version_html_root`, `dir_fallback` majority-vote logic |
 | `tests/test_postprocess_blockquote.py` | 12 | `rewrite_blockquotes_in_tables` — single/multiple replacement, inner content preservation (lists, divs), Markdown `> ` blockquotes untouched, idempotency |
+| `tests/test_postprocess_fragments.py` | 25 | `heading_slug`, `build_anchor_slug_map`, `rewrite_fragment_anchors` — in-page fragments, cross-file Markdown fragments, HTML href fragments, duplicate-heading deduplication (-1/-2 suffixes), unknown anchor fallback, idempotency |
 
-Total: **101 tests**. All must pass before committing changes to preprocessor, table classifier, TOC logic, or postprocessor blockquote rewrite.
+Total: **126 tests**. All must pass before committing changes to preprocessor, table classifier, TOC logic, or postprocessor blockquote rewrite.
 
 ---
 
