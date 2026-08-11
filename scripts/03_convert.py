@@ -335,12 +335,19 @@ def build_frontmatter(meta: dict, extra: dict | None = None) -> str:
 
 def copy_images(html_content: bytes, page_url: str, cache_dir: Path,
                 output_dir: Path, output_md_path: Path,
-                skip_prefixes: list[str], dry_run: bool) -> int:
-    """Copy images referenced in the HTML to the output directory."""
+                skip_prefixes: list[str], dry_run: bool,
+                cache_html_path: Path | None = None) -> int:
+    """Copy images referenced in the HTML to the output directory.
+
+    cache_html_path: the actual path of the cached HTML file (may differ from
+    the URL-derived path for ZIP-based products like EBX addons, which have
+    /html/ in the canonical URL but not in the extracted cache path).  When
+    provided it is used as a fallback to locate images that cannot be found via
+    the URL-derived path.
+    """
     from urllib.parse import urljoin
     soup = BeautifulSoup(html_content, "lxml")
     copied = 0
-    output_page_dir = output_md_path.parent
 
     for img in soup.find_all("img", src=True):
         src = img["src"]
@@ -351,11 +358,24 @@ def copy_images(html_content: bytes, page_url: str, cache_dir: Path,
         # Resolve image URL and find its cached path
         abs_url = urljoin(page_url, src)
         cached  = url_to_cache_path(abs_url, cache_dir)
+        use_md_relative = False
+        if not cached.exists() and cache_html_path is not None:
+            # Fallback: resolve relative to the actual cached HTML file's directory.
+            # Needed for ZIP-based products (e.g. EBX addons) where the canonical
+            # URL contains /html/ but the extracted ZIP does not.  In this case we
+            # also use the .md file's directory for the destination so the relative
+            # image reference in the Markdown resolves correctly.
+            cached = (cache_html_path.parent / src).resolve()
+            use_md_relative = True
         if not cached.exists():
             continue
-        # Place image relative to the output .md file
-        img_path_in_url = urlparse(abs_url).path.lstrip("/")
-        dest = output_dir / img_path_in_url
+        if use_md_relative:
+            # Destination mirrors the .md file's directory (same relative path as
+            # the img src), not the URL-derived path which would include /html/.
+            dest = (output_md_path.parent / src).resolve()
+        else:
+            img_path_in_url = urlparse(abs_url).path.lstrip("/")
+            dest = output_dir / img_path_in_url
         if not dry_run:
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(cached, dest)
@@ -536,7 +556,8 @@ def convert_entry(
         # Copy images
         skip_prefixes = settings.get("image_skip_prefixes", [])
         images_copied = copy_images(
-            html_bytes, url, cache_dir, output_dir, out_path, skip_prefixes, dry_run
+            html_bytes, url, cache_dir, output_dir, out_path, skip_prefixes, dry_run,
+            cache_html_path=cache_path,
         )
         reporter.count("images_copied", images_copied)
         reporter.count("pages_converted")
