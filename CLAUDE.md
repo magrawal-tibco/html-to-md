@@ -2,104 +2,18 @@
 
 ## Project Overview
 
-Python pipeline that converts TIBCO product documentation (~2000 product versions) from HTML
-(docs.tibco.com) to plain Markdown. Source is MadCap Flare WebHelp2 HTML output, crawled via
-a 3-level sitemap hierarchy.
+Python pipeline that converts TIBCO product documentation from HTML (docs.tibco.com) to
+structured Markdown for Adobe Experience Manager (AEM) Guides import. Covers 600K+ pages,
+584 products, 1500+ versions, 4 business units (TIBCO, IBI, DataSynapse, EBX). Source formats:
+MadCap Flare WebHelp2, WebWorks ePublisher (FrameMaker), DITA WebHelp Responsive (SDL Trisoft),
+and PDF.
 
 **Workspace root:** `c:\github\html-to-md\`
 **Python:** 3.11+ (venv at `.venv/`)
-**Run:** `python run.py --phase phase_01`
+**Run:** `python run.py --phase <name>`
 
----
-
-## Why This Tool Exists
-
-### The Problem
-
-TIBCO's documentation catalog spans **600,000+ pages** across **584 products**, **1,500+ versions**,
-and **4 business units** — TIBCO, IBI, DataSynapse, and EBX. Content was authored over many years
-in MadCap Flare, DocBook, FrameMaker (published via WebWorks ePublisher), DITA (SDL Trisoft
-WebHelp Responsive), and Word. Each tool produces a different HTML or PDF output format, none of
-which is directly ingestible by Adobe Experience Manager (AEM) Guides — the platform used as the
-central authoring and publishing hub.
-
-AEM Guides requires structured Markdown with YAML frontmatter, a specific folder layout per
-language and product version, and machine-readable TOC files (`toc.yml`). Manually converting
-even a single product version was a multi-day exercise. At catalog scale, documentation was
-effectively trapped in siloed HTML — invisible to AI systems and impossible to reformat
-consistently by hand.
-
-### What This Tool Does
-
-The pipeline automates the full conversion lifecycle for all four business units and all
-supported source formats:
-
-- **Discovers** all product versions from the docs.tibco.com API or sitemap hierarchy (no manual
-  URL lists)
-- **Downloads** documentation ZIPs (or individual HTML pages as fallback), along with images,
-  alias.xml CSH mappings, and archive assets to a local cache
-- **Converts** each HTML topic to clean Markdown with accurate frontmatter (title, language, TOC
-  path, product name/version, CSH IDs), with format-aware transforms per authoring tool
-- **Post-processes** the converted files: rewrites internal `.htm` links to relative `.md` links,
-  strips authoring-tool tokens, normalises heading levels, rewrites external Java API links, and
-  generates synthetic section index pages for TOC grouping nodes that have no source page
-- **Reconstructs the TOC** from authoritative MadCap TOC JS files (when available from ZIPs) or
-  from per-page `data-mc-toc-path` breadcrumbs as fallback, emitting `_toc.json` and `toc.yml`
-  compatible with AEM Guides
-- **Runs sub-pipelines** automatically for DITA WebHelp (SDL Trisoft), WebWorks ePublisher
-  (legacy FrameMaker), and PDF release notes within the same orchestrated run
-- **Restructures** EBX output into the language-first folder layout required by AEM Guides, and
-  copies PDF/doc assets alongside with generated index pages
-
-### Key Benefits
-
-- **Zero manual work per version** — adding a new product or version requires only one URL added
-  to a phase YAML; the pipeline handles everything else
-- **Format-agnostic** — a single orchestrator handles MadCap Flare, DocBook, DITA, WebWorks
-  ePublisher, and PDF source formats through dedicated sub-pipelines
-- **Idempotent and resumable** — each step is independently re-runnable; a SQLite progress
-  database checkpoints completed URLs so interrupted runs pick up where they left off
-- **Auditable output** — every converted page carries frontmatter linking it back to its source
-  URL, language, product, and version; structured JSON reports and a persistent
-  `conversion_log.csv` give per-run statistics
-- **Handles real-world messiness** — dozens of product-specific quirks (fake-list tables, DITA
-  task markup, encoding artifacts, missing alias files, multi-language variants) are handled
-  declaratively through preprocessor passes and settings, not manual cleanup
-
----
-
-## How This Tool Was Developed (and How Claude Code Evolves It)
-
-This pipeline was built and is maintained **entirely through Claude Code** — Anthropic's
-agentic CLI that operates directly on the codebase. The development workflow is:
-
-1. **Discovery via conversation** — a product-specific quirk is observed in the output (e.g.
-   a numbered list rendered as bullets, a broken link, a missing TOC entry). The problem is
-   described in plain language to Claude Code.
-2. **Root-cause investigation** — Claude Code reads the relevant source HTML, traces through the
-   preprocessor and converter code, and identifies the exact line or transform responsible.
-3. **Targeted fix** — a minimal, surgical change is made to the correct script. Claude Code
-   writes the fix, explains the reasoning, and leaves the surrounding code untouched.
-4. **Verification** — the affected step is re-run against real data; the output is inspected to
-   confirm the fix without regressions.
-5. **Documentation update** — CLAUDE.md is updated to record the new behaviour, so the next
-   session starts with full context.
-
-Because CLAUDE.md is loaded at the start of every Claude Code session, it acts as the
-**persistent memory** for the project: what the HTML source looks like, what each script does,
-what quirks have already been handled, and what conventions the pipeline follows. This means:
-
-- **No onboarding cost** — a new Claude Code session immediately understands the architecture
-  and can make precise changes without re-exploring the codebase
-- **Incremental evolution** — each fix or feature is added to the right layer of the pipeline
-  without breaking unrelated behaviour; the modular phase/step design makes this safe
-- **Self-improving documentation** — every structural change (new script, removed flag, new
-  output convention) is reflected in CLAUDE.md in the same session that made the change,
-  keeping documentation and code in sync automatically
-
-This approach has made it practical for a small team to build and evolve a production-grade
-documentation pipeline covering thousands of product versions, across multiple languages and
-output formats, without dedicated engineering time per product.
+See `README.md` for human-readable overview, setup instructions, and Google Drive upload guide.
+See `README-EBX.md` for EBX-specific end-to-end run guide.
 
 ---
 
@@ -107,54 +21,170 @@ output formats, without dedicated engineering time per product.
 
 ```
 html-to-md/
-├── run.py                        # Orchestrator (--phase, --from-step, --to-step, --dry-run)
+├── run.py                          # Orchestrator (--phase, --from-step, --to-step, --dry-run)
+├── pyrightconfig.json              # Pylance config — excludes cache/output/logs from indexing
 ├── requirements.txt
 ├── CLAUDE.md
 ├── config/
-│   ├── settings.yaml             # All tunable settings
+│   ├── settings.yaml               # All tunable settings
+│   ├── pdf_slug_mappings.yaml      # Filename slug → human-readable guide label
 │   └── phases/
-│       ├── phase_01.yaml         # List of L2 product sitemap URLs for phase 1
-│       └── phase_02.yaml
+│       ├── phase_template.yaml     # Annotated template for new phases
+│       └── <name>.yaml             # Phase definition (product version URLs or sitemap URLs)
 ├── scripts/
-│   ├── 01_build_manifest.py      # Sitemap crawl → manifests/manifest_<phase>.json
-│   ├── 02_download.py            # HTML + images + alias.xml → cache/
-│   ├── 03_convert.py             # HTML → Markdown with preprocessor transforms
-│   ├── 04_build_csh_maps.py      # alias.xml → csh_map.json + frontmatter injection
-│   ├── 05_postprocess.py         # Rewrite .htm links → .md, strip variable tokens
-│   ├── 06_build_toc.py           # Reconstruct TOC from toc_path breadcrumbs → _toc.json
-│   ├── ebx_addon_restructure.py  # EBX add-on: version-first → addon-first layout
-│   ├── 08_restructure_ebx.py     # EBX main: URL-mirror → language-first AEM layout + PDF/doc assets
-│   ├── copy_assets.py            # Generic: copy PDF/doc assets + generate index.md + toc.yml
-│   ├── 10_copy_ebx_addon_pdfs.py # EBX add-on: copy all PDFs from cache → ebx-addons repo + index.md + toc.yml
+│   ├── 01_build_manifest.py        # Sitemap/API crawl → manifests/manifest_<phase>.json
+│   ├── 02a_download_zip.py         # Download + extract per-version documentation ZIPs
+│   ├── 02_download.py              # HTML + images + alias.xml → cache/ (fallback for missing ZIPs)
+│   ├── 03_convert.py               # HTML → Markdown with preprocessor transforms
+│   ├── 04_build_csh_maps.py        # alias.xml → csh_map.json + frontmatter injection
+│   ├── 05_postprocess.py           # Rewrite .htm links → .md, strip variable tokens
+│   ├── 06_build_toc.py             # Build _toc.json (prefers ZIP TOC JS, falls back to breadcrumbs)
+│   ├── 07_generate_report.py       # Write phase_report.csv + update manifests/conversion_log.csv
+│   ├── 08_restructure_ebx.py       # EBX main: URL-mirror → language-first AEM layout + PDF/doc assets
+│   ├── ebx_addon_restructure.py    # EBX add-on: version-first → addon-first layout
+│   ├── tibco_restructure.py        # TIBCO/DataSynapse: version-first → language-first AEM layout
+│   ├── copy_assets.py              # Generic: copy PDF/doc assets + generate index.md + toc.yml
+│   ├── 10_copy_ebx_addon_pdfs.py   # EBX add-on: copy all PDFs → ebx-addons repo + index.md + toc.yml
+│   ├── audit_tables.py             # Migration planning: classify all <table> elements in HTML source
+│   ├── audit_tables_context.md     # Context doc for audit_tables.py (classification rules, examples)
+│   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
+│   ├── catalog/
+│   │   └── fetch_versions.py       # Query docs.tibco.com API → tibco_versions.csv (all products)
+│   ├── dita/                       # DITA WebHelp Responsive sub-pipeline (SDL Trisoft)
+│   │   └── run.py                  # DITA orchestrator
+│   ├── pdf/
+│   │   └── convert.py              # PDF release notes → Markdown (pymupdf, font-size heading detect)
+│   ├── webworks/                   # WebWorks ePublisher sub-pipeline (legacy FrameMaker)
+│   │   ├── convert.py              # WebWorks HTML → Markdown
+│   │   ├── build_toc.py            # toc.xml → _toc.json
+│   │   ├── build_csh_maps.py       # ctx/*.htm JS redirects → csh_map.json
+│   │   ├── run.py                  # WebWorks orchestrator
+│   │   └── utils.py                # Discovery + file-reading helpers
 │   └── lib/
-│       ├── io_utils.py           # Shared I/O helpers: load_settings, load_manifest, read/write_frontmatter
-│       ├── sitemap_parser.py     # 3-level sitemap crawl functions
-│       ├── preprocessor.py       # BeautifulSoup transform passes
-│       ├── table_classifier.py   # Tier 1/2/3 table classification
-│       ├── reporter.py           # Structured logging + JSON report writing
-│       └── asset_copy.py         # Shared PDF/doc asset copy + slug resolution utilities
-├── manifests/                    # Generated JSON manifests — commit these
-├── cache/                        # Downloaded HTML + images — gitignore
-├── output/                       # Converted Markdown files — gitignore
-└── logs/                         # Per-run logs and reports — gitignore
+│       ├── io_utils.py             # load_settings, load_manifest, read/write_frontmatter
+│       ├── manifest_utils.py       # URL/path helpers, skip logic, alias.xml URL, output path
+│       ├── sitemap_parser.py       # 3-level sitemap crawl functions
+│       ├── toc_parser.py           # MadCap WebHelp2 TOC JS parsing (shared by steps 6 + compare_toc)
+│       ├── preprocessor.py         # 13 BeautifulSoup transform passes
+│       ├── table_classifier.py     # Tier 1/2/3 table classification
+│       ├── reporter.py             # Structured logging + JSON report writing
+│       ├── asset_copy.py           # PDF/doc asset copy + slug resolution (shared by 08 + copy_assets)
+│       └── version_registry.py     # Track already-converted versions across runs
+├── manifests/                      # Generated JSON manifests — commit these
+│   └── conversion_log.csv          # Persistent cross-phase conversion log (committed)
+├── audit-output/                   # Table audit reports (tables.csv + summary.md per phase/src)
+├── cache/                          # Downloaded HTML + images — gitignored
+├── output/                         # Converted Markdown files — gitignored
+└── logs/                           # Per-run logs and reports — gitignored
 ```
 
 ---
 
 ## Pipeline Steps
 
+`run.py` runs steps 1–7 in sequence, then automatically triggers sub-pipelines if applicable.
+
 | Step | Script | Input | Output |
 |------|--------|-------|--------|
-| 1 | `01_build_manifest.py` | Phase YAML | `manifests/manifest_<phase>.json` |
-| 2 | `02_download.py` | Manifest JSON | `cache/` — HTML, images, alias.xml |
+| 1 | `01_build_manifest.py` | Phase YAML | `manifests/manifest_<phase>.json`, `empty_versions_<phase>.json` |
+| 2a | `02a_download_zip.py` | Manifest | `cache/` — full ZIP extracted; manifest expanded; `zip_registry_<phase>.json`, `zip_missing_<phase>.json` |
+| 2 | `02_download.py` | Manifest + zip_registry | `cache/` — HTML, images, alias.xml (skips versions covered by ZIP) |
 | 3 | `03_convert.py` | Manifest + cache/ | `output/**/*.md` + images |
-| 4 | `04_build_csh_maps.py` | cache/ alias.xml files | `output/.../csh_map.json` + updated frontmatter |
+| 4 | `04_build_csh_maps.py` | cache/ alias.xml | `output/.../csh_map.json` + updated frontmatter |
 | 5 | `05_postprocess.py` | output/**/*.md | Updated .md files (in-place) |
-| 6 | `06_build_toc.py` | output/**/*.md frontmatter | `output/.../_toc.json` + `toc.yml` + `_section_*.md` per version |
+| 6 | `06_build_toc.py` | cache/ TOC JS + output/**/*.md | `output/.../_toc.json` + `toc.yml` + `_section_*.md` per version |
+| 7 | `07_generate_report.py` | All manifests + output/ | `logs/.../phase_report.csv`, `manifests/conversion_log.csv` |
+
+### Sub-pipelines (automatic after Step 7)
+
+| Sub-pipeline | Trigger | Script |
+|---|---|---|
+| DITA | `dita_versions_<phase>.json` non-empty | `scripts/dita/run.py` |
+| PDF release notes | Always (unless `--skip-pdf`) | `scripts/pdf/convert.py` |
+| WebWorks ePublisher | `wwhelp/books.htm` found in cache | `scripts/webworks/run.py` |
+
+### Restructure scripts (manual — not called by run.py)
+
+Must be run after the pipeline completes, and re-run after any step 3/5/6 rerun:
+
+| Script | What it does |
+|---|---|
+| `scripts/08_restructure_ebx.py` | EBX main: `output/pub/ebx/` → `output/ebx/` (language-first) |
+| `scripts/ebx_addon_restructure.py` | EBX add-on: `output/pub/ebx-addon/` → `output/ebx-addon/` (addon-first) |
+| `scripts/tibco_restructure.py` | TIBCO/DataSynapse: `output/pub/<product>/` → `output/<product>/` (language-first) |
+
+### CLI flags
+
+| Flag | Applies to | Description |
+|------|-----------|-------------|
+| `--from-step N` | Main pipeline | Start from step N |
+| `--to-step N` | Main pipeline | Stop after step N |
+| `--dry-run` | All stages | Parse and plan but write no files |
+| `--force-rerun` | All stages | Re-process already-done files |
+| `--force-refresh` | Step 2 only | Re-download cached HTML |
+| `--scan-cache` | Step 3 only | Drive conversion from cached files (use when ZIP paths differ from sitemap URLs) |
+| `--skip-dita` | DITA stage | Skip DITA sub-pipeline |
+| `--skip-pdf` | PDF stage | Skip PDF sub-pipeline |
+| `--skip-webworks` | WebWorks stage | Skip WebWorks ePublisher sub-pipeline |
+
+---
+
+## Table Audit Tool
+
+`scripts/audit_tables.py` — standalone migration-planning utility, **not part of the pipeline**.
+Scans Flare HTML source files and classifies every `<table>` by structural complexity.
+
+```bash
+python scripts/audit_tables.py --phase bw_plugins_poc          # from manifest file list
+python scripts/audit_tables.py --src cache/pub/activematrix_businessworks  # from directory
+```
+
+Output in `audit-output/<name>/`: `tables.csv` (per table) + `summary.md` (counts + top 10 complex).
+
+**Categories** (a table can match multiple):
+
+| Category | Trigger |
+|---|---|
+| `SIMPLE` | No other categories matched |
+| `FAKE_LIST` | `AutoNumber` class or `*_inner`/`*_outer` divs — preprocessor handles these |
+| `MULTI_PARAGRAPH` | Cell has >1 `<p>` or `<p>` + other block sibling |
+| `NOTE_OR_ADMONITION` | Cell has `<div class="note*">` → **HIGH RISK**: becomes `<blockquote>` which AEM **silently drops** |
+| `LIST_IN_CELL` | Cell has `<ul>`, `<ol>`, or `<dl>` |
+| `MERGED_CELLS` | Any cell has `colspan > 1` or `rowspan > 1` |
+| `NESTED_TABLE` | `<table>` inside any cell |
+| `WIDE` | More than 5 columns |
+| `IMAGE_IN_CELL` | Cell has `<img>` |
+| `CODE_IN_CELL` | Cell has `<pre>` or `<code>` |
+| `OTHER_BLOCK_ELEMENTS` | Direct cell child is `<h1>`–`<h6>`, `<blockquote>`, `<figure>`, `<aside>`, `<details>`, `<summary>` |
+
+Admonition container class regex: `^note([A-Z]|$)` — matches `note`, `noteImportant`, `noteCaution`,
+`noteTip`, `noteWarning`, `noteNote`. Does not match child-label classes (`noteHead`, `noteHeadInTable`)
+or `AuthorNote`. See `scripts/audit_tables_context.md` for full detail.
 
 ---
 
 ## Key Technical Facts
+
+### Phase Files (config/phases/)
+
+Two supported formats — Step 1 detects automatically:
+
+**Product version URL format (preferred):**
+```yaml
+name: "BusinessEvents"
+products:
+  - https://docs.tibco.com/products/tibco-businessevents-enterprise-edition-6-4-0
+```
+Step 1 calls `/api/products/<slug>` → gets `folder_path` → constructs ZIP URL. No sitemap crawl needed.
+
+**Legacy sitemap format:**
+```yaml
+name: "Phase (legacy)"
+products:                    # L2 sitemapindex — all versions discovered automatically
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition.xml
+versions:                    # L3 urlset — target a specific version
+  - https://docs.tibco.com/ftp_portal/coveo/tibco-businessevents-enterprise-edition-6-4-0.xml
+```
 
 ### Sitemap Hierarchy (3 levels)
 ```
@@ -162,9 +192,9 @@ https://docs.tibco.com/sitemap.xml                              (master sitemapi
   → https://docs.tibco.com/ftp_portal/coveo/tibco-foo.xml      (product sitemapindex, L2)
     → https://docs.tibco.com/ftp_portal/coveo/tibco-foo-1-0.xml (version urlset, L3)
 ```
-- Phase YAML files list L2 (product-level) sitemap URLs — pipeline starts from here, not from root
-- L3 urlset uses namespace `http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd` (note: `/sitemap.xsd` suffix variant) plus `coveo:` namespace for metadata
+- L3 urlset uses namespace `http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd` (note `/sitemap.xsd` suffix variant) plus `coveo:` namespace for metadata
 - Always parse XML with explicit namespace mapping; do not use wildcard namespace queries
+- Sitemaps contain stale `localhost:5001` hostnames for many products — product version URL format preferred for new phases
 
 ### HTML Structure (MadCap Flare WebHelp2)
 ```html
@@ -200,43 +230,56 @@ https://docs.tibco.com/sitemap.xml                              (master sitemapi
 Controlled by `skip_filenames` in settings.yaml.
 
 ### Non-MadCap HTML (filter in Step 1)
-URLs containing `/api/javadoc/` are standard Javadoc output, not MadCap Flare.
-Logged as skipped with reason `non-madcap-html`. No conversion attempted.
-
-### SDL Trisoft / DITA WebHelp Responsive (filter in Step 1)
-Some TIBCO products were authored in SDL Tridion Docs (formerly SDL Trisoft) and published as
-DITA WebHelp Responsive output. These have GUID-based filenames like
-`GUID-07C4296F-B4D9-481A-A97F-9608231B1429.html` instead of human-readable names.
-Filtered by `skip_filename_patterns` in settings.yaml; logged as `non-madcap-dita`.
-When DITA conversion support is added, these products should use a separate phase YAML and
-dedicated scripts (`01_dita.py`, `03_dita.py`, etc.).
+- URLs containing `/api/javadoc/` — standard Javadoc, logged as `non-madcap-html`
+- GUID-based filenames (`GUID-xxx.html`) — SDL Trisoft DITA, logged as `non-madcap-dita`,
+  written to `dita_versions_<phase>.json` for the DITA sub-pipeline
 
 ### Non-Content Directories (filter in Step 1)
 `_globalpages/`, `MicroContent/`, `_templates/`, `Skins/`, `Resources/`
-These paths appear in the version URL base but contain auxiliary MadCap files, not topics.
+
+### ZIP-first download (Step 2a)
+Downloads the full documentation ZIP per version and extracts into `cache/`. After extraction,
+rewrites the manifest with per-page entries. Provides:
+- Authoritative TOC JS files (`Data/Tocs/*.js`) for Step 6
+- All HTML pages + images in one request per version
+
+Versions where ZIP is missing/404 go to `zip_missing_<phase>.json` and fall back to Step 2.
+Already-extracted versions (non-empty `Data/Tocs/`) are skipped unless `--force-rerun`.
+
+ZIP settings in `config/settings.yaml`:
+```yaml
+zip:
+  enabled: true
+  store_zip: true        # Keep .zip after extraction
+  zip_cache_dir: "cache/zip"
+  min_free_gb: 20        # Skip version if disk space drops below this
+```
 
 ### alias.xml (Context-Sensitive Help)
-- URL derived per version: `<version-html-root>/Data/Alias.xml`
-- Not listed in sitemap — must be fetched separately once per version
+- URL: `<version-html-root>/Data/Alias.xml` — not in sitemap, fetched separately per version
 - Format: `<Map Name="TOPIC_ID" Link="relative/path.htm" ResolvedId="1000"/>`
-  - `Name` = alphanumeric CSH identifier
+  - `Name` = alphanumeric CSH identifier (case-significant by design)
   - `ResolvedId` = numeric CSH identifier
   - `Link` = relative path to the topic .htm file
-- Many products have empty `<CatapultAliasFile />` — handle silently, not an error
-- Some products have 404 alias.xml — handle silently
+- Empty `<CatapultAliasFile />` — handle silently, not an error
+- 404 alias.xml — handle silently
 
-### TOC
-- `Data/Tocs/Default.js` exists on server but is stripped/0-bytes on docs.tibco.com — unusable
-- Only reliable TOC data is the `data-mc-toc-path` attribute on each page's `<html>` tag
-- Step 6 reconstructs the tree from these breadcrumbs; manifest URL order = page sort order
-- Pages with empty/missing toc_path go into `_orphans` list in `_toc.json`
-- **Section index pages:** After building `_toc.json`, Step 6 generates `_section_<slug>.md` for
-  every TOC node that has children but no source page (`"file": null`). Each file gets a
-  frontmatter + `# Title` heading + nested `- [child](rel.md)` listing of its subtree. The node's
-  `file` field is updated in-place so `toc.yml` emits a `url:` for it (required by AEM Guides).
-- **External URL injection:** TOC nodes matching known external titles (currently "Java API") have
-  their `file` set to the external URL (e.g. `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/`).
-  `node_to_yaml()` detects `http://`/`https://` prefixes and emits `url:` directly.
+### TOC (Step 6)
+Two sources, in preference order:
+1. **MadCap TOC JS** (authoritative) — `Data/Tocs/*.js` from extracted ZIP. Gives exact
+   hierarchy and page order as authored. `_toc.json` `"_source"` = `"toc_js"`.
+2. **Breadcrumbs** (fallback) — reconstructs tree from `data-mc-toc-path` on each `<html>` tag.
+   `_toc.json` `"_source"` = `"breadcrumbs"`.
+
+- Pages with empty/missing `toc_path` go into `_orphans` in `_toc.json`
+- **Section index pages:** Step 6 generates `_section_<slug>.md` for every TOC node with
+  children but no source page (`"file": null`). Gets frontmatter + `# Title` + subtree link list.
+  Node's `file` field updated so `toc.yml` emits a `url:`.
+- **External URL injection:** TOC nodes matching known external titles (e.g. "Java API") have
+  `file` set to the external URL. `node_to_yaml()` detects `http://`/`https://` prefix and
+  emits `url:` directly.
+- **WebWorks TOC source:** `wwhdata/xml/toc.xml` (hierarchical, authoritative).
+  `_toc.json` `"_source"` = `"webworks_toc_xml"`.
 
 ### Tables (3 tiers — see table_classifier.py)
 - **Tier 1:** Text-only cells → GFM pipe table
@@ -244,20 +287,32 @@ These paths appear in the version URL base but contain auxiliary MadCap files, n
 - **Tier 3:** Cells with block content (ul, ol, pre, nested tables, h2+) → raw HTML passthrough,
   marked with `data-converter-passthrough="true"` for manual review
 
+Tables without `<thead>` have first row promoted to header automatically.
+
 ### Preprocessor Transforms (order matters — see preprocessor.py)
-1. `strip_chrome` — removes nav/UI elements listed in `chrome_selectors` in settings.yaml
-2. `fake_list_tables` — `AutoNumber_p_*` table class → proper `<ul>`/`<ol>`
-3. `callout_divs` — `div.note/warning/caution/tip/important` → `<blockquote>` with bold label
-4. `task_sections` — DITA task elements (prereq, steps, result, postreq, context, example) → semantic HTML
-5. `inline_spans` — maps span/element classes to inline HTML tags:
-   - `uicontrol`, `wintitle`, `option`, `menucascade` → `<strong>`
-   - `filepath`, `codeph` → `<code>`
-   - `varname`, `parmname`, `term` → `<em>`
-   - `<var>` element → `<em>`
-6. `anchor_only_links` — strip `<a name="...">` with no href (MadCap navigation anchors)
-7. `classify_and_handle_tables` — applies 3-tier logic, calls table_classifier.py
-8. `rewrite_image_src` — intentional no-op; relative image `src` paths are left unchanged because
-   the output mirrors the source URL directory structure, so relative paths resolve correctly as-is
+13 transforms applied before markdownify:
+
+| # | Name | What it does |
+|---|------|------|
+| 1 | `strip_chrome` | Removes nav/UI chrome (`chrome_selectors` in settings.yaml) |
+| 2 | `fake_list_tables` | `AutoNumber_p_*` table class → `<ul>`/`<ol>` |
+| 3 | `callout_divs` | `div.note/warning/caution/tip/important` → `<blockquote>` with bold label |
+| 4 | `text_popups` | MCTextPopup inline popups → Note blockquotes; trigger marker removed |
+| 5 | `definition_lists` | DITA `div.dl/dlentry/dt/dd` → bold term + unwrapped definition |
+| 6 | `task_sections` | DITA task elements (prereq, steps, result, postreq, context) → semantic HTML |
+| 7 | `inline_spans` | MadCap span classes → `<strong>`, `<code>`, `<em>` |
+| 8 | `anchor_only_links` | Strip `<a name="...">` with no href (MadCap nav anchors) |
+| 9 | `split_colspan_tables` | Full-width colspan rows → `<h4>` headings + sub-tables |
+| 10 | `classify_tables` | 3-tier table classification (calls table_classifier.py) |
+| 11 | `normalize_whitespace` | Collapse `\r\n\t` in text nodes (browser whitespace rules) |
+| 12 | `fix_pre_linebreaks` | Replace `<br>` inside `<pre>` with actual newlines |
+| 13 | `rewrite_image_src` | Make image paths relative to output .md location |
+
+`inline_spans` class mappings:
+- `uicontrol`, `wintitle`, `option`, `menucascade` → `<strong>`
+- `filepath`, `codeph` → `<code>`
+- `varname`, `parmname`, `term` → `<em>`
+- `<var>` element → `<em>`
 
 ### Frontmatter Schema
 ```yaml
@@ -285,6 +340,12 @@ Images alongside:
 → output/pub/businessevents-enterprise/6.4.0/doc/html/Admin/images/figure1.png
 ```
 
+Restructure scripts remap to language-first AEM layout:
+```
+output/pub/ebx/<version>/doc/html/<lang>/<content>
+  → output/ebx/<lang-norm>/ebx/webhelp/<ver-dashed>/<content>
+```
+
 ---
 
 ## Configuration (config/settings.yaml)
@@ -305,29 +366,18 @@ http:
   timeout_read: 30
   user_agent: "tibco-docs-converter/1.0"
 
-content_selector: "div[role='main']#mc-main-content"
+zip:
+  enabled: true
+  store_zip: true
+  zip_cache_dir: "cache/zip"
+  min_free_gb: 20
 
-skip_filenames:
-  - Default.htm
-  - Default_CSH.htm
-  - Home.htm
+content_selectors:
+  - "div[role='main']#mc-main-content"   # MadCap Flare WebHelp2
+  - "div#center article"                 # DITA WebHelp Responsive
+  - "article"
 
-skip_path_segments:
-  - /api/javadoc/
-  - /_globalpages/
-  - /MicroContent/
-  - /_templates/
-  - /Skins/
-  - /Resources/
-
-skip_filename_patterns:
-  - "^GUID-[0-9A-Fa-f]{8}-...-[0-9A-Fa-f]{12}\\.html?$"  # SDL Trisoft DITA WebHelp
-
-html_extensions:
-  - .htm
-  - .html
-
-chrome_selectors:
+chrome_selectors:                        # Elements stripped by strip_chrome transform
   - p.MCWebHelpFramesetLink
   - div#prdnm
   - div.toolbar
@@ -335,6 +385,7 @@ chrome_selectors:
   - div.MCMiniTocBox_0
   - div#feedback-survey
   - p.Copyright
+  - a.codeSnippetCopyButton
 
 image_skip_prefixes:
   - Skins/
@@ -355,76 +406,34 @@ tables:
 
 ---
 
-## Phase Files (config/phases/)
-
-```yaml
-# Example phase file
-name: "Phase 1 - POC"
-products:
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-postgresql.xml
-  - https://docs.tibco.com/ftp_portal/coveo/tibco-spotfire-connector-for-sap-bw.xml
-```
-Each entry is a product-level (L2) sitemapindex URL. All version sitemaps under a product are
-discovered automatically by the pipeline.
-
----
-
-## Running the Pipeline
-
-```bash
-# Activate venv first
-.venv\Scripts\activate    # Windows
-source .venv/bin/activate # Linux/Mac
-
-# Full pipeline run
-python run.py --phase phase_01
-
-# Resume from a specific step (steps 1-2 already done)
-python run.py --phase phase_01 --from-step 3
-
-# Run only specific steps
-python run.py --phase phase_01 --from-step 1 --to-step 2
-
-# Dry run — no files written, prints what would happen
-python run.py --phase phase_01 --dry-run
-
-# Re-download/re-convert already-processed files
-python run.py --phase phase_01 --force-rerun
-
-# Run a single step directly
-python scripts/01_build_manifest.py --phase phase_01
-```
-
----
-
 ## Logging & Reports
 
-Each run creates a timestamped folder:
 ```
 logs/<phase>/<YYYYMMDD-HHMMSS>/
   run.log              # Full verbose log (all steps)
   errors.log           # Errors only
-  skipped.log          # Filtered URLs with reason
+  skipped.log          # Filtered URLs with reason code
   01_manifest.json     # Step 1 stats
+  02a_zip.json         # Step 2a stats (ZIP downloads)
   02_download.json     # Step 2 stats
   03_convert.json      # Step 3 stats
   04_csh.json          # Step 4 stats
   05_postprocess.json  # Step 5 stats
   06_toc.json          # Step 6 stats
-  summary.json         # Full rollup
+  07_report.json       # Step 7 stats
+  phase_report.csv     # Per-version report for this run
 ```
 
-Progress is checkpointed in `logs/progress.db` (SQLite). Re-runs skip already-completed URLs.
+`manifests/conversion_log.csv` — persistent log appended every run, committed to git.
+
+Progress checkpointed in SQLite (`logs/progress.db`). Re-runs skip already-completed URLs.
 
 ---
 
 ## Test Suite
 
 ```bash
-# Run all tests
 .venv/Scripts/python -m pytest tests/ -v
-
-# Run a specific test file
 .venv/Scripts/python -m pytest tests/test_preprocessor.py -v
 ```
 
@@ -440,25 +449,23 @@ Total: **89 tests**. All must pass before committing changes to preprocessor, ta
 
 ## EBX-Specific Post-Processing
 
-EBX documentation ZIPs have a richer structure than standard MadCap products and require
-additional post-processing steps run after the standard pipeline (Steps 1–6).
+EBX documentation ZIPs have a richer structure and require restructure scripts after Steps 1–7.
 
-### Archive structure (cache/pub/ebx/<version>/doc/)
+### EBX archive structure (cache/pub/ebx/<version>/doc/)
 ```
 doc/
 ├── html/
-│   ├── en/      → webhelp (converted by Steps 1-6)
+│   ├── en/      → webhelp (converted by Steps 1-7)
 │   ├── fr/      → webhelp (French, 6.1.1+)
 │   └── ja/      → webhelp (Japanese, 6.1.1+)
-├── relnotes/    → relnotes.md (generated separately)
-├── pdf/         → PDF files (copied as-is by Step 08/09)
-└── doc/         → Other documents, e.g. readme.txt (copied as-is by Step 08/09)
+├── relnotes/    → relnotes.md (generated by PDF sub-pipeline)
+├── pdf/         → PDF files (copied by 08_restructure_ebx.py)
+└── doc/         → Other documents (copied by 08_restructure_ebx.py)
 ```
 
-### Step 08 — EBX restructure (`scripts/08_restructure_ebx.py`)
+### 08_restructure_ebx.py
 
-Transforms the URL-mirroring output layout into the AEM Guides language-first layout, and
-copies PDF/doc assets alongside the restructured webhelp output.
+Transforms URL-mirroring layout → AEM Guides language-first layout. Copies PDF/doc assets.
 
 **Webhelp restructure:**
 ```
@@ -466,36 +473,35 @@ output/pub/ebx/<version>/doc/html/<lang>/<content>
   → output/ebx/<lang-norm>/ebx/webhelp/<ver-dashed>/<content>
 ```
 
-**PDF/doc asset copy (Phase 4 of the script):**
+**PDF/doc asset copy (Phase 4):**
 ```
 cache/pub/ebx/<version>/doc/pdf/   → output/ebx/en-us/ebx/pdf/<ver-dashed>/
 cache/pub/ebx/<version>/doc/doc/   → output/ebx/en-us/ebx/doc/<ver-dashed>/
 ```
 
-Each version folder under `pdf/` and `doc/` gets two generated files:
-- `index.md` — frontmatter + heading + sorted hyperlinked file list with resolved display names
-- `toc.yml` — `docs_list_title` + single entry pointing to `index.md`
+Each `pdf/` and `doc/` version folder gets `index.md` + `toc.yml`.
 
-Usage:
 ```bash
 python scripts/08_restructure_ebx.py [--src output/pub/ebx] [--dst output/ebx] \
-                                      [--cache-src cache/pub/ebx] \
-                                      [--preflight-only]
+                                      [--cache-src cache/pub/ebx] [--preflight-only]
 ```
 
-**Note:** The `Java_API/` folder is unconditionally excluded from the restructure — Java API
-is now hosted externally. Relative `Java_API/` links in `.md` files are rewritten to the
-external URL by Step 5 (`05_postprocess.py`).
+**Sequencing:** Step 5 must run before Step 8. If Step 3 is re-run, always follow with Step 5
+before Step 8 — otherwise Step 8 copies un-postprocessed files. Step 8 warns if it detects this.
 
-**Sequencing requirement:** Step 5 must be run before Step 8. If Step 3 is re-run (e.g.
-force-rerun), always follow it with Step 5 before running Step 8 — otherwise Step 8 copies
-un-postprocessed files (still containing `.html` links) into `output/ebx/`. Step 8 emits a
-warning if it detects this condition.
+`Java_API/` folder is unconditionally excluded — Java API is hosted externally. Step 5 rewrites
+relative `Java_API/` links to `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/`.
 
-### EBX add-on restructure (`scripts/ebx_addon_restructure.py`)
+### ebx_addon_restructure.py
 
-Transforms the version-first URL-mirroring layout of EBX add-on output into an addon-first
-layout, writing a separate copy without touching the original.
+Transforms version-first layout → addon-first layout. Runs 6 phases:
+- Phase 0: Pre-flight cross-addon link scan
+- Phase 1: Build webhelp path mapping (excludes Java_API)
+- Phase 2: Build javadocs path mapping
+- Phase 3: Copy webhelp files
+- Phase 4: Copy javadoc files
+- Phase 5: Patch `_toc.json` root and `file` paths
+- Phase 6: Rewrite EBX-main javadoc URLs → addon-specific URLs; strip MadCap popup links
 
 **Webhelp restructure:**
 ```
@@ -503,26 +509,17 @@ output/pub/ebx-addon/<version>/doc/<addon>/<content>
   → output/ebx-addon/en-us/ebx-addon/<addon>/<ver-dashed>/<content>
 ```
 
-**Java API restructure (separate tree):**
+**Java API restructure:**
 ```
 output/pub/ebx-addon/<version>/doc/<addon>/Java_API/<content>
   → output/ebx-addon-javadocs/en-us/ebx-addons/<addon>/javadocs/<ver-dashed>/<content>
 ```
 
-**Phases:**
-- Phase 0: Pre-flight cross-addon link scan (warns on links that will break after restructure)
-- Phase 1: Build webhelp path mapping (Java_API excluded)
-- Phase 2: Build javadocs path mapping
-- Phase 3: Copy webhelp files
-- Phase 4: Copy javadoc files
-- Phase 5: Patch `_toc.json` root and `file` paths to new locations
-- Phase 6: Rewrite EBX-main javadoc URLs → addon-specific URLs, strip MadCap popup links
-
-Phase 6 corrects a URL mismatch: Step 5 rewrites relative `Java_API/` links to the EBX **main**
-javadoc URL (`https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{ver}/`), which is wrong
-for addon content. Phase 6 replaces these with the per-addon URL
-(`https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/`). Do not fix
-this in Step 5 — Step 5 has no access to the addon slug.
+Phase 6 fixes URL mismatch: Step 5 rewrites `Java_API/` links to the EBX **main** javadoc URL
+(`https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/{ver}/`), which is wrong for addon
+content. Phase 6 replaces with per-addon URL:
+`https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/`.
+Do not fix this in Step 5 — Step 5 has no access to the addon slug.
 
 ```bash
 python scripts/ebx_addon_restructure.py [--src output/pub/ebx-addon] \
@@ -531,79 +528,35 @@ python scripts/ebx_addon_restructure.py [--src output/pub/ebx-addon] \
                                          [--preflight-only]
 ```
 
-### Generic asset copy (`scripts/copy_assets.py`)
+### PDF slug mapping (config/pdf_slug_mappings.yaml)
 
-Runs the same PDF/doc asset copy for any product (not EBX-specific). Used for products
-whose archives contain `<version>/doc/pdf/` and `<version>/doc/doc/` subfolders.
-
-```bash
-python scripts/copy_assets.py \
-  --cache-src cache/pub/<product> \
-  --dst       output/<product> \
-  --product-slug <slug> \
-  --product-name "<Full Product Name>" \
-  [--lang en-us]
-```
-
-**Output structure produced by both scripts:**
-```
-output/<product>/<lang>/<slug>/
-├── webhelp/<ver-dashed>/    ← existing converted Markdown
-├── pdf/<ver-dashed>/
-│   ├── TIB_*.pdf            ← copied as-is
-│   ├── index.md             ← generated listing page
-│   └── toc.yml              ← generated TOC pointer
-└── doc/<ver-dashed>/
-    ├── TIB_*.txt            ← copied as-is
-    ├── index.md             ← generated listing page
-    └── toc.yml              ← generated TOC pointer
-```
-
-### PDF slug mapping (`config/pdf_slug_mappings.yaml`)
-
-Maps filename slugs (the part after `TIB_<product>_<version>_`) to human-readable guide labels.
+Maps filename slugs (part after `TIB_<product>_<version>_`) to human-readable guide labels.
 Display name = `"<product_name> <version> <label>"`.
 
-```yaml
-admin-guide: "Administration Guide"
-installation: "Installation Guide"
-relnotes: "Release Notes"
-# ...
-```
-
 Resolution order per file:
-1. PDF `Title` metadata via PyMuPDF — strips `<product_name> <version>` prefix; auto-populates mapping
+1. PDF `Title` metadata via PyMuPDF — strips product/version prefix; auto-populates mapping
 2. Slug mapping lookup (`config/pdf_slug_mappings.yaml`)
 3. Title-case the slug as fallback
 4. Raw filename as last resort
 
-The script auto-adds newly discovered slugs to the mapping file (empty value = needs manual review).
-Manual corrections persist across all future runs since the file is committed.
+Script auto-adds newly discovered slugs (empty value = needs manual review). Manual corrections
+persist since the file is committed. Shared utilities in `scripts/lib/asset_copy.py`.
 
-Shared utilities live in `scripts/lib/asset_copy.py` and are used by `08_restructure_ebx.py` and `copy_assets.py`.
+### 10_copy_ebx_addon_pdfs.py
 
-### Step 10 — EBX add-on PDF copy (`scripts/10_copy_ebx_addon_pdfs.py`)
+Copies all EBX add-on PDFs from cache → `en-us-onebx-ebx-addons` publishing repo. Generates
+`index.md` + `toc.yml` per version.
 
-Standalone script that copies all PDFs from the EBX add-on cache into the
-`en-us-onebx-ebx-addons` publishing repo and generates `index.md` + `toc.yml` per version.
+**Source:** `cache/pub/ebx-addon/<version>/pdf/` (root level). Falls back to
+`cache/pub/ebx-addon/<version>/doc/pdf/` for versions (e.g. 6.2.3) with only the nested path.
 
-**Source:** `cache/pub/ebx-addon/<version>/pdf/` (root level, present in all versions).
-Falls back to `cache/pub/ebx-addon/<version>/doc/pdf/` for versions (e.g. 6.2.3) that only
-have the nested path.
+**Destination:** `C:\github\ebx\en-us-onebx-ebx-addons\en-us\ebx-addon\pdf\<version-dashed>\`
 
-**Destination:**
-```
-C:\github\ebx\en-us-onebx-ebx-addons\en-us\ebx-addon\pdf\<version-dashed>\
-  TIB_ebx-*.pdf          ← copied as-is
-  index.md               ← generated listing page (all PDFs as bullet links)
-  toc.yml                ← generated TOC pointer
-```
-
-**Title derivation** — filenames follow `TIB_ebx-<addon>_<addon_version>[_<slug>].pdf`:
-- Addon code (`adix`, `common`, `moda`, etc.) maps to a hardcoded TIBCO EBX product name
-- Guide slug (`relnotes`, `license`, `versioning_and_packaging_guide`, etc.) maps to a label
-- No slug → append "Documentation" to the product name
-- `addon` code (package-level files like license, vpat) maps to "TIBCO EBX Add-ons"
+Title derivation — filenames follow `TIB_ebx-<addon>_<addon_version>[_<slug>].pdf`:
+- Addon code (`adix`, `common`, `moda`, etc.) → TIBCO EBX product name (hardcoded map)
+- Guide slug (`relnotes`, `license`, `versioning_and_packaging_guide`, etc.) → label
+- No slug → append "Documentation" to product name
+- `addon` code → "TIBCO EBX Add-ons"
 
 ```bash
 python scripts/10_copy_ebx_addon_pdfs.py [--dry-run] \
@@ -611,47 +564,41 @@ python scripts/10_copy_ebx_addon_pdfs.py [--dry-run] \
   [--dest C:\github\ebx\en-us-onebx-ebx-addons\en-us\ebx-addon\pdf]
 ```
 
-Uses only stdlib (`pathlib`, `shutil`, `argparse`) — no dependency on `scripts/lib/`.
-Processes all 42 versions (4.5.7 → 6.2.3). Safe to re-run (overwrites existing output).
+Uses only stdlib (`pathlib`, `shutil`, `argparse`). Processes all 42 versions (4.5.7–6.2.3).
 
 ---
 
 ## Known Variations Across Products
 
-- Some products have empty alias.xml (`<CatapultAliasFile />`) — not an error
-- Some pages have `[%=System.LinkedHeader%]` tokens in `data-mc-toc-path` — strip in Step 5
-- BusinessWorks HTML uses `AutoNumber_p_*` table classes as fake lists — handled by preprocessor
-- BE 6.4.0 HTML uses DITA task/concept/reference structure — handled by preprocessor
+- Empty alias.xml (`<CatapultAliasFile />`) — not an error; handle silently
+- Pages with `[%=System.LinkedHeader%]` tokens in `data-mc-toc-path` — strip in Step 5
+- BusinessWorks `AutoNumber_p_*` table classes as fake lists — handled by `fake_list_tables`
+- `AutoNumber_p_Bullet` on numbered-step tables: `data-mc-autonum` attribute is ground truth;
+  if value starts with a digit → `<ol>`, not `<ul>` (tiebreaker in preprocessor.py)
+- BE 6.4.0 uses DITA task/concept/reference structure — handled by `task_sections` + `definition_lists`
 - coveo:metadata product name fields may contain encoding artifacts (e.g. `â„¢` for `™`) —
   always open sitemap XML with explicit utf-8 encoding
-- `AutoNumber_p_Bullet` class is sometimes used on numbered-step tables in MadCap — the
-  `data-mc-autonum` attribute on the content `<td>` is the ground truth: if its value starts
-  with a digit the table is treated as `<ol>`, not `<ul>` (tiebreaker in `preprocessor.py`)
-- EBX Java API is hosted externally at
-  `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/` — Step 5 rewrites all
-  relative `Java_API/` links to this URL; `08_restructure_ebx.py` excludes the `Java_API/` folder
-  from the restructured output. For EBX add-ons, `ebx_addon_restructure.py` Phase 6 further
-  rewrites these URLs to the per-addon javadoc URL.
-- EBX pages carry an in-page mini TOC in `<div id="toc">` (nested `<ul class="toc1/toc2">`
-  anchor links to headings). This is **retained** — `ebx_chrome_selectors` is now empty so
-  markdownify converts it to a nested Markdown link list. The links resolve because EBX heading
-  `id` attributes are preserved as `<a name="id"></a>` anchors (see next point).
-- EBX HTML headings carry `id` attributes (e.g. `<h2 id="overview">`). Step 3 uses
-  `_TibcoMarkdownConverter` (a `MarkdownConverter` subclass in `scripts/03_convert.py`) that
-  overrides `convert_hN` to append `<a name="id"></a>` after each heading that has an `id`,
-  producing e.g. `## Overview <a name="overview"></a>`. This makes mini TOC anchor links resolve.
-- markdownify's `chomp()` function can introduce a spurious space after opening `**` bold markers
-  when `<strong>` content starts with whitespace (e.g. `** word**` instead of `**word**`).
-  `clean_markdown()` in `scripts/03_convert.py` fixes this with
-  `re.sub(r'\*\* +(\S)', r'**\1', text)`.
-- EBX addon ZIP archives store HTML at `doc/<addon>/` (no `/html/` in path), but the canonical
-  URL must include `/html/` (e.g. `doc/html/<addon>/`). Manifest entries for ZIP-based products
-  now carry a `cache_path` field (actual filesystem path relative to cache root) separate from
-  the canonical `url`. `convert_entry` in `scripts/03_convert.py` uses `entry["cache_path"]`
-  when present to locate the file, falling back to URL-derived path for non-ZIP products.
-- `01_build_manifest.py` only fires a HEAD request for `zip_last_modified` when `--delta` is
-  set. Without `--delta`, `zip_last_modified` is stored as `""` in the manifest. Do not assume
-  the field is always populated.
-- `02_download.py` image concurrency: each image download acquires the semaphore independently
-  after the parent page's semaphore slot is released. The configured `concurrency` limit applies
-  uniformly to both page and image downloads.
+- EBX Java API hosted externally at `https://stg-docs.onebx.com/us/en/ebx/resources/javadocs/<version>/`
+  — Step 5 rewrites all relative `Java_API/` links; `08_restructure_ebx.py` excludes the folder
+- EBX add-on Java API URL: per-addon at `https://stg-docs.onebx.com/us/en/ebx-addons/resources/{addon}/javadocs/{ver}/`
+  — corrected by `ebx_addon_restructure.py` Phase 6 (not Step 5, which has no addon slug)
+- EBX pages carry in-page mini TOC in `<div id="toc">` (nested `<ul class="toc1/toc2">` anchor links).
+  Retained — markdownify converts to nested Markdown link list. Links resolve because EBX heading
+  `id` attributes are preserved as `<a name="id"></a>` anchors.
+- EBX HTML headings carry `id` attributes. `_TibcoMarkdownConverter` (subclass of `MarkdownConverter`
+  in `scripts/03_convert.py`) overrides `convert_hN` to append `<a name="id"></a>` after each
+  heading with an `id`, e.g. `## Overview <a name="overview"></a>`.
+- EBX `ebx_definitionList` tables forced to Tier 3 passthrough in `table_classifier.py` —
+  prevents `_promote_first_row_as_header` from wrongly promoting first `<td>` row
+- EBX `p.noPrint` stripped by `ebx_chrome_selectors` in settings.yaml — removes search icon +
+  "User guide [table of contents]" nav link from topic bottoms
+- EBX addon ZIP archives store HTML at `doc/<addon>/` (no `/html/` in path), but canonical URL
+  must include `/html/`. Manifest entries for ZIP-based products carry a `cache_path` field
+  (actual filesystem path) separate from canonical `url`. `convert_entry` in `scripts/03_convert.py`
+  uses `entry["cache_path"]` when present, falls back to URL-derived path.
+- `01_build_manifest.py` only fires HEAD request for `zip_last_modified` when `--delta` is set.
+  Without `--delta`, field is stored as `""`. Do not assume it is populated.
+- `02_download.py` image concurrency: image downloads acquire the semaphore independently after
+  the parent page's slot is released. `concurrency` limit applies uniformly to pages and images.
+- WebWorks phase manifests contain version-level metadata entries (with `version_url` instead of
+  `url`). Steps 5 and 6 guard against these with `if "url" not in entry: continue`.
