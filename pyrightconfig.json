@@ -1,0 +1,12 @@
+{
+  "pythonVersion": "3.11",
+  "venvPath": ".",
+  "venv": ".venv",
+  "exclude": [
+    "cache",
+    "output",
+    "logs",
+    "manifests",
+    ".venv"
+  ]
+}
