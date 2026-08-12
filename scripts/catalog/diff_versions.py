@@ -25,14 +25,16 @@ import sys
 from pathlib import Path
 
 FIELDS = [
-    "change", "product_name", "product_slug",
+    "change", "product_name", "product_slug", "category",
     "version", "doc_url", "is_archived", "zip_url", "ga_date", "detail",
 ]
 
 
-def load(path: Path) -> dict[tuple[str, str], dict]:
+def load(path: Path) -> tuple[dict[tuple[str, str], dict], list[str]]:
     with path.open(encoding="utf-8-sig") as f:
-        return {(r["product_slug"], r["version"]): r for r in csv.DictReader(f)}
+        reader = csv.DictReader(f)
+        rows = {(r["product_slug"], r["version"]): r for r in reader}
+        return rows, list(reader.fieldnames or [])
 
 
 def main() -> int:
@@ -53,7 +55,16 @@ def main() -> int:
             print(f"ERROR: not found: {p}", file=sys.stderr)
             return 1
 
-    old, new = load(args.old), load(args.new)
+    old, old_fields = load(args.old)
+    new, new_fields = load(args.new)
+
+    # Compare only columns both files have. A schema change (e.g. adding
+    # `category`) would otherwise mark every single row as changed.
+    compare_fields = [f for f in new_fields if f in set(old_fields)]
+    dropped = sorted(set(old_fields) ^ set(new_fields))
+    if dropped:
+        print(f"Note: schemas differ; comparing {len(compare_fields)} shared column(s). "
+              f"Ignoring: {', '.join(dropped)}\n")
 
     excluded: set[str] = set()
     if args.exclude_errors:
@@ -71,9 +82,12 @@ def main() -> int:
             print(f"  ! {slug}")
         print()
 
+    def _differs(k) -> bool:
+        return any(old[k].get(f) != new[k].get(f) for f in compare_fields)
+
     added   = sorted(set(new) - set(old))
     removed = sorted(set(old) - set(new))
-    changed = sorted(k for k in set(old) & set(new) if old[k] != new[k])
+    changed = sorted(k for k in set(old) & set(new) if _differs(k))
 
     rows: list[dict] = []
 
@@ -84,7 +98,7 @@ def main() -> int:
         for k in removed:
             rows.append({"change": "removed", "detail": "", **{f: old[k][f] for f in old[k]}})
         for k in changed:
-            diffs = [f for f in new[k] if old[k][f] != new[k][f]]
+            diffs = [f for f in compare_fields if old[k].get(f) != new[k].get(f)]
             detail = "; ".join(f"{f}: {old[k][f] or '(empty)'} -> {new[k][f] or '(empty)'}"
                                for f in diffs)
             rows.append({"change": "changed", "detail": detail, **{f: new[k][f] for f in new[k]}})
@@ -101,13 +115,14 @@ def main() -> int:
             print(f"  - {old[k]['product_name']}  {k[1]}")
         print(f"\nChanged: {len(changed)}")
         for k in changed:
-            diffs = [f for f in new[k] if old[k][f] != new[k][f]]
+            diffs = [f for f in compare_fields if old[k].get(f) != new[k].get(f)]
             print(f"  ~ {new[k]['product_name']}  {k[1]}  [{', '.join(diffs)}]")
 
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         with args.out.open("w", newline="", encoding="utf-8-sig") as f:
-            writer = csv.DictWriter(f, fieldnames=FIELDS)
+            # extrasaction: tolerate snapshots carrying columns this tool predates
+            writer = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(rows)
         print(f"\nDelta CSV written: {args.out.resolve()}  ({len(rows)} rows)")

@@ -9,6 +9,8 @@ For each product the script collects:
 Output CSV columns:
   product_name     — human-readable product name
   product_slug     — parent product slug (e.g. tibco-businessevents-enterprise-edition)
+  category         — "Products & Solutions" grouping (e.g. Integration, Visual
+                     Analytics); "Unassigned" when the product has no grouping
   version          — version string (e.g. 6.4.0)
   doc_url          — product version page on docs.tibco.com
   is_archived      — True if this version appears under "Other Versions"
@@ -61,9 +63,10 @@ USER_AGENT      = "tibco-catalog-fetcher/1.0"
 
 DEFAULT_RETRIES = 3
 DEFAULT_BACKOFF = 1.5
+UNASSIGNED      = "Unassigned"
 
 FIELDS = [
-    "product_name", "product_slug",
+    "product_name", "product_slug", "category",
     "version", "doc_url",
     "is_archived", "zip_url", "ga_date",
 ]
@@ -132,6 +135,29 @@ def _fetch_json(
     raise FetchError(last)
 
 
+# ── Category ─────────────────────────────────────────────────────────────────
+
+def _product_category(product: dict) -> str:
+    """
+    Category ("Products & Solutions" grouping) for an a_to_z product entry.
+
+    The docs.tibco.com /product/categories page renders this client-side, so the
+    page HTML cannot be fetched directly — but the same data is already on every
+    a_to_z product as `Groups`. Verified against a browser-saved copy of that
+    page: 380 grouped products vs the page's 378, zero disagreements, so the API
+    is a strict superset.
+
+    No product currently has more than one group; if that changes they are joined
+    with "; " rather than silently dropping one.
+    """
+    names = sorted(
+        g["name"].strip()
+        for g in (product.get("Groups") or [])
+        if isinstance(g, dict) and (g.get("name") or "").strip()
+    )
+    return "; ".join(names) if names else UNASSIGNED
+
+
 # ── Per-product fetch ─────────────────────────────────────────────────────────
 
 def fetch_product_versions(
@@ -149,8 +175,9 @@ def fetch_product_versions(
     emitted where they come from a different endpoint that succeeded, but every
     failure is recorded so the caller can flag the affected fields as unreliable.
     """
-    name = product["name"]
-    slug = product["slug"]   # parent product slug from a_to_z
+    name     = product["name"]
+    slug     = product["slug"]   # parent product slug from a_to_z
+    category = _product_category(product)
     rows: list[dict] = []
     errors: list[dict] = []
 
@@ -209,6 +236,7 @@ def fetch_product_versions(
             rows.append({
                 "product_name": name,
                 "product_slug": slug,
+                "category":     category,
                 "version":      ver,
                 "doc_url":      "",
                 "is_archived":  True,
@@ -258,6 +286,7 @@ def fetch_product_versions(
         rows.append({
             "product_name": name,
             "product_slug": slug,
+            "category":     category,
             "version":      ver,
             "doc_url":      doc_url,
             "is_archived":  is_archived,
@@ -271,6 +300,7 @@ def fetch_product_versions(
             rows.append({
                 "product_name": name,
                 "product_slug": slug,
+                "category":     category,
                 "version":      ver,
                 "doc_url":      "",
                 "is_archived":  True,
@@ -326,8 +356,13 @@ def main() -> int:
 
     # a_to_z can list one slug twice under different spellings of the name (e.g.
     # "Spotfire Application" and "Spotfire™ Application"), which would duplicate
-    # every version of that product. Keep one entry per slug, choosing by sorted
-    # name so the pick is stable across runs regardless of API ordering.
+    # every version of that product. Keep one entry per slug, preferring the one
+    # carrying Groups — the duplicates are not equivalent, and the bare-name entry
+    # is the one missing its category. Name is only a tie-break, so the pick stays
+    # stable across runs regardless of API ordering.
+    def _entry_rank(e: dict) -> tuple:
+        return (-len(e.get("Groups") or []), e["name"])
+
     by_slug: dict[str, list[dict]] = {}
     for p in products:
         by_slug.setdefault(p["slug"], []).append(p)
@@ -335,9 +370,10 @@ def main() -> int:
     if dup_slugs:
         print(f"Note: {len(dup_slugs)} slug(s) listed more than once in a_to_z — deduplicating:")
         for s, entries in sorted(dup_slugs.items()):
-            names = sorted(e["name"] for e in entries)
-            print(f"  {s}: {len(entries)} entries, keeping {names[0]!r}")
-    products = [sorted(v, key=lambda e: e["name"])[0] for v in by_slug.values()]
+            kept = min(entries, key=_entry_rank)
+            print(f"  {s}: {len(entries)} entries, keeping {kept['name']!r} "
+                  f"(category: {_product_category(kept)})")
+    products = [min(v, key=_entry_rank) for v in by_slug.values()]
 
     if args.product:
         products = [p for p in products if p["slug"] == args.product]
@@ -402,6 +438,14 @@ def main() -> int:
     print(f"\nCSV written: {out_path.resolve()}")
     print(f"  Rows:    {len(all_rows)}")
     print(f"  Columns: {', '.join(FIELDS)}")
+
+    cat_products: dict[str, set[str]] = {}
+    for r in all_rows:
+        cat_products.setdefault(r["category"], set()).add(r["product_slug"])
+    print(f"\nCategories ({len(cat_products)}), by product count:")
+    for cat, slugs in sorted(cat_products.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+        n_rows = sum(1 for r in all_rows if r["category"] == cat)
+        print(f"  {cat:34} {len(slugs):>4} products  {n_rows:>5} versions")
 
     # Error report — written only when there is something to report, and removed
     # otherwise so a stale file from a previous run cannot be mistaken for current.

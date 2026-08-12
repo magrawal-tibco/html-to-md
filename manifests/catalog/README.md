@@ -13,6 +13,47 @@ the snapshot taken at the start of that run to find releases published since.
 |---|---|---|---|
 | `tibco_versions_2026-08-12.csv` | 659 | 4969 | Baseline taken before the bulk conversion run |
 
+## The `category` column
+
+The "Products & Solutions" grouping shown on
+<https://docs.tibco.com/product/categories>, used to batch similar products into
+conversion phases. Products with no grouping get **`Unassigned`** — currently 332
+of 659, so this is the largest bucket by product count, though not by version
+count.
+
+| Category | Products | Versions |
+|---|---:|---:|
+| Unassigned | 332 | 1560 |
+| Integration | 111 | 854 |
+| Visual Analytics | 77 | 1075 |
+| B2B | 27 | 212 |
+| Data Science & Streaming | 24 | 240 |
+| Master Data Management | 19 | 183 |
+| Messaging | 12 | 215 |
+| Event Processing | 11 | 149 |
+| Foresight | 11 | 93 |
+| Fulfillment Orchestration Suite | 5 | 42 |
+| Mainframe | 5 | 44 |
+| Data Grid | 4 | 50 |
+| Data Virtualization | 4 | 39 |
+| DataSynapse | 4 | 28 |
+| Monitoring | 3 | 37 |
+| Others | 3 | 14 |
+| iProcess | 3 | 37 |
+| Business Process Management | 2 | 41 |
+| EBX | 1 | 54 |
+| Social BPM | 1 | 2 |
+
+Source is the `Groups` field already present on every `a_to_z` product — **not**
+scraped from the categories page, which renders client-side and returns only an
+8 KB shell to a plain GET. Validated against a browser-saved copy of that page:
+the API lists 380 grouped products to the page's 378, with zero disagreements,
+so it is a strict superset. The two extras are `tibco-messaging` (Messaging) and
+`tibco-nimbus-player-desktop-edition` (Social BPM).
+
+No product currently belongs to more than one group. If that changes, groups are
+joined with `; ` rather than one being silently dropped.
+
 ## Refresh and diff
 
 ```bash
@@ -33,7 +74,12 @@ Rows are keyed on `(product_slug, version)`. `diff_versions.py` reports:
 
 - **added** — version present now, absent in baseline (new releases)
 - **removed** — version dropped from the catalog
-- **changed** — same version, different `is_archived` / `zip_url` / `ga_date` / `doc_url`
+- **changed** — same version, different `is_archived` / `zip_url` / `ga_date` /
+  `doc_url` / `category`
+
+Only columns present in *both* files are compared, so adding a column to the
+schema does not mark every row as changed. Columns unique to one side are
+reported once and ignored.
 
 ## Trusting a diff
 
@@ -68,8 +114,10 @@ fixed in the same change:
   Retries recovered all 442.
 - **99 rows were duplicated.** `a_to_z` lists `spotfire-application` twice, under
   `Spotfire Application` and `Spotfire™ Application`, duplicating all of its
-  versions. The list is now deduplicated by slug, picking by sorted name so the
-  choice is stable across runs.
+  versions. The list is now deduplicated by slug. The two entries are *not*
+  equivalent — the bare-name one has no `Groups` — so the entry carrying a
+  category wins, with name only as a tie-break. Picking by name alone would have
+  left a 99-version product `Unassigned`.
 
 Separately, ten versions across six BW plug-ins plus Product and Service Catalog
 5.1.0 flipped `is_archived: True -> False` and lost their `zip_url` in this
