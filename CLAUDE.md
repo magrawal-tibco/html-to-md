@@ -49,7 +49,8 @@ html-to-md/
 │   ├── audit_tables_context.md     # Context doc for audit_tables.py (classification rules, examples)
 │   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
 │   ├── catalog/
-│   │   └── fetch_versions.py       # Query docs.tibco.com API → tibco_versions.csv (all products)
+│   │   ├── fetch_versions.py       # Query docs.tibco.com API → tibco_versions.csv (all products)
+│   │   └── diff_versions.py        # Diff two catalog snapshots → added/removed/changed versions
 │   ├── dita/                       # DITA WebHelp Responsive sub-pipeline (SDL Trisoft)
 │   │   └── run.py                  # DITA orchestrator
 │   ├── pdf/
@@ -71,7 +72,8 @@ html-to-md/
 │       ├── asset_copy.py           # PDF/doc asset copy + slug resolution (shared by 08 + copy_assets)
 │       └── version_registry.py     # Track already-converted versions across runs
 ├── manifests/                      # Generated JSON manifests — commit these
-│   └── conversion_log.csv          # Persistent cross-phase conversion log (committed)
+│   ├── conversion_log.csv          # Persistent cross-phase conversion log (committed)
+│   └── catalog/                    # Dated tibco_versions.csv snapshots for release-delta runs
 ├── audit-output/                   # Table audit reports (tables.csv + summary.md per phase/src)
 ├── cache/                          # Downloaded HTML + images — gitignored
 ├── output/                         # Converted Markdown files — gitignored

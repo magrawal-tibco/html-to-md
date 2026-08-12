@@ -11,6 +11,12 @@ Usage:
   python scripts/catalog/diff_versions.py manifests/catalog/tibco_versions_2026-08-12.csv tibco_versions.csv
   python scripts/catalog/diff_versions.py OLD.csv NEW.csv --out delta.csv
   python scripts/catalog/diff_versions.py OLD.csv NEW.csv --added-only
+  python scripts/catalog/diff_versions.py OLD.csv NEW.csv --exclude-errors tibco_versions_errors.csv
+
+If the fetch that produced NEW.csv reported endpoint failures, pass its
+<out>_errors.csv via --exclude-errors. Products listed there are held out of the
+diff and reported separately: their missing rows and dropped zip_urls are fetch
+artefacts, not catalog changes.
 """
 
 import argparse
@@ -37,6 +43,9 @@ def main() -> int:
                         help="Write delta rows to CSV (default: print only)")
     parser.add_argument("--added-only", action="store_true",
                         help="Report only added versions")
+    parser.add_argument("--exclude-errors", type=Path, default=None, metavar="PATH",
+                        help="Errors CSV from fetch_versions.py; hold its products "
+                             "out of the diff (their data is known-incomplete)")
     args = parser.parse_args()
 
     for p in (args.old, args.new):
@@ -45,6 +54,23 @@ def main() -> int:
             return 1
 
     old, new = load(args.old), load(args.new)
+
+    excluded: set[str] = set()
+    if args.exclude_errors:
+        if not args.exclude_errors.exists():
+            print(f"ERROR: not found: {args.exclude_errors}", file=sys.stderr)
+            return 1
+        with args.exclude_errors.open(encoding="utf-8-sig") as f:
+            excluded = {r["product_slug"] for r in csv.DictReader(f)}
+        held = {k for k in (set(old) | set(new)) if k[0] in excluded}
+        old = {k: v for k, v in old.items() if k[0] not in excluded}
+        new = {k: v for k, v in new.items() if k[0] not in excluded}
+        print(f"Excluded {len(excluded)} product(s) with fetch errors "
+              f"({len(held)} version rows held out) — data known-incomplete:")
+        for slug in sorted(excluded):
+            print(f"  ! {slug}")
+        print()
+
     added   = sorted(set(new) - set(old))
     removed = sorted(set(old) - set(new))
     changed = sorted(k for k in set(old) & set(new) if old[k] != new[k])

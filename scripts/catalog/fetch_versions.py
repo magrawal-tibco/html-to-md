@@ -15,11 +15,31 @@ Output CSV columns:
   zip_url          — direct ZIP download URL (archived versions only; empty for current)
   ga_date          — GA release date string (archived versions only)
 
+A second CSV (<out>_errors.csv) records any endpoint that could not be resolved,
+so a run that silently lost data is distinguishable from one that found none.
+See "Failure classification" below — this matters when diffing two snapshots,
+because a dropped zip_url looks identical whether the product was un-archived
+or the archive endpoint simply failed.
+
 Usage:
   python scripts/catalog/fetch_versions.py
   python scripts/catalog/fetch_versions.py --out versions.csv
   python scripts/catalog/fetch_versions.py --product tibco-businessevents-enterprise-edition
   python scripts/catalog/fetch_versions.py --concurrency 30
+  python scripts/catalog/fetch_versions.py --strict      # exit 2 if any endpoint failed
+
+Failure classification (see _fetch_json):
+  The API wraps every JSON response in {"result": {"success": bool, "error": str|null, ...}}.
+  That envelope — not the HTTP status — is the reliable signal.
+
+  definitive absent  → 200 with a text/html body. The API serves the SPA shell for
+                       slugs it cannot resolve. Returns None; caller treats as "no data".
+  indeterminate      → transport error, non-JSON error response, malformed JSON, or
+                       success=false (e.g. HTTP 500 {"success": false, "error": ...},
+                       which is what an unknown slug yields on the archive endpoint).
+                       Retried; raises FetchError once retries are exhausted.
+  success            → success=true. children:[] here is authoritative — the product
+                       genuinely has no archived versions.
 """
 
 import argparse
@@ -39,11 +59,20 @@ ZIP_BASE        = "https://docs.tibco.com"
 DEFAULT_OUT     = "tibco_versions.csv"
 USER_AGENT      = "tibco-catalog-fetcher/1.0"
 
+DEFAULT_RETRIES = 3
+DEFAULT_BACKOFF = 1.5
+
 FIELDS = [
     "product_name", "product_slug",
     "version", "doc_url",
     "is_archived", "zip_url", "ga_date",
 ]
+
+ERROR_FIELDS = ["product_name", "product_slug", "endpoint", "url", "error", "impact"]
+
+
+class FetchError(Exception):
+    """An endpoint could not be resolved to a definite answer."""
 
 
 # ── HTTP helpers ─────────────────────────────────────────────────────────────
@@ -56,20 +85,58 @@ def _client() -> httpx.Client:
     )
 
 
-def _fetch_json(client: httpx.Client, url: str) -> dict | None:
-    try:
-        r = client.get(url)
-        r.raise_for_status()
-        if "json" in r.headers.get("content-type", ""):
-            return r.json()
-    except Exception:
-        pass
-    return None
+def _fetch_json(
+    client: httpx.Client,
+    url: str,
+    *,
+    retries: int = DEFAULT_RETRIES,
+    backoff: float = DEFAULT_BACKOFF,
+) -> dict | None:
+    """
+    Fetch a JSON API response.
+
+    Returns the parsed payload on success, or None when the endpoint definitively
+    has no data (200 text/html — the SPA shell served for unresolvable slugs).
+    Raises FetchError when the outcome is indeterminate after `retries` attempts.
+
+    Never conflate the two: returning None on a timeout would make a failed run
+    look like an empty one, which is invisible in the output CSV.
+    """
+    last = "no attempt made"
+
+    for attempt in range(retries):
+        try:
+            r = client.get(url)
+        except httpx.HTTPError as exc:
+            last = f"{type(exc).__name__}: {exc}"
+        else:
+            if "json" not in r.headers.get("content-type", ""):
+                if r.status_code == 200:
+                    return None          # SPA shell — slug does not resolve
+                last = f"HTTP {r.status_code}, content-type {r.headers.get('content-type') or '(none)'}"
+            else:
+                try:
+                    data = r.json()
+                except ValueError as exc:
+                    last = f"HTTP {r.status_code}, malformed JSON: {exc}"
+                else:
+                    result = data.get("result")
+                    if isinstance(result, dict) and result.get("success"):
+                        return data
+                    api_err = result.get("error") if isinstance(result, dict) else None
+                    last = f"HTTP {r.status_code}, success=false, error={api_err!r}"
+
+        if attempt < retries - 1:
+            time.sleep(backoff ** attempt)
+
+    raise FetchError(last)
 
 
 # ── Per-product fetch ─────────────────────────────────────────────────────────
 
-def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
+def fetch_product_versions(
+    client: httpx.Client, product: dict, retries: int = DEFAULT_RETRIES,
+) -> tuple[list[dict], list[dict]]:
     """
     Fetch all version rows for one product using the products API.
 
@@ -77,16 +144,34 @@ def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
     1. Archive API → archived version_nos, ZIP URLs, GA dates + one archived versioned slug
     2. If no archived slug, fall back to /api/products/<parent-slug> for a versioned slug
     3. /api/products/<versioned-slug> → siblings → active versions (isArchive=False)
+
+    Returns (rows, errors). Rows derived from an endpoint that failed are still
+    emitted where they come from a different endpoint that succeeded, but every
+    failure is recorded so the caller can flag the affected fields as unreliable.
     """
     name = product["name"]
     slug = product["slug"]   # parent product slug from a_to_z
     rows: list[dict] = []
+    errors: list[dict] = []
+
+    def _record(endpoint: str, url: str, exc: Exception, impact: str) -> None:
+        errors.append({
+            "product_name": name, "product_slug": slug,
+            "endpoint": endpoint, "url": url, "error": str(exc), "impact": impact,
+        })
 
     # ── 1. Archived versions from archive API ─────────────────────────────────
     archived: dict[str, dict] = {}   # version_no → {zip_url, ga_date}
     archived_versioned_slug: str | None = None
 
-    arch_data = _fetch_json(client, ARCHIVE_API.format(slug=slug))
+    arch_url = ARCHIVE_API.format(slug=slug)
+    try:
+        arch_data = _fetch_json(client, arch_url, retries=retries)
+    except FetchError as exc:
+        arch_data = None
+        _record("archive", arch_url, exc,
+                "zip_url/ga_date missing and archived versions may be absent")
+
     if arch_data:
         for child in arch_data.get("result", {}).get("product", {}).get("children", []):
             ver  = child.get("version_no", "")
@@ -107,7 +192,12 @@ def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
 
     if versioned_slug is None:
         # No archives → ask the parent-slug API
-        p_data = _fetch_json(client, PRODUCTS_API.format(slug=slug))
+        p_url = PRODUCTS_API.format(slug=slug)
+        try:
+            p_data = _fetch_json(client, p_url, retries=retries)
+        except FetchError as exc:
+            p_data = None
+            _record("product", p_url, exc, "no versioned slug found; active versions missing")
         if p_data:
             product_data = p_data.get("result", {}).get("product", {})
             if not product_data.get("isParentProduct") and product_data.get("version_no"):
@@ -125,12 +215,17 @@ def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
                 "zip_url":      arch_info["zip_url"],
                 "ga_date":      arch_info["ga_date"],
             })
-        return rows
+        return rows, errors
 
     # ── 3. Siblings of a versioned product → active versions ──────────────────
-    v_data = _fetch_json(client, PRODUCTS_API.format(slug=versioned_slug))
+    v_url = PRODUCTS_API.format(slug=versioned_slug)
+    try:
+        v_data = _fetch_json(client, v_url, retries=retries)
+    except FetchError as exc:
+        v_data = None
+        _record("siblings", v_url, exc, "active (non-archived) versions missing")
     if not v_data:
-        return rows
+        return rows, errors
     vp = v_data.get("result", {}).get("product", {})
 
     # Collect all version entries: current product + all siblings
@@ -183,13 +278,17 @@ def fetch_product_versions(client: httpx.Client, product: dict) -> list[dict]:
                 "ga_date":      arch_info["ga_date"],
             })
 
-    # Sort by version (newest first)
+    # Sort by version (newest first). Tag each part with a type rank so a numeric
+    # part is never compared against a string one (e.g. "1.0.0" vs "1.0.0-beta"),
+    # which would raise TypeError and drop the whole product from the CSV.
     def _ver_key(row):
-        parts = row["version"].split(".")
-        return tuple(int(p) if p.isdigit() else p for p in parts)
+        return tuple(
+            (0, int(p), "") if p.isdigit() else (1, 0, p)
+            for p in row["version"].split(".")
+        )
 
     rows.sort(key=_ver_key, reverse=True)
-    return rows
+    return rows, errors
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -204,18 +303,42 @@ def main() -> int:
                         help="Limit to a single product slug (for testing)")
     parser.add_argument("--concurrency", type=int, default=10, metavar="N",
                         help="Parallel product fetches (default: 10)")
+    parser.add_argument("--retries",     type=int, default=DEFAULT_RETRIES, metavar="N",
+                        help=f"Attempts per endpoint before giving up (default: {DEFAULT_RETRIES})")
+    parser.add_argument("--strict",      action="store_true",
+                        help="Exit 2 if any endpoint failed (CSV is still written)")
     args = parser.parse_args()
 
     client = _client()
 
     # Step 1: get product list
     print(f"Fetching product list from {A_TO_Z_API}")
-    data = _fetch_json(client, A_TO_Z_API)
+    try:
+        data = _fetch_json(client, A_TO_Z_API, retries=args.retries)
+    except FetchError as exc:
+        print(f"ERROR: could not fetch product list — {exc}", file=sys.stderr)
+        return 1
     if not data:
-        print("ERROR: could not fetch product list", file=sys.stderr)
+        print(f"ERROR: {A_TO_Z_API} returned no JSON payload", file=sys.stderr)
         return 1
 
     products = data["result"]["products"]
+
+    # a_to_z can list one slug twice under different spellings of the name (e.g.
+    # "Spotfire Application" and "Spotfire™ Application"), which would duplicate
+    # every version of that product. Keep one entry per slug, choosing by sorted
+    # name so the pick is stable across runs regardless of API ordering.
+    by_slug: dict[str, list[dict]] = {}
+    for p in products:
+        by_slug.setdefault(p["slug"], []).append(p)
+    dup_slugs = {s: v for s, v in by_slug.items() if len(v) > 1}
+    if dup_slugs:
+        print(f"Note: {len(dup_slugs)} slug(s) listed more than once in a_to_z — deduplicating:")
+        for s, entries in sorted(dup_slugs.items()):
+            names = sorted(e["name"] for e in entries)
+            print(f"  {s}: {len(entries)} entries, keeping {names[0]!r}")
+    products = [sorted(v, key=lambda e: e["name"])[0] for v in by_slug.values()]
+
     if args.product:
         products = [p for p in products if p["slug"] == args.product]
         if not products:
@@ -226,22 +349,38 @@ def main() -> int:
 
     # Step 2: fetch versions for all products in parallel
     all_rows: list[dict] = []
+    all_errors: list[dict] = []
     start = time.time()
 
     with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
-        futures = {pool.submit(fetch_product_versions, client, p): p for p in products}
+        futures = {
+            pool.submit(fetch_product_versions, client, p, args.retries): p
+            for p in products
+        }
         done = 0
         for future in as_completed(futures):
             product = futures[future]
             done += 1
             try:
-                rows = future.result()
-                all_rows.extend(rows)
-                archived_count = sum(1 for r in rows if r["is_archived"])
-                print(f"  [{done:>3}/{len(products)}]  {product['name']}"
-                      f"  ({len(rows)} versions, {archived_count} archived)")
+                rows, errors = future.result()
             except Exception as exc:
+                # Unexpected bug rather than a fetch failure — surface it as an error
+                # row so the product cannot vanish from the CSV unnoticed.
                 print(f"  [{done:>3}/{len(products)}]  {product['name']}  ERROR: {exc}")
+                all_errors.append({
+                    "product_name": product["name"], "product_slug": product["slug"],
+                    "endpoint": "unhandled", "url": "",
+                    "error": f"{type(exc).__name__}: {exc}",
+                    "impact": "product omitted entirely",
+                })
+                continue
+
+            all_rows.extend(rows)
+            all_errors.extend(errors)
+            archived_count = sum(1 for r in rows if r["is_archived"])
+            suffix = f"  !! {len(errors)} endpoint error(s)" if errors else ""
+            print(f"  [{done:>3}/{len(products)}]  {product['name']}"
+                  f"  ({len(rows)} versions, {archived_count} archived){suffix}")
 
     elapsed = round(time.time() - start, 1)
     print(f"\nDone in {elapsed}s — {len(all_rows)} total version rows")
@@ -263,6 +402,33 @@ def main() -> int:
     print(f"\nCSV written: {out_path.resolve()}")
     print(f"  Rows:    {len(all_rows)}")
     print(f"  Columns: {', '.join(FIELDS)}")
+
+    # Error report — written only when there is something to report, and removed
+    # otherwise so a stale file from a previous run cannot be mistaken for current.
+    err_path = out_path.with_name(f"{out_path.stem}_errors{out_path.suffix}")
+    if all_errors:
+        with err_path.open("w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.DictWriter(f, fieldnames=ERROR_FIELDS)
+            writer.writeheader()
+            writer.writerows(all_errors)
+
+        affected = sorted({e["product_slug"] for e in all_errors})
+        print(f"\n{'!' * 72}")
+        print(f"WARNING: {len(all_errors)} endpoint failure(s) across {len(affected)} product(s).")
+        print("Data for these products is incomplete — do NOT treat a missing zip_url")
+        print("or absent version as a real catalog change when diffing snapshots.")
+        for e in all_errors[:15]:
+            print(f"  {e['product_slug']}  [{e['endpoint']}]  {e['error']}")
+        if len(all_errors) > 15:
+            print(f"  ... and {len(all_errors) - 15} more")
+        print(f"Error report: {err_path.resolve()}")
+        print("!" * 72)
+        if args.strict:
+            return 2
+    else:
+        err_path.unlink(missing_ok=True)
+        print("\nAll endpoints resolved cleanly — no failures to report.")
+
     return 0
 
 
