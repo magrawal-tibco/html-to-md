@@ -67,12 +67,12 @@ def parse_chunk_files(toc_js_dir: Path) -> dict[int, dict]:
         for m in pattern.finditer(content):
             url, ids_str, titles_str = m.group(1), m.group(2), m.group(3)
             ids    = [int(x.strip()) for x in ids_str.split(",") if x.strip()]
-            titles = [t.replace("\\'", "'") for t in _title_re.findall(titles_str)]
+            titles = [t.replace("\\'", "'").strip() for t in _title_re.findall(titles_str)]
             for node_id, title in zip(ids, titles):
                 id_to_page[node_id] = {"url": url, "title": title}
         for m in _section_pattern.finditer(content):
             ids    = [int(x.strip()) for x in m.group(1).split(",") if x.strip()]
-            titles = [t.replace("\\'", "'") for t in _title_re.findall(m.group(2))]
+            titles = [t.replace("\\'", "'").strip() for t in _title_re.findall(m.group(2))]
             for node_id, title in zip(ids, titles):
                 if node_id not in id_to_page:  # page nodes take precedence
                     id_to_page[node_id] = {"url": None, "title": title}

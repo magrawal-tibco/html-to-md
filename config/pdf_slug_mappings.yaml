@@ -7,8 +7,10 @@
 
 ReminderNotice: Reminder Notice
 admin-guide: Administration Guide
+administration: ''
 advanced_documentation: Advanced Documentation
 com-tutorial: COM Tutorial
+concepts: ''
 container_edition: Container Edition Guide
 dev-guide: Developer Guide
 installation: Installation Guide
@@ -18,6 +20,7 @@ licensedetails: License Details
 pdriver-tutorial: Process Driver Tutorial
 readme: Readme
 relnotes: Release Notes
+security: ''
 security-guide: Security Guide
 service-tutorial: Service Tutorial
 speedlink-guide: SpeedLink Guide

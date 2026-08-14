@@ -47,6 +47,9 @@ skip_path_segments:
   - /videos/
   - /resources/
   - /Java_API/
+  - /c/
+  - /tibdg/
+  - /golang/
   - /java/
 
 # Path segments to copy as-is from cache to output (no HTML→Markdown conversion)
@@ -118,3 +121,6 @@ zip:
   store_zip: true          # Keep .zip after extraction (set false to save disk space)
   zip_cache_dir: "cache/zip"
   min_free_gb: 20          # Skip a version if free disk space drops below this threshold
+
+pdf:
+  convert_relnotes: false  # Set true to convert relnotes PDFs to Markdown via pdf/convert.py

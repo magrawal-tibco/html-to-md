@@ -330,7 +330,7 @@ def node_to_yaml(node: dict, version_root: str) -> dict:
 def toc_to_yaml(toc: dict) -> dict:
     version_root = toc["root"].replace("\\", "/")
     return {
-        "docs_list_title": toc.get("version", ""),
+        "docs_list_title": "Online Help",
         "docs": [node_to_yaml(n, version_root) for n in toc["tree"]],
     }
 

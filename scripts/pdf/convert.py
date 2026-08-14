@@ -1206,7 +1206,12 @@ def discover_pdfs(cache_dir: Path, manifest: list[dict], settings: dict) -> list
 
     Only PDFs whose filename stem contains a pattern from settings.pdf.relnotes_patterns
     (default: ["relnotes", "release-notes"]) are returned.
+
+    Returns [] immediately if settings.pdf.convert_relnotes is False.
     """
+    if not settings.get("pdf", {}).get("convert_relnotes", True):
+        return []
+
     relnotes_patterns = settings.get("pdf", {}).get(
         "relnotes_patterns", ["relnotes", "release-notes"]
     )

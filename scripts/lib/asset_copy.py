@@ -4,6 +4,7 @@ asset_copy.py — Shared utilities for copying PDF/doc assets and generating lis
 Used by:
   scripts/08_restructure_ebx.py   (EBX-specific restructure)
   scripts/09_copy_assets.py       (generic product asset copy)
+  scripts/tibco_restructure.py    (TIBCO/DataSynapse restructure)
 """
 
 import re
@@ -15,14 +16,35 @@ import yaml
 
 SLUG_MAPPINGS_FILE = Path("config/pdf_slug_mappings.yaml")
 
-# PDF slugs that are "release documents" — listed in doc/index.md, excluded from pdf/index.md.
+# ---------------------------------------------------------------------------
+# Slug classification sets (used by tibco_restructure.py three-folder layout)
+# ---------------------------------------------------------------------------
+
+# Slugs of PDFs excluded from user-guides (relnotes → release-information; vpat+license → reference-documents)
+_USER_GUIDE_EXCLUDE_SLUGS = {"relnotes", "vpat", "license"}
+
+# Slugs of PDFs that belong in release-information
+_RELEASE_INFO_PDF_SLUGS = {"relnotes"}
+
+# Slugs of PDFs that belong in reference-documents (from pdf/ folder)
+_REFERENCE_DOC_PDF_SLUGS = {"vpat", "license"}
+
+# Legacy constant kept for EBX callers (08_restructure_ebx.py uses this directly)
 RELEASE_DOC_SLUGS = {"relnotes", "license", "vpat"}
+
+# Filename pattern for doc/ files that belong in release-information (readme TXT)
+_README_RE = re.compile(r"readme", re.IGNORECASE)
 
 # Anchors on the version number to handle product codes with underscores (e.g. dsp_gridserver).
 # Captures everything after the version as the slug.
 _VERSION_ANCHOR_RE = re.compile(r"_\d+[\d.]*_(.+)$")
 # Fallback for filenames without a version segment — take last underscore-separated token.
 _LAST_TOKEN_RE = re.compile(r"_([^_]+)$")
+
+
+def is_release_info_file(f: Path) -> bool:
+    """Return True if a doc/ file belongs in release-information (readme TXT)."""
+    return bool(_README_RE.search(f.stem))
 
 
 def load_slug_mappings(path: Path = SLUG_MAPPINGS_FILE) -> dict[str, str]:
@@ -127,32 +149,31 @@ def resolve_display_name(
 
 def write_index_md(
     dest_dir: Path,
-    subfolder: str,
+    label: str,
     product_name: str,
     product_version: str,
     files: list[Path],
     slug_mappings: dict[str, str],
     extra_files: list[tuple[Path, str]] | None = None,
 ) -> None:
-    """Write index.md for a pdf/ or doc/ asset folder.
+    """Write index.md for an asset folder.
 
-    extra_files: list of (source_path, link_href) for cross-folder entries — used to
-    include relnotes/license/vpat links in doc/index.md pointing into pdf/<ver>/.
+    label: display label for this folder (e.g. 'User Guides (PDF)', 'Release Information').
+    extra_files: list of (source_path, link_href) for cross-folder entries.
     """
-    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
-    title = f"{product_name} {product_version} {doc_type_label}"
+    title = f"{product_name} {product_version} {label}"
 
     # Serialize each frontmatter value via yaml.dump to safely quote special characters
     # (colons, brackets, quotes, etc. in product names/versions would break raw f-string YAML)
     def _ys(v: str) -> str:
-        return yaml.dump(v, allow_unicode=True, default_flow_style=True).strip()
+        return yaml.dump(v, allow_unicode=True, default_flow_style=True).split("\n")[0]
 
     lines = [
         "---\n",
+        f"doc_name: {_ys(label)}\n",
         f"title: {_ys(title)}\n",
         f"product_name: {_ys(product_name)}\n",
         f"product_version: {_ys(product_version)}\n",
-        f"doc_type: {_ys(subfolder)}\n",
         "---\n",
         "\n",
         f"# {title}\n",
@@ -168,18 +189,16 @@ def write_index_md(
     (dest_dir / "index.md").write_text("".join(lines), encoding="utf-8")
 
 
-def write_toc_yml(dest_dir: Path, subfolder: str, product_name: str, product_version: str) -> None:
-    doc_type_label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
-    title = f"{product_name} {product_version} {doc_type_label}"
-    # Use yaml.dump for string values to safely handle special characters
-    # (product names may contain ®, colons, or other YAML-significant characters)
+def write_toc_yml(dest_dir: Path, label: str, product_name: str, product_version: str) -> None:
+    title = f"{product_name} {product_version} {label}"
+
     def _ys(v: str) -> str:
-        return yaml.dump(v, allow_unicode=True, default_flow_style=True).strip()
+        return yaml.dump(v, allow_unicode=True, default_flow_style=True).split("\n")[0]
 
     content = (
         f"docs_list_title: {_ys(title)}\n"
         "docs:\n"
-        f"- title: {_ys(doc_type_label)}\n"
+        f"- title: {_ys(label)}\n"
         "  url: index.md\n"
     )
     (dest_dir / "toc.yml").write_text(content, encoding="utf-8")
@@ -195,15 +214,18 @@ def copy_asset_folder(
     slug_mappings: dict[str, str],
     exclude_slugs: set[str] | None = None,
     extra_files: list[tuple[Path, str]] | None = None,
+    dest_subfolder: str | None = None,
+    label: str | None = None,
 ) -> int:
-    """Copy pdf/ or doc/ assets from cache to dest_base/<subfolder>/<version_dashed>/.
+    """Copy pdf/ or doc/ assets from cache to dest_base/<dest_subfolder>/<version_dashed>/.
 
     Generates index.md and toc.yml alongside the copied files.
     Returns the number of asset files copied (excluding generated files).
 
+    dest_subfolder: output folder name (defaults to subfolder value).
+    label: display label for index.md/toc.yml (defaults to legacy derived label).
     exclude_slugs: slugs to omit from the index.md listing (files are still copied).
-    extra_files: (source_path, link_href) pairs to append to index.md — used to list
-                 release-doc PDFs in doc/index.md with cross-folder relative links.
+    extra_files: (source_path, link_href) pairs to append to index.md.
     """
     src_dir = cache_doc_dir / subfolder
     if not src_dir.is_dir():
@@ -213,18 +235,104 @@ def copy_asset_folder(
     if not files:
         return 0
 
-    dest_dir = dest_base / subfolder / version_dashed
+    out_folder = dest_subfolder or subfolder
+    # Derive default label from folder name for backward-compat with EBX callers
+    if label is None:
+        label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
+
+    dest_dir = dest_base / out_folder / version_dashed
     dest_dir.mkdir(parents=True, exist_ok=True)
 
+    # Only copy files that are not excluded — excluded slugs belong in other folders
+    excluded = exclude_slugs or set()
+    copy_files = [f for f in files if extract_slug(f.stem) not in excluded]
+    for f in copy_files:
+        shutil.copy2(f, dest_dir / f.name)
+
+    write_index_md(dest_dir, label, product_name, product_version,
+                   copy_files, slug_mappings, extra_files)
+    write_toc_yml(dest_dir, label, product_name, product_version)
+
+    return len(copy_files)
+
+
+def copy_release_info_folder(
+    cache_doc_dir: Path,
+    dest_base: Path,
+    version_dashed: str,
+    product_name: str,
+    product_version: str,
+    slug_mappings: dict[str, str],
+) -> int:
+    """Copy release-information assets: relnotes PDF (from pdf/) + readme TXT (from doc/).
+
+    Returns number of files copied.
+    """
+    dest_dir = dest_base / "release-information" / version_dashed
+    files: list[Path] = []
+
+    pdf_src = cache_doc_dir / "pdf"
+    if pdf_src.is_dir():
+        files += [f for f in sorted(pdf_src.iterdir())
+                  if f.is_file() and extract_slug(f.stem) in _RELEASE_INFO_PDF_SLUGS]
+
+    doc_src = cache_doc_dir / "doc"
+    if doc_src.is_dir():
+        files += [f for f in sorted(doc_src.iterdir())
+                  if f.is_file() and is_release_info_file(f)]
+
+    if not files:
+        return 0
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
     for f in files:
         shutil.copy2(f, dest_dir / f.name)
 
-    list_files = [f for f in files
-                  if extract_slug(f.stem) not in (exclude_slugs or set())]
-    write_index_md(dest_dir, subfolder, product_name, product_version,
-                   list_files, slug_mappings, extra_files)
-    write_toc_yml(dest_dir, subfolder, product_name, product_version)
+    write_index_md(dest_dir, "Release Information", product_name, product_version,
+                   files, slug_mappings)
+    write_toc_yml(dest_dir, "Release Information", product_name, product_version)
+    return len(files)
 
+
+def copy_reference_docs_folder(
+    cache_doc_dir: Path,
+    dest_base: Path,
+    version_dashed: str,
+    product_name: str,
+    product_version: str,
+    slug_mappings: dict[str, str],
+) -> int:
+    """Copy reference-documents assets: vpat + license (PDF or TXT) + all other doc/ files.
+
+    Sources:
+      - pdf/: files whose slug is in _REFERENCE_DOC_PDF_SLUGS (vpat, license)
+      - doc/: all files except readme (those go to release-information)
+
+    Returns number of files copied.
+    """
+    dest_dir = dest_base / "reference-documents" / version_dashed
+    files: list[Path] = []
+
+    pdf_src = cache_doc_dir / "pdf"
+    if pdf_src.is_dir():
+        files += [f for f in sorted(pdf_src.iterdir())
+                  if f.is_file() and extract_slug(f.stem) in _REFERENCE_DOC_PDF_SLUGS]
+
+    doc_src = cache_doc_dir / "doc"
+    if doc_src.is_dir():
+        files += [f for f in sorted(doc_src.iterdir())
+                  if f.is_file() and not is_release_info_file(f)]
+
+    if not files:
+        return 0
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    for f in files:
+        shutil.copy2(f, dest_dir / f.name)
+
+    write_index_md(dest_dir, "Reference Documents", product_name, product_version,
+                   files, slug_mappings)
+    write_toc_yml(dest_dir, "Reference Documents", product_name, product_version)
     return len(files)
 
 
