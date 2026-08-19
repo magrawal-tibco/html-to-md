@@ -61,6 +61,8 @@ class _TibcoMarkdownConverter(MarkdownConverter):
             return alt or ""
         # Sanitise: strip newlines/pipes that would break GFM pipe tables
         alt = alt.replace("\n", " ").replace("|", "&#124;")
+        # EBX source HTML uses the filename as alt text with a leading "/"; strip it
+        alt = alt.lstrip("/")
         return f"![{alt}]({src})"
 
 
