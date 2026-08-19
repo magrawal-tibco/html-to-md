@@ -34,7 +34,7 @@ EXPORT_FILES = [
     "scripts/05_postprocess.py",
     "scripts/06_build_toc.py",
     "scripts/07_generate_report.py",
-    "scripts/07_restructure_ebx_addon.py",
+    "scripts/ebx_addon_restructure.py",
     "scripts/08_restructure_ebx.py",
 ]
 
