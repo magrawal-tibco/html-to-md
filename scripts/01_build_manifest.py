@@ -151,7 +151,9 @@ def _fetch_json(client: httpx.Client, url: str) -> dict | None:
         r = client.get(url)
         r.raise_for_status()
         if "json" in r.headers.get("content-type", ""):
-            return r.json()
+            # Decode bytes explicitly as UTF-8 to avoid httpx inferring latin-1
+            # from a Content-Type header that omits a charset parameter.
+            return json.loads(r.content.decode("utf-8"))
     except Exception:
         pass
     return None
