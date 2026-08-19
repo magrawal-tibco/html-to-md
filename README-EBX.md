@@ -52,16 +52,20 @@ phases.
 If you need to add new EBX versions not listed in the phase files, edit the phase YAML:
 
 ```yaml
-# config/phases/ebx.yaml
+# config/phases/ebx.yaml (excerpt)
 name: "ebx POC"
 products:
   - https://docs.tibco.com/products/tibco-ebx-6-2-3
   - https://docs.tibco.com/products/tibco-ebx-6-2-2
-  # Add new versions here
+  # Add new EBX main versions here (slug pattern: tibco-ebx-<major>-<minor>-<patch>)
+
+# config/phases/ebx-addon-62x.yaml (excerpt)
+  - https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-3
+  - https://docs.tibco.com/products/tibco-ebx-add-ons-6-2-2
+  # Add new add-on versions here (slug pattern: tibco-ebx-add-ons-<major>-<minor>-<patch>)
 ```
 
 Each entry is a product page URL in the form `https://docs.tibco.com/products/<slug>`.
-The slug follows the pattern `tibco-ebx-<major>-<minor>-<patch>`.
 
 ---
 
@@ -83,9 +87,9 @@ python run.py --phase ebx
 python scripts/08_restructure_ebx.py
 ```
 
-### Phase B — EBX Add-ons 6.2.x
+### Phase B — EBX Add-ons
 
-Covers EBX Add-ons versions 6.2.0 through 6.2.3 (English only).
+Covers EBX Add-ons versions 4.5.x through 6.2.x (English only).
 
 ```bash
 # Step 1: Run the full pipeline for add-ons
@@ -93,12 +97,31 @@ python run.py --phase ebx-addon-62x
 
 # Step 2: Restructure directly to final layout (addon-first, language-first)
 # Source = output/pub/ebx-addon, destination = output/ebx-addon
-python scripts/07_restructure_ebx_addon.py --dst output/ebx-addon
+python scripts/ebx_addon_restructure.py --dst output/ebx-addon
 ```
 
-> **Important**: The restructure scripts (`07_restructure_ebx_addon.py`, `08_restructure_ebx.py`)
+> **Important**: The restructure scripts (`ebx_addon_restructure.py`, `08_restructure_ebx.py`)
 > are **not** called automatically by `run.py`. They must always be run manually after the
 > pipeline completes.
+
+### Post-restructure: Fix image alt text
+
+EBX source HTML uses the image filename as alt text with a leading `/` (e.g. `alt="/file.png"`).
+After restructuring, run this script once to strip the leading slash from all image alt text in
+the output — AEM Guides treats a leading-slash alt as an absolute path and fails to render the image:
+
+```bash
+# Fix both output/ebx and output/ebx-addon (default)
+python scripts/fix_image_alt.py
+
+# Preview what would change without writing
+python scripts/fix_image_alt.py --dry-run
+
+# Fix a specific subtree only
+python scripts/fix_image_alt.py --dirs output/ebx-addon
+```
+
+This script is idempotent — safe to run multiple times.
 
 ---
 
@@ -221,6 +244,6 @@ consistently fails, check network access to docs.tibco.com and re-run from `--fr
 The URL embedded in the product metadata may have changed. Check the product page at
 `https://docs.tibco.com/products/<slug>` and update the phase YAML if needed.
 
-**`output/pub/ebx-addon-reorg` not found when running Phase B restructure**
-`07_restructure_ebx_addon.py` must complete successfully before running `08_restructure_ebx.py`
-with `--src output/pub/ebx-addon-reorg`. Check the previous step's output for errors.
+**`output/pub/ebx-addon` not found when running Phase B restructure**
+`run.py --phase ebx-addon-62x` must complete successfully before running
+`ebx_addon_restructure.py`. Check the previous step's output for errors.

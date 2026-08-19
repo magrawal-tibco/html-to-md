@@ -35,6 +35,7 @@ EXPORT_FILES = [
     "scripts/06_build_toc.py",
     "scripts/07_generate_report.py",
     "scripts/ebx_addon_restructure.py",
+    "scripts/fix_image_alt.py",
     "scripts/08_restructure_ebx.py",
 ]
 
