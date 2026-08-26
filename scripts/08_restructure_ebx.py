@@ -438,16 +438,58 @@ def main() -> int:
             unfilled = [k for k, v in slug_mappings.items() if not v]
             print(f"  Review slugs       : {', '.join(unfilled)}")
 
-    # ── Phase 5: report ───────────────────────────────────────────────────────
-    print("\n=== Done ===")
-    print(f"  Files copied : {len(mapping) - errors}")
-    print(f"  Assets copied: {asset_total}")
-    print(f"  Errors       : {errors}")
-    if cross_links:
-        print(f"  Cross-lang   : {len(cross_links)} links need manual review")
-    print(f"  Output       : {dst.resolve()}")
+    # ── Phase 5: copy resources/samples and rest_toolkit/samples from cache ─────
+    print("\n=== Phase 5: Copying sample asset directories from cache ===")
+    # These directories are skipped by the main pipeline (/resources/ is in
+    # skip_path_segments) but their files are linked from topic pages. Copy
+    # them verbatim from cache into the restructured destination.
+    SAMPLE_PARENT_NAMES = {"resources", "rest_toolkit"}
+    samples_copied = 0
+    samples_errors = 0
+    if not cache_src.is_dir():
+        print(f"  WARNING: cache source not found ({cache_src}) — skipping samples copy")
+    else:
+        for version_dir in sorted(cache_src.iterdir()):
+            if not version_dir.is_dir():
+                continue
+            version = version_dir.name
+            ver_dashed = version.replace(".", "-")
+            html_dir = version_dir / "doc" / "html"
+            if not html_dir.is_dir():
+                continue
+            for lang_dir in sorted(html_dir.iterdir()):
+                if not lang_dir.is_dir():
+                    continue
+                lang = lang_dir.name
+                lang_norm = _norm_lang(lang)
+                webhelp_dst = dst / lang_norm / PRODUCT_SLUG / "webhelp" / ver_dashed
+                for samples_dir in lang_dir.rglob("samples"):
+                    if not samples_dir.is_dir():
+                        continue
+                    if samples_dir.parent.name not in SAMPLE_PARENT_NAMES:
+                        continue
+                    rel = samples_dir.relative_to(lang_dir)
+                    target = webhelp_dst / rel
+                    try:
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copytree(samples_dir, target, dirs_exist_ok=True)
+                        samples_copied += sum(1 for f in samples_dir.rglob("*") if f.is_file())
+                    except Exception as exc:
+                        print(f"\n  Error copying {rel}: {exc}")
+                        samples_errors += 1
+    print(f"  Sample files copied: {samples_copied} ({samples_errors} errors)")
 
-    return 0 if errors == 0 else 1
+    # ── Phase 6: report ───────────────────────────────────────────────────────
+    print("\n=== Done ===")
+    print(f"  Files copied   : {len(mapping) - errors}")
+    print(f"  Assets copied  : {asset_total}")
+    print(f"  Samples copied : {samples_copied}")
+    print(f"  Errors         : {errors + samples_errors}")
+    if cross_links:
+        print(f"  Cross-lang     : {len(cross_links)} links need manual review")
+    print(f"  Output         : {dst.resolve()}")
+
+    return 0 if (errors == 0 and samples_errors == 0) else 1
 
 
 if __name__ == "__main__":
