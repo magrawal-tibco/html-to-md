@@ -26,5 +26,7 @@ service-tutorial: Service Tutorial
 speedlink-guide: SpeedLink Guide
 upgrade-guide: Upgrade Guide
 user-guide: User Guide
+user_guide: ''
+users_guide: ''
 versioning_and_packaging_guide: Versioning and Packaging Guide
 vpat: VPAT (Accessibility)

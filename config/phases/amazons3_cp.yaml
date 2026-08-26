@@ -1,0 +1,6 @@
+name: "ActiveSpaces EE"
+
+products:
+  # TIBCO ActiveSpaces® - Enterprise Edition
+  - https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0
+  

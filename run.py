@@ -241,12 +241,15 @@ def get_zip_pub_slugs(phase: str, settings: dict) -> list[str]:
 def run_restructure_pipeline(
     pub_slugs: list[str],
     dry_run: bool,
+    phase: str | None = None,
 ) -> tuple[int, float]:
-    """Run 09_restructure_tibco.py for the given product slugs."""
+    """Run tibco_restructure.py for the given product slugs."""
     cmd = [
         sys.executable, "scripts/tibco_restructure.py",
         "--products", *pub_slugs,
     ]
+    if phase:
+        cmd += ["--phase", phase, "--phase-group", phase]
     if dry_run:
         cmd.append("--dry-run")
 
@@ -443,7 +446,7 @@ def main():
     if not args.skip_restructure and zip_slugs:
         print(f"\nZip-based products detected — running restructure sub-pipeline...")
         restructure_rc, restructure_elapsed = run_restructure_pipeline(
-            zip_slugs, args.dry_run
+            zip_slugs, args.dry_run, phase=args.phase
         )
         restructure_ok = (restructure_rc == 0)
         if not restructure_ok:

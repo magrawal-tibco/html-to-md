@@ -1,9 +1,47 @@
 # Phase file template — copy and rename to config/phases/<name>.yaml
 #
-# A phase defines which product versions to convert in one pipeline run.
+# A phase defines which product versions to convert in one pipeline run,
+# and how restructured output is organised.
 #
 # ─────────────────────────────────────────────────────────────────────────────
-# PRIMARY FORMAT — product version page URLs (recommended)
+# MODE (optional, default: version)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   mode: version       — Convert the listed version(s) only. No archive download.
+#                         Use for single-version or incremental updates.  (default)
+#
+#   mode: product       — Convert listed active versions AND download archived ZIPs
+#                         (is_archived=True rows in tibco_versions.csv) into
+#                         <phase>-resources/en-us/<product>/archives/.
+#                         Use for a full product migration.
+#
+#   mode: archives-only — Skip HTML conversion entirely. Only download archived ZIPs
+#                         for the pub_slugs listed in products:. In this mode,
+#                         products: contains plain pub_slug strings (not URLs).
+#                         Use when you want to populate archives/ without reconverting.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# OUTPUT LAYOUT
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# When run.py calls tibco_restructure.py, the phase name is passed as --phase-group.
+# This groups all products from this phase under two sibling folders:
+#
+#   output/<phase-name>/en-us/<product>/online-help/<version>/   ← webhelp Markdown
+#   output/<phase-name>-resources/en-us/<product>/user-guides/   ← PDFs, archives, API refs
+#                                        release-information/
+#                                        reference-documents/
+#                                        api-references/
+#                                        archives/
+#
+# Example for a "messaging" phase with products "as" and "ftl":
+#   output/messaging/en-us/as/online-help/5-2-0/
+#   output/messaging/en-us/ftl/online-help/6-0-0/
+#   output/messaging-resources/en-us/as/user-guides/5-2-0/
+#   output/messaging-resources/en-us/ftl/archives/
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# PRIMARY FORMAT — product version page URLs (recommended for mode: version / product)
 # ─────────────────────────────────────────────────────────────────────────────
 #
 #   products:  — one URL per product version
@@ -15,14 +53,19 @@
 # URL format:
 #   https://docs.tibco.com/products/<versioned-slug>
 #
-# Example versioned slugs:
-#   tibco-businessevents-enterprise-edition-6-4-0
-#   tibco-activematrix-businessworks-6-10-0
-#   tibco-flogo-enterprise-2-17-0
-#
 # To get a full list of product version URLs, run:
 #   python scripts/catalog/fetch_versions.py
 # This writes tibco_versions.csv with a doc_url column ready to paste here.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ARCHIVES-ONLY FORMAT — pub_slug strings (only for mode: archives-only)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   products:  — plain pub_slug strings (the folder name under cache/pub/)
+#               No HTML conversion runs. Archived ZIPs are downloaded from
+#               tibco_versions.csv rows where is_archived=True.
+#
+# Example pub_slugs: bwpluginawss3, dsp_gridserver, activespaces-enterprise-edition
 #
 # ─────────────────────────────────────────────────────────────────────────────
 # LEGACY FORMAT — sitemap URLs (backward-compatible, not recommended for new phases)
@@ -30,8 +73,6 @@
 #
 #   products:  — L2 product sitemapindex .xml URL
 #               Crawls all version sitemaps under the product automatically.
-#               Note: docs.tibco.com sitemaps are stale and may be missing
-#               current versions or contain broken localhost:5001 URLs.
 #
 #   versions:  — L3 version urlset .xml URL
 #               Targets one specific version directly.
@@ -40,13 +81,27 @@
 #   /products/<slug>  → product version URL → uses API
 #   *.xml / ftp_portal → sitemap URL → crawls sitemap
 
+# ── Example: convert a single version (default mode) ─────────────────────────
 name: "<descriptive phase name>"
+
+# mode: version   # default — omit this line for single-version conversion
 
 products:
   # Paste doc_url values from tibco_versions.csv here — one per line
   - https://docs.tibco.com/products/tibco-<product-slug>-<X-Y-Z>
-  # - https://docs.tibco.com/products/tibco-<another-product>-<A-B-C>
 
-# Optional: legacy L3 version sitemap URLs (for re-running specific old versions)
+# ── Example: full product migration (convert active + download archives) ──────
+# name: "<product> full migration"
+# mode: product
+# products:
+#   - https://docs.tibco.com/products/tibco-<product-slug>-<X-Y-Z>
+
+# ── Example: download archives only (no HTML conversion) ─────────────────────
+# name: "<product> archives"
+# mode: archives-only
+# products:
+#   - <pub-slug>   # e.g. bwpluginawss3
+
+# ── Legacy: L3 version sitemap URLs (for re-running specific old versions) ────
 # versions:
 #   - https://docs.tibco.com/ftp_portal/coveo/tibco-<product-slug>-<X-Y-Z>.xml

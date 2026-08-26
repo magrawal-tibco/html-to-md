@@ -1,0 +1,9 @@
+{
+  "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0": {
+    "zip_url": "https://docs.tibco.com/pub/bwpluginawss3/6.7.0/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0_documentation.zip",
+    "html_root": "pub/bwpluginawss3/6.7.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}

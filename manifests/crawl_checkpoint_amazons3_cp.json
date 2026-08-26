@@ -1,0 +1,12 @@
+{
+  "phase": "amazons3_cp",
+  "crawled_at": "2026-08-20T09:30:29Z",
+  "versions": {
+    "https://docs.tibco.com/products/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0": {
+      "zip_url": "https://docs.tibco.com/pub/bwpluginawss3/6.7.0/tibco-activematrix-businessworks-plug-in-for-amazon-s3-6-7-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "TIBCO ActiveMatrix BusinessWorks™ Plug-in for Amazon S3 6.7.0",
+      "product_version": "6.7.0"
+    }
+  }
+}

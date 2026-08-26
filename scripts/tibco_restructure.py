@@ -8,20 +8,28 @@ GitHub repos.
 Old layout (mirrors source URL):
   output/pub/<product>/<version>/doc/html/<content>
 
-New layout (language-first, doc/html removed):
+New layout with --phase-group <phase> (recommended):
+  output/<phase>/en-us/<product>/online-help/<version>/<content>    ← webhelp
+  output/<phase>-resources/en-us/<product>/user-guides/<version>/   ← assets
+
+New layout without --phase-group (legacy, no grouping):
   output/<product>/en-us/<product>/online-help/<version>/<content>
 
-Phase 5 copies PDF/doc assets from cache into three named folders:
+Phase 5 copies PDF/doc assets from cache into three named folders under resources_dst:
   user-guides/        — user-guide PDFs
   release-information/— relnotes PDF + readme TXT
   reference-documents/— vpat, license, and all other doc/ files
 
 Phase 6 copies API reference folders (c/, java/, golang/, tibdg/) from cache
-into <product>-resources/en-us/<product>/api-references/<subdir>/<version>/
+into resources_dst/en-us/<product>/api-references/<subdir>/<version>/
 and rewrites links in .md files to point to the new location.
 
 Phase 7 downloads archived version ZIPs (is_archived=True in tibco_versions.csv,
-not yet converted) into <product>-resources/en-us/<product>/archives/<version>/.
+not yet converted) into resources_dst/en-us/<product>/archives/.
+Only runs when phase mode is 'product' or 'archives-only' (default mode 'version' skips it).
+
+Phase mode is read from manifests/manifest_<phase>.json (conversion_mode field) or
+manifests/archive_only_<phase>.json. Override with --mode.
 
 Original source is left untouched. EBX-family products are excluded (already
 reorganized by scripts 07 and 08).
@@ -32,6 +40,9 @@ Usage:
                                        [--cache cache/pub]
                                        [--products bwpluginas bwplugincassandra ...]
                                        [--lang en-us]
+                                       [--phase <name>]
+                                       [--phase-group <name>]
+                                       [--mode version|product|archives-only]
                                        [--preflight-only]
                                        [--dry-run]
                                        [--skip-assets]
@@ -140,13 +151,17 @@ def discover_versions(src: Path, product: str) -> list[tuple[str, Path | None]]:
 
 def build_path_mapping(
     src: Path,
-    dst: Path,
+    webhelp_dst: Path,
     products: list[str],
     lang: str,
 ) -> dict[Path, Path]:
     """Build {old_path: new_path} for all webhelp files across all products.
 
-    src/<P>/<V>/doc/html/<rest> → dst/<P>/<lang>/<P>/online-help/<V-dashed>/<rest>
+    With phase grouping (webhelp_dst = output/<phase>):
+      src/<P>/<V>/doc/html/<rest> -> webhelp_dst/<lang>/<P>/online-help/<V-dashed>/<rest>
+
+    Without phase grouping (webhelp_dst = output, legacy):
+      src/<P>/<V>/doc/html/<rest> -> webhelp_dst/<P>/<lang>/<P>/online-help/<V-dashed>/<rest>
     """
     mapping: dict[Path, Path] = {}
     for product in products:
@@ -155,8 +170,10 @@ def build_path_mapping(
                 for f in html_dir.rglob("*"):
                     if f.is_file():
                         rel = f.relative_to(html_dir)
-                        mapping[f] = (dst / product / lang / product
-                                      / "online-help" / version.replace(".", "-") / rel)
+                        mapping[f] = (
+                            webhelp_dst / lang / product
+                            / "online-help" / version.replace(".", "-") / rel
+                        )
     return mapping
 
 
@@ -222,15 +239,17 @@ def rewrite_api_ref_links(
     md_file: Path,
     product: str,
     version_dashed: str,
-    dst: Path,
+    webhelp_dst: Path,
+    resources_dst: Path,
     lang: str,
 ) -> int:
-    """Rewrite relative API ref links in a .md file to point to <product>-resources location.
+    """Rewrite relative API ref links in a .md file to point to the resources_dst location.
 
     Handles two link patterns (matched by _API_REF_LINK_RE):
-      [text](api/c/index.html)       →  [text](../../../../../../<product>-resources/...)
-      [text](../../c/index.html)     →  [text](../../../../../../<product>-resources/...)
+      [text](api/c/index.html)       ->  [text](<rel>/api-references/...)
+      [text](../../c/index.html)     ->  [text](<rel>/api-references/...)
 
+    The relative prefix is computed from the md_file location back to resources_dst.
     Returns number of replacements made.
     """
     try:
@@ -238,16 +257,25 @@ def rewrite_api_ref_links(
     except Exception:
         return 0
 
-    # Depth from dst/<product>/<lang>/<product>/online-help/<version-dashed>/ back to dst/ = 5
-    prefix = "../../../../../"
-    resources_product = f"{product}-resources"
+    # Compute relative path from the .md file's directory back to resources_dst
+    # md_file is under webhelp_dst/<lang>/<product>/online-help/<ver>/
+    # resources_dst is a sibling of webhelp_dst (or same as webhelp_dst for legacy mode)
+    try:
+        rel_to_resources = Path(
+            "/".join([".."] * len(md_file.parent.relative_to(webhelp_dst).parts))
+        ) / resources_dst.name
+        prefix = rel_to_resources.as_posix() + "/"
+    except ValueError:
+        # Fallback: count depth manually (5 levels: lang/product/online-help/ver/file)
+        prefix = "../../../../../"
+        if resources_dst != webhelp_dst:
+            prefix = f"../../../../../../{resources_dst.name}/"
 
     def replace_link(m: re.Match) -> str:
         text = m.group(1)
         subdir = m.group(2)
         rest = m.group(3)
-        new_url = (f"{prefix}{resources_product}/{lang}/{product}"
-                   f"/api-references/{subdir}/{version_dashed}/{rest}")
+        new_url = f"{prefix}{lang}/{product}/api-references/{subdir}/{version_dashed}/{rest}"
         return f"[{text}]({new_url})"
 
     new_content, count = _API_REF_LINK_RE.subn(replace_link, content)
@@ -349,7 +377,7 @@ def _load_converted_urls() -> set[str]:
         try:
             entries = json.loads(mf.read_text(encoding="utf-8"))
             for e in entries:
-                doc_url = (e.get("url") or "").strip()
+                doc_url = (e.get("url") or e.get("version_url") or "").strip()
                 if doc_url:
                     urls.add(doc_url)
         except Exception:
@@ -357,9 +385,48 @@ def _load_converted_urls() -> set[str]:
     return urls
 
 
+def _read_phase_mode(phase: str | None) -> tuple[str, list[str]]:
+    """Return (mode, archive_only_pub_slugs) for the given phase.
+
+    Mode is read from:
+      1. manifests/archive_only_<phase>.json  -> mode='archives-only', slugs from file
+      2. First entry of manifests/manifest_<phase>.json -> entry['conversion_mode']
+      3. Default: 'version'
+
+    archive_only_pub_slugs is non-empty only when mode='archives-only'.
+    """
+    if not phase:
+        return "version", []
+
+    manifests_dir = Path("manifests")
+
+    # Check for archives-only sentinel file first
+    ao_path = manifests_dir / f"archive_only_{phase}.json"
+    if ao_path.exists():
+        try:
+            entries = json.loads(ao_path.read_text(encoding="utf-8"))
+            slugs = [e["pub_slug"] for e in entries if e.get("pub_slug")]
+            return "archives-only", slugs
+        except Exception:
+            pass
+
+    # Read conversion_mode from the phase manifest
+    mf_path = manifests_dir / f"manifest_{phase}.json"
+    if mf_path.exists():
+        try:
+            entries = json.loads(mf_path.read_text(encoding="utf-8"))
+            if entries:
+                mode = entries[0].get("conversion_mode", "version")
+                return mode, []
+        except Exception:
+            pass
+
+    return "version", []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Restructure TIBCO product output: version-first → language-first per-product staging"
+        description="Restructure TIBCO product output: version-first -> language-first per-product staging"
     )
     parser.add_argument("--src", default="output/pub",
                         help="Source base directory (default: output/pub)")
@@ -375,6 +442,13 @@ def main() -> int:
                         help="Run pre-flight scan only — no files written")
     parser.add_argument("--dry-run", action="store_true",
                         help="Build mapping and report counts, but do not copy files")
+    parser.add_argument("--phase", default=None, metavar="PHASE",
+                        help="Phase name (used to read mode from manifest)")
+    parser.add_argument("--phase-group", default=None, metavar="NAME",
+                        help="Group output: webhelp->dst/<NAME>/, assets->dst/<NAME>-resources/")
+    parser.add_argument("--mode", default=None,
+                        choices=["version", "product", "archives-only"],
+                        help="Override phase mode (default: read from manifest, fallback 'version')")
     parser.add_argument("--skip-assets", action="store_true",
                         help="Skip Phase 5 PDF/doc asset copy")
     parser.add_argument("--skip-api-refs", action="store_true",
@@ -386,220 +460,259 @@ def main() -> int:
     src = Path(args.src)
     dst = Path(args.dst)
 
-    if not src.exists():
+    # Resolve effective mode (CLI override > manifest > default)
+    manifest_mode, archive_only_slugs = _read_phase_mode(args.phase)
+    phase_mode = args.mode or manifest_mode
+
+    # Derive webhelp and resources roots
+    if args.phase_group:
+        webhelp_dst   = dst / args.phase_group
+        resources_dst = dst / f"{args.phase_group}-resources"
+    else:
+        # Legacy: no grouping — each product gets its own top-level folder
+        webhelp_dst   = dst
+        resources_dst = dst  # product-resources computed per-product below
+
+    if not src.exists() and phase_mode != "archives-only":
         print(f"Error: source not found: {src}", file=sys.stderr)
         return 1
 
-    print(f"Source : {src.resolve()}")
+    print(f"Source : {src.resolve() if src.exists() else src}")
     print(f"Dest   : {dst.resolve()}")
     print(f"Lang   : {args.lang}")
-    if args.dry_run:
-        print("Mode   : DRY RUN (no files written)")
+    print(f"Mode   : {phase_mode}" + (" [DRY RUN]" if args.dry_run else ""))
+    if args.phase_group:
+        print(f"Group  : {args.phase_group}  (webhelp -> {webhelp_dst.name}/, resources -> {resources_dst.name}/)")
     print()
 
     # ── Phase 0: discover & preflight ────────────────────────────────────────
     print("=== Phase 0: Discovery & pre-flight scan ===")
-    products = discover_products(src, args.products or [])
-    if not products:
-        print("  No products found (check --src and --products).", file=sys.stderr)
-        return 1
+
+    # archives-only: skip all conversion phases, go straight to Phase 7
+    if phase_mode == "archives-only":
+        ao_products = args.products or archive_only_slugs
+        if not ao_products:
+            print("  No pub_slugs found for archives-only mode. Pass --products or set mode in phase YAML.", file=sys.stderr)
+            return 1
+        print(f"  Archives-only mode: {len(ao_products)} product(s) — skipping Phases 1–6")
+        # Jump directly to Phase 7 below; set products for the archive loop
+        products = ao_products
+        mapping: dict[Path, Path] = {}
+        cross_links: list[dict] = []
+        errors = 0
+        patched = 0
+        total_asset_files = 0
+        total_api_files = 0
+        total_api_link_rewrites = 0
+    else:
+        products = discover_products(src, args.products or [])
+        if not products:
+            print("  No products found (check --src and --products).", file=sys.stderr)
+            return 1
 
     print(f"  Products to restructure: {len(products)}")
     for product in products:
-        versions = discover_versions(src, product)
-        webhelp_files = sum(
-            sum(1 for _ in v[1].rglob("*") if _.is_file()) if v[1] else 0
-            for v in versions
-        )
-        ver_names = [v[0] for v in versions]
-        print(f"    {product:<30} versions={ver_names}  webhelp={webhelp_files}")
+        if phase_mode == "archives-only":
+            print(f"    {product:<30} (archives-only)")
+        else:
+            versions = discover_versions(src, product)
+            webhelp_files = sum(
+                sum(1 for _ in v[1].rglob("*") if _.is_file()) if v[1] else 0
+                for v in versions
+            )
+            ver_names = [v[0] for v in versions]
+            print(f"    {product:<30} versions={ver_names}  webhelp={webhelp_files}")
 
-    cross_links = preflight_scan(src, products)
-    if cross_links:
-        print(f"\n  *** WARNING: {len(cross_links)} cross-product/version link(s) found ***")
-        for cl in cross_links[:20]:
-            print(f"    {cl['file']}  ->  {cl['link']}")
-        if len(cross_links) > 20:
-            print(f"    ... and {len(cross_links) - 20} more")
-        print("  These relative links may be broken in the restructured copy.")
-    else:
-        print("  No cross-product relative links found. All relative paths are preserved.")
+    if phase_mode != "archives-only":
+        cross_links = preflight_scan(src, products)
+        if cross_links:
+            print(f"\n  *** WARNING: {len(cross_links)} cross-product/version link(s) found ***")
+            for cl in cross_links[:20]:
+                print(f"    {cl['file']}  ->  {cl['link']}")
+            if len(cross_links) > 20:
+                print(f"    ... and {len(cross_links) - 20} more")
+            print("  These relative links may be broken in the restructured copy.")
+        else:
+            print("  No cross-product relative links found. All relative paths are preserved.")
 
     if args.preflight_only:
         print("\n(--preflight-only: stopping before copy)")
         return 0
 
-    # ── Phase 1: build path mapping ───────────────────────────────────────────
-    print("\n=== Phase 1: Building path mapping ===")
-    mapping = build_path_mapping(src, dst, products, args.lang)
-    print(f"  {len(mapping)} files mapped")
+    if phase_mode != "archives-only":
+        # ── Phase 1: build path mapping ───────────────────────────────────────
+        print("\n=== Phase 1: Building path mapping ===")
+        mapping = build_path_mapping(src, webhelp_dst, products, args.lang)
+        print(f"  {len(mapping)} files mapped")
 
-    if args.dry_run:
-        print("\n(--dry-run: skipping copy and patch)")
-        print(f"\n=== Done (dry run) ===")
-        print(f"  Would copy : {len(mapping)} files")
-        return 0
+        if args.dry_run:
+            print("\n(--dry-run: skipping copy and patch)")
+            print(f"\n=== Done (dry run) ===")
+            print(f"  Would copy : {len(mapping)} files")
+            return 0
 
-    # ── Phase 2: copy files ───────────────────────────────────────────────────
-    print("\n=== Phase 2: Copying files ===")
-    errors = 0
-    for old_path, new_path in tqdm(mapping.items(), desc="Copying", unit="file"):
+        # ── Phase 2: copy files ───────────────────────────────────────────────
+        print("\n=== Phase 2: Copying files ===")
+        errors = 0
+        for old_path, new_path in tqdm(mapping.items(), desc="Copying", unit="file"):
+            try:
+                new_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(old_path, new_path)
+            except Exception as exc:
+                print(f"\n  Error: {old_path} -> {exc}")
+                errors += 1
+
+        print(f"  Copied {len(mapping) - errors} files ({errors} errors)")
+
+        # ── Phase 3: cross-product link rewriting (informational only) ────────
+        if cross_links:
+            print("\n=== Phase 3: Cross-product link rewriting ===")
+            print("  Skipped -- cross-product links detected but auto-rewriting not implemented.")
+            print("  Review Phase 0 output for affected files.")
+
+        # ── Phase 4: patch _toc.json root fields ─────────────────────────────
+        print("\n=== Phase 4: Patching _toc.json root fields ===")
+
+        output_dir = Path("output")
         try:
-            new_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(old_path, new_path)
-        except Exception as exc:
-            print(f"\n  Error: {old_path} → {exc}")
-            errors += 1
+            src_prefix = src.resolve().relative_to(output_dir.resolve()).as_posix()
+        except ValueError:
+            src_prefix = src.as_posix().lstrip("./")
 
-    print(f"  Copied {len(mapping) - errors} files ({errors} errors)")
+        patched = 0
+        toc_candidates = 0
+        for product in products:
+            for version, html_dir in discover_versions(src, product):
+                if not html_dir:
+                    continue
+                folder_ver = version.replace(".", "-")
+                toc_file = (webhelp_dst / args.lang / product
+                            / "online-help" / folder_ver / "_toc.json")
+                if toc_file.exists():
+                    toc_candidates += 1
+                    old_root = f"{src_prefix}/{product}/{version}/doc/html/"
+                    new_root = f"{args.lang}/{product}/online-help/{folder_ver}/"
+                    if patch_toc_json(toc_file, old_root, new_root):
+                        patched += 1
 
-    # ── Phase 3: cross-product link rewriting (informational only) ────────────
-    if cross_links:
-        print("\n=== Phase 3: Cross-product link rewriting ===")
-        print("  Skipped -- cross-product links detected but auto-rewriting not implemented.")
-        print("  Review Phase 0 output for affected files.")
+        print(f"  Patched {patched} / {toc_candidates} _toc.json files")
 
-    # ── Phase 4: patch _toc.json root fields ─────────────────────────────────
-    print("\n=== Phase 4: Patching _toc.json root fields ===")
-
-    output_dir = Path("output")
-    try:
-        src_prefix = src.resolve().relative_to(output_dir.resolve()).as_posix()
-    except ValueError:
-        src_prefix = src.as_posix().lstrip("./")
-
-    patched = 0
-    toc_candidates = 0
-    for product in products:
-        for version, html_dir in discover_versions(src, product):
-            if not html_dir:
-                continue
-            folder_ver = version.replace(".", "-")
-            toc_file = dst / product / args.lang / product / "online-help" / folder_ver / "_toc.json"
-            if toc_file.exists():
-                toc_candidates += 1
-                old_root = f"{src_prefix}/{product}/{version}/doc/html/"
-                new_root = f"{product}/{args.lang}/{product}/online-help/{folder_ver}/"
-                if patch_toc_json(toc_file, old_root, new_root):
-                    patched += 1
-
-    print(f"  Patched {patched} / {toc_candidates} _toc.json files")
-
-    # ── Phase 5: copy PDF/doc assets ─────────────────────────────────────────
-    total_asset_files = 0
-    if args.skip_assets:
-        print("\n=== Phase 5: PDF/doc asset copy skipped (--skip-assets) ===")
-    elif not _ASSET_COPY_AVAILABLE:
-        print("\n=== Phase 5: PDF/doc asset copy skipped (lib.asset_copy not available) ===")
-    else:
-        print("\n=== Phase 5: Copying PDF/doc assets ===")
-        cache_root = Path(args.cache)
-        if not cache_root.exists():
-            print(f"  Cache root not found: {cache_root} — skipping")
+        # ── Phase 5: copy PDF/doc assets ─────────────────────────────────────
+        total_asset_files = 0
+        if args.skip_assets:
+            print("\n=== Phase 5: PDF/doc asset copy skipped (--skip-assets) ===")
+        elif not _ASSET_COPY_AVAILABLE:
+            print("\n=== Phase 5: PDF/doc asset copy skipped (lib.asset_copy not available) ===")
         else:
-            slug_mappings = load_slug_mappings(SLUG_MAPPINGS_FILE)
-            for product in products:
-                cache_src = cache_root / product
-                if not cache_src.is_dir():
-                    continue
-                asset_versions = discover_asset_versions(cache_src)
-                if not asset_versions:
-                    continue
-                dest_base = dst / product / args.lang / product
-                product_total = 0
-                for version, version_dashed in asset_versions:
-                    product_name = _lookup_product_name(product, version) or product
-                    cache_doc_dir = cache_src / version / "doc"
-
-                    n_user = copy_asset_folder(
-                        cache_doc_dir, "pdf", dest_base, version_dashed,
-                        product_name, version, slug_mappings,
-                        exclude_slugs=_USER_GUIDE_EXCLUDE_SLUGS,
-                        dest_subfolder="user-guides",
-                        label="User Guides (PDF)",
-                    )
-                    n_rel = copy_release_info_folder(
-                        cache_doc_dir, dest_base, version_dashed,
-                        product_name, version, slug_mappings,
-                    )
-                    n_ref = copy_reference_docs_folder(
-                        cache_doc_dir, dest_base, version_dashed,
-                        product_name, version, slug_mappings,
-                    )
-                    product_total += n_user + n_rel + n_ref
-                if product_total:
-                    print(f"  {product}: {product_total} asset files copied")
-                total_asset_files += product_total
-            save_slug_mappings(slug_mappings, SLUG_MAPPINGS_FILE)
-            print(f"  Total: {total_asset_files} asset files copied")
-
-    # ── Phase 6: copy API reference folders + rewrite links ──────────────────
-    total_api_files = 0
-    total_api_link_rewrites = 0
-    if args.skip_api_refs:
-        print("\n=== Phase 6: API reference copy skipped (--skip-api-refs) ===")
-    else:
-        print("\n=== Phase 6: Copying API reference folders ===")
-        cache_root = Path(args.cache)
-        if not cache_root.exists():
-            print(f"  Cache root not found: {cache_root} — skipping")
-        else:
-            for product in products:
-                cache_src = cache_root / product
-                if not cache_src.is_dir():
-                    continue
-                resources_base = (dst / f"{product}-resources"
-                                  / args.lang / product / "api-references")
-                product_api_files = 0
-                for version_dir in sorted(cache_src.iterdir()):
-                    if not version_dir.is_dir():
+            print("\n=== Phase 5: Copying PDF/doc assets ===")
+            cache_root = Path(args.cache)
+            if not cache_root.exists():
+                print(f"  Cache root not found: {cache_root} — skipping")
+            else:
+                slug_mappings = load_slug_mappings(SLUG_MAPPINGS_FILE)
+                for product in products:
+                    cache_src = cache_root / product
+                    if not cache_src.is_dir():
                         continue
-                    version = version_dir.name
-                    version_dashed = version.replace(".", "-")
-                    doc_dir = version_dir / "doc"
-                    for subdir in sorted(API_REF_SUBDIRS):
-                        src_api = doc_dir / subdir
-                        if not src_api.is_dir():
+                    asset_versions = discover_asset_versions(cache_src)
+                    if not asset_versions:
+                        continue
+                    dest_base = resources_dst / args.lang / product
+                    product_total = 0
+                    for version, version_dashed in asset_versions:
+                        product_name = _lookup_product_name(product, version) or product
+                        cache_doc_dir = cache_src / version / "doc"
+
+                        n_user = copy_asset_folder(
+                            cache_doc_dir, "pdf", dest_base, version_dashed,
+                            product_name, version, slug_mappings,
+                            exclude_slugs=_USER_GUIDE_EXCLUDE_SLUGS,
+                            dest_subfolder="user-guides",
+                            label="User Guides (PDF)",
+                        )
+                        n_rel = copy_release_info_folder(
+                            cache_doc_dir, dest_base, version_dashed,
+                            product_name, version, slug_mappings,
+                        )
+                        n_ref = copy_reference_docs_folder(
+                            cache_doc_dir, dest_base, version_dashed,
+                            product_name, version, slug_mappings,
+                        )
+                        product_total += n_user + n_rel + n_ref
+                    if product_total:
+                        print(f"  {product}: {product_total} asset files copied")
+                    total_asset_files += product_total
+                save_slug_mappings(slug_mappings, SLUG_MAPPINGS_FILE)
+                print(f"  Total: {total_asset_files} asset files copied")
+
+        # ── Phase 6: copy API reference folders + rewrite links ──────────────
+        total_api_files = 0
+        total_api_link_rewrites = 0
+        if args.skip_api_refs:
+            print("\n=== Phase 6: API reference copy skipped (--skip-api-refs) ===")
+        else:
+            print("\n=== Phase 6: Copying API reference folders ===")
+            cache_root = Path(args.cache)
+            if not cache_root.exists():
+                print(f"  Cache root not found: {cache_root} — skipping")
+            else:
+                for product in products:
+                    cache_src = cache_root / product
+                    if not cache_src.is_dir():
+                        continue
+                    resources_base = resources_dst / args.lang / product / "api-references"
+                    product_api_files = 0
+                    for version_dir in sorted(cache_src.iterdir()):
+                        if not version_dir.is_dir():
                             continue
-                        dest_api = resources_base / subdir / version_dashed
-                        shutil.copytree(src_api, dest_api, dirs_exist_ok=True)
-                        count = sum(1 for f in dest_api.rglob("*") if f.is_file())
-                        product_api_files += count
+                        version = version_dir.name
+                        version_dashed = version.replace(".", "-")
+                        doc_dir = version_dir / "doc"
+                        for subdir in sorted(API_REF_SUBDIRS):
+                            src_api = doc_dir / subdir
+                            if not src_api.is_dir():
+                                continue
+                            dest_api = resources_base / subdir / version_dashed
+                            shutil.copytree(src_api, dest_api, dirs_exist_ok=True)
+                            count = sum(1 for f in dest_api.rglob("*") if f.is_file())
+                            product_api_files += count
 
-                    # Rewrite API ref links and remove the api/ mirror from online-help
-                    online_help_dir = (dst / product / args.lang / product
-                                       / "online-help" / version_dashed)
-                    if online_help_dir.is_dir():
-                        for md_file in online_help_dir.rglob("*.md"):
-                            rewrites = rewrite_api_ref_links(
-                                md_file, product, version_dashed, dst, args.lang
-                            )
-                            total_api_link_rewrites += rewrites
+                        # Rewrite API ref links and remove the api/ mirror from online-help
+                        online_help_dir = (webhelp_dst / args.lang / product
+                                           / "online-help" / version_dashed)
+                        if online_help_dir.is_dir():
+                            for md_file in online_help_dir.rglob("*.md"):
+                                rewrites = rewrite_api_ref_links(
+                                    md_file, product, version_dashed,
+                                    webhelp_dst, resources_dst, args.lang,
+                                )
+                                total_api_link_rewrites += rewrites
 
-                        # Remove the api/ mirror folder that the ZIP placed under online-help
-                        # (typically under API-Reference/api/ — now served from api-references/)
-                        for api_mirror in online_help_dir.rglob("api"):
-                            if api_mirror.is_dir():
-                                shutil.rmtree(api_mirror)
+                            # Remove the api/ mirror folder placed under online-help by the ZIP
+                            for api_mirror in online_help_dir.rglob("api"):
+                                if api_mirror.is_dir():
+                                    shutil.rmtree(api_mirror)
 
-                if product_api_files:
-                    print(f"  {product}: {product_api_files} API reference files copied")
-                total_api_files += product_api_files
+                    if product_api_files:
+                        print(f"  {product}: {product_api_files} API reference files copied")
+                    total_api_files += product_api_files
 
-        if total_api_files:
-            print(f"  Total: {total_api_files} API reference files copied")
-        if total_api_link_rewrites:
-            print(f"  Link rewrites: {total_api_link_rewrites} API reference links updated")
+            if total_api_files:
+                print(f"  Total: {total_api_files} API reference files copied")
+            if total_api_link_rewrites:
+                print(f"  Link rewrites: {total_api_link_rewrites} API reference links updated")
 
     # ── Phase 7: download archived version ZIPs ───────────────────────────────
     total_archived = 0
     if args.skip_archives:
         print("\n=== Phase 7: Archived ZIP download skipped (--skip-archives) ===")
+    elif phase_mode == "version":
+        print("\n=== Phase 7: Skipped (mode=version — add 'mode: product' to phase YAML to enable) ===")
     else:
         print("\n=== Phase 7: Downloading archived version ZIPs ===")
         converted_urls = _load_converted_urls()
         for product in products:
-            # Derive the pub slug from manifests; fall back to the cache dir name
+            # Derive the pub slug from manifests; fall back to the product name itself
             pub_slug = _extract_pub_slug_from_manifests(product) or product
             if pub_slug != product:
                 print(f"  {product}: pub slug = '{pub_slug}' (from manifests)")
@@ -608,8 +721,8 @@ def main() -> int:
             if not archived:
                 continue
 
-            # All ZIPs go into a single flat archives/ folder — no per-version subdir
-            archives_dir = dst / f"{product}-resources" / args.lang / product / "archives"
+            # All ZIPs go into a single flat archives/ folder under resources_dst
+            archives_dir = resources_dst / args.lang / product / "archives"
             archives_dir.mkdir(parents=True, exist_ok=True)
 
             downloaded_entries: list[dict] = []
@@ -672,17 +785,19 @@ def main() -> int:
     # ── Summary ───────────────────────────────────────────────────────────────
     print("\n=== Done ===")
     print(f"  Products  : {len(products)}")
-    print(f"  Files     : {len(mapping) - errors} copied, {errors} errors")
-    print(f"  _toc.json : {patched} patched")
-    if total_asset_files:
-        print(f"  Assets    : {total_asset_files} PDF/doc files copied")
-    if total_api_files:
-        print(f"  API refs  : {total_api_files} files copied, {total_api_link_rewrites} links rewritten")
+    if phase_mode != "archives-only":
+        print(f"  Files     : {len(mapping) - errors} copied, {errors} errors")
+        print(f"  _toc.json : {patched} patched")
+        if total_asset_files:
+            print(f"  Assets    : {total_asset_files} PDF/doc files copied")
+        if total_api_files:
+            print(f"  API refs  : {total_api_files} files copied, {total_api_link_rewrites} links rewritten")
     if total_archived:
         print(f"  Archives  : {total_archived} version ZIPs downloaded")
-    if cross_links:
+    if phase_mode != "archives-only" and cross_links:
         print(f"  Cross-link: {len(cross_links)} links need manual review")
-    print(f"  Output    : {dst.resolve()}")
+    print(f"  Webhelp   : {webhelp_dst.resolve()}")
+    print(f"  Resources : {resources_dst.resolve()}")
 
     return 0 if errors == 0 else 1
 

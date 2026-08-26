@@ -42,12 +42,16 @@ html-to-md/
 │   ├── 07_generate_report.py       # Write phase_report.csv + update manifests/conversion_log.csv
 │   ├── 08_restructure_ebx.py       # EBX main: URL-mirror → language-first AEM layout + PDF/doc assets
 │   ├── ebx_addon_restructure.py    # EBX add-on: version-first → addon-first layout
-│   ├── tibco_restructure.py        # TIBCO/DataSynapse: version-first → language-first AEM layout
+│   ├── tibco_restructure.py        # TIBCO/DataSynapse: version-first → language-first + 3-folder assets
 │   ├── copy_assets.py              # Generic: copy PDF/doc assets + generate index.md + toc.yml
 │   ├── 10_copy_ebx_addon_pdfs.py   # EBX add-on: copy all PDFs → ebx-addons repo + index.md + toc.yml
 │   ├── audit_tables.py             # Migration planning: classify all <table> elements in HTML source
 │   ├── audit_tables_context.md     # Context doc for audit_tables.py (classification rules, examples)
 │   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
+│   ├── list_converted.py           # View/manage converted-versions registry (list, remove, mark-obsolete)
+│   ├── fix_missing_images.py       # Find and heal broken image refs in restructured output
+│   ├── qa_check.py                 # Post-conversion quality checks (9 check types, per-file or batch)
+│   ├── create_ebx_export.py        # Package EBX pipeline scripts as a portable zip for the EBX team
 │   ├── catalog/
 │   │   ├── fetch_versions.py       # Query docs.tibco.com API → tibco_versions.csv (all products)
 │   │   └── diff_versions.py        # Diff two catalog snapshots → added/removed/changed versions
@@ -236,8 +240,13 @@ Controlled by `skip_filenames` in settings.yaml.
 - GUID-based filenames (`GUID-xxx.html`) — SDL Trisoft DITA, logged as `non-madcap-dita`,
   written to `dita_versions_<phase>.json` for the DITA sub-pipeline
 
-### Non-Content Directories (filter in Step 1)
-`_globalpages/`, `MicroContent/`, `_templates/`, `Skins/`, `Resources/`
+### Non-Content Directories / Path Segments (filter in Step 1)
+Controlled by `skip_path_segments` in settings.yaml:
+`/javadoc/`, `/_globalpages/`, `/MicroContent/`, `/_templates/`, `/Skins/`, `/Resources/`,
+`/lib/`, `/functions/`, `/videos/`, `/resources/`, `/Java_API/`, `/c/`, `/tibdg/`, `/golang/`, `/java/`
+
+`copy_path_segments` — segments copied verbatim from cache to output without HTML→Markdown conversion:
+`/Java_API/`, `/java/`
 
 ### ZIP-first download (Step 2a)
 Downloads the full documentation ZIP per version and extracts into `cache/`. After extraction,
@@ -344,8 +353,18 @@ Images alongside:
 
 Restructure scripts remap to language-first AEM layout:
 ```
+# EBX main (08_restructure_ebx.py):
 output/pub/ebx/<version>/doc/html/<lang>/<content>
   → output/ebx/<lang-norm>/ebx/webhelp/<ver-dashed>/<content>
+
+# TIBCO/DataSynapse (tibco_restructure.py):
+output/pub/<product>/<version>/doc/html/<content>
+  → output/<product>/en-us/<product>/online-help/<ver-dashed>/<content>
+  → output/<product>-resources/en-us/<product>/user-guides/<ver-dashed>/        (PDFs)
+  → output/<product>-resources/en-us/<product>/release-information/<ver-dashed>/ (relnotes + readme)
+  → output/<product>-resources/en-us/<product>/reference-documents/<ver-dashed>/ (vpat + license + doc/)
+  → output/<product>-resources/en-us/<product>/api-references/<subdir>/<ver-dashed>/ (C/Java/Go APIs)
+  → output/<product>-resources/en-us/<product>/archives/                         (archived ZIPs)
 ```
 
 ---
@@ -378,6 +397,7 @@ content_selectors:
   - "div[role='main']#mc-main-content"   # MadCap Flare WebHelp2
   - "div#center article"                 # DITA WebHelp Responsive
   - "article"
+  - "div#ebx_main"                       # EBX custom YUI frameset
 
 chrome_selectors:                        # Elements stripped by strip_chrome transform
   - p.MCWebHelpFramesetLink
@@ -387,12 +407,20 @@ chrome_selectors:                        # Elements stripped by strip_chrome tra
   - div.MCMiniTocBox_0
   - div#feedback-survey
   - p.Copyright
-  - a.codeSnippetCopyButton
+  - noscript
+  # (ebx_chrome_selectors in settings.yaml adds EBX-specific entries: p.noPrint, div#printHeader, etc.)
 
 image_skip_prefixes:
   - Skins/
   - Resources/Scripts/
   - Resources/Stylesheets/
+  - resources/stylesheets/
+  - resources/yui/
+  - resources/icons/
+  - resources/syntaxHighlighter/
+
+pdf:
+  convert_relnotes: false  # Set true to convert relnotes PDFs to Markdown via pdf/convert.py
 
 tables:
   passthrough_block_tags:
@@ -529,6 +557,50 @@ python scripts/ebx_addon_restructure.py [--src output/pub/ebx-addon] \
                                          [--javadocs-dst output/ebx-addon-javadocs] \
                                          [--preflight-only]
 ```
+
+### tibco_restructure.py
+
+Transforms TIBCO/DataSynapse intermediate output → language-first AEM layout with three-folder
+asset structure. Runs 7 phases:
+
+- Phase 1: Build file path mapping (`output/pub/<product>/` → `output/<product>/en-us/<product>/online-help/<ver-dashed>/`)
+- Phase 2: Patch `_toc.json` root paths to reflect new locations
+- Phase 3: Copy webhelp Markdown + images to `online-help/<ver-dashed>/`
+- Phase 4: Patch `toc.yml` `docs_list_title` = `"Online Help"`
+- Phase 5: Copy PDF/doc assets into three named folders:
+  - `user-guides/<ver>/` — PDFs excluding relnotes/vpat/license (`User Guides (PDF)`)
+  - `release-information/<ver>/` — relnotes PDF + readme TXT (`Release Information`)
+  - `reference-documents/<ver>/` — vpat + license PDFs + all other doc/ files (`Reference Documents`)
+- Phase 6: Copy API reference dirs (`c/`, `java/`, `golang/`, `tibdg/`) → `<product>-resources/en-us/<product>/api-references/<subdir>/<ver-dashed>/`; rewrite `api/` links in .md files to the new location; remove `api/` mirror from online-help
+- Phase 7: Download archived version ZIPs → `<product>-resources/en-us/<product>/archives/`; write combined `index.md` + `toc.yml`
+
+```bash
+python scripts/tibco_restructure.py [--src output/pub] [--dst output] \
+                                     [--cache cache/pub] [--products as bwce] \
+                                     [--lang en-us] [--dry-run] [--preflight-only] \
+                                     [--skip-assets] [--skip-api] [--skip-archives]
+```
+
+`API_REF_SUBDIRS = {"c", "java", "golang", "tibdg"}` — API reference directory names copied in Phase 6.
+Links inside online-help .md files are rewritten from relative `api/<subdir>/` to
+`../../../../../<product>-resources/en-us/<product>/api-references/<subdir>/<ver-dashed>/`.
+
+### list_converted.py
+
+View and manage `manifests/converted_versions.json` — the registry of successfully converted versions.
+
+```bash
+python scripts/list_converted.py                        # list all, grouped by phase
+python scripts/list_converted.py --filter "EBX"        # keyword filter
+python scripts/list_converted.py --phase activespaces_ee
+python scripts/list_converted.py --remove <version_url>          # remove one → forces re-conversion
+python scripts/list_converted.py --remove-all --phase bw_plugins_poc
+python scripts/list_converted.py --mark-obsolete <version_url>   # flag for rerun without removing
+python scripts/list_converted.py --mark-obsolete-all --filter "GridServer"
+python scripts/list_converted.py --dry-run --remove-all --phase ebx
+```
+
+`--remove-all` and `--mark-obsolete-all` require `--filter` or `--phase` as a safety guard.
 
 ### PDF slug mapping (config/pdf_slug_mappings.yaml)
 

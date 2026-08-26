@@ -255,7 +255,21 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
     # Track alias.xml URLs per version to avoid duplicates
     seen_alias: dict[str, str] = {}  # version_sitemap_url → alias_xml_url
 
-    products = phase.get("products", [])
+    phase_mode = phase.get("mode", "version").strip().lower()
+    VALID_MODES = {"version", "product", "archives-only"}
+    if phase_mode not in VALID_MODES:
+        reporter.fail("phase YAML", f"Unknown mode '{phase_mode}' — must be one of: {', '.join(sorted(VALID_MODES))}", step="01_build_manifest")
+        return [], [], [], {}
+
+    reporter.info(f"Phase mode: {phase_mode}")
+
+    # archives-only: no HTML conversion — just record pub_slugs for restructure Phase 7
+    products_raw = phase.get("products", [])
+    if phase_mode == "archives-only":
+        reporter.info(f"Mode 'archives-only': skipping HTML conversion, recording {len(products_raw)} pub_slug(s)")
+        return [], [], [], {}
+
+    products = products_raw
     reporter.info(f"Processing {len(products)} product sitemap(s) from phase '{phase.get('name')}'")
 
     for product_url in products:
@@ -276,6 +290,7 @@ def build_manifest(phase: dict, settings: dict, reporter: Reporter, dry_run: boo
                             reporter.count("versions_delta_skipped")
                             time.sleep(delay)
                             continue
+                    entry["conversion_mode"] = phase_mode
                     manifest.append(entry)
                     version_meta[product_url] = {
                         "zip_url":           entry["zip_url"],
@@ -499,6 +514,18 @@ def main():
 
     if not args.dry_run:
         manifests_dir.mkdir(parents=True, exist_ok=True)
+
+        # For archives-only phases, write pub_slug list instead of (empty) manifest
+        phase_mode = phase.get("mode", "version").strip().lower()
+        if phase_mode == "archives-only":
+            products_raw = phase.get("products", [])
+            archive_only = [{"pub_slug": p} for p in products_raw if isinstance(p, str)]
+            ao_path = manifests_dir / f"archive_only_{args.phase}.json"
+            ao_path.write_text(
+                json.dumps(archive_only, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            reporter.info(f"Archive-only pub_slugs written to {ao_path}")
 
         out_path = manifests_dir / f"manifest_{args.phase}.json"
         out_path.write_text(
