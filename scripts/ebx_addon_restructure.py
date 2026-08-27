@@ -391,6 +391,44 @@ def main() -> int:
                 cj_errors += 1
     print(f"  Total: {cj_copied} files copied ({cj_errors} errors)")
 
+    # Generate index.md and toc.yml in dst/en-us/ebx-addon/javadocs/
+    # listing all copied versions as external links.
+    javadocs_index_dir = dst / "en-us" / "ebx-addon" / "javadocs"
+    if cj_copied > 0 or javadocs_index_dir.is_dir():
+        javadocs_index_dir.mkdir(parents=True, exist_ok=True)
+        # Collect versions that were actually copied, sorted numerically.
+        copied_versions = sorted(
+            (d.name for d in (dst / "en-us" / "ebx-addons" / "javadocs").iterdir() if d.is_dir()),
+            key=lambda v: [int(x) for x in v.split("-")],
+        )
+        base_url = "https://stg-docs.onebx.com/us/en/ebx-addons/resources/javadocs"
+        bullet_lines = "\n".join(
+            f"- [TIBCO EBX® Add-ons {v.replace('-', '.')} Java API]({base_url}/{v}/)"
+            for v in copied_versions
+        )
+        index_md = (
+            "---\n"
+            "title: Java API Reference\n"
+            "source_url: ''\n"
+            "lang: en-us\n"
+            "topic_type: ''\n"
+            "toc_path: ''\n"
+            "product_name: TIBCO EBX® Add-ons\n"
+            "product_version: ''\n"
+            "---\n\n"
+            "# Java API Reference\n\n"
+            f"{bullet_lines}\n"
+        )
+        toc_yml = (
+            "docs_list_title: TIBCO EBX® Add-ons Java API Reference\n"
+            "docs:\n"
+            "- title: Java API Reference\n"
+            "  url: index.md\n"
+        )
+        (javadocs_index_dir / "index.md").write_text(index_md, encoding="utf-8")
+        (javadocs_index_dir / "toc.yml").write_text(toc_yml, encoding="utf-8")
+        print(f"  Generated index.md and toc.yml in {javadocs_index_dir.relative_to(dst)} ({len(copied_versions)} versions)")
+
     # ── Summary ───────────────────────────────────────────────────────────────
     total_errors = errors + jd_errors + cj_errors
     print("\n=== Done ===")
