@@ -209,12 +209,15 @@ def main() -> int:
                         help="Webhelp destination (default: output/ebx-addon)")
     parser.add_argument("--javadocs-dst", default=None,
                         help="Javadocs destination (default: same as --dst)")
+    parser.add_argument("--cache-src", default="cache/pub/ebx-addon",
+                        help="Cache root for ebx-addon (default: cache/pub/ebx-addon)")
     parser.add_argument("--preflight-only", action="store_true",
                         help="Run pre-flight scan only — no files written")
     args = parser.parse_args()
 
     src = Path(args.src)
     dst = Path(args.dst)
+    cache_src = Path(args.cache_src)
     javadocs_dst = Path(args.javadocs_dst) if args.javadocs_dst else dst
 
     if not src.exists():
@@ -222,6 +225,7 @@ def main() -> int:
         return 1
 
     print(f"Source       : {src.resolve()}")
+    print(f"Cache src    : {cache_src.resolve()}")
     print(f"Webhelp dest : {dst.resolve()}")
     print(f"Javadocs dest: {javadocs_dst.resolve()}")
     print()
@@ -356,11 +360,43 @@ def main() -> int:
 
     print(f"  Patched {patched_java} files" + (f" ({java_errors} errors)" if java_errors else ""))
 
+    # ── Phase 7: copy component-level java/ from cache → ebx-addons/javadocs/ ──
+    # Some ebx-addon versions ship a top-level java/ Javadoc tree at
+    # cache/pub/ebx-addon/<version>/java/ that applies to all addons (not
+    # per-addon). Copy it verbatim to:
+    #   dst/en-us/ebx-addons/javadocs/<ver-dashed>/
+    print("\n=== Phase 7: Copying component-level Javadocs from cache ===")
+    cj_copied = 0
+    cj_errors = 0
+    if not cache_src.is_dir():
+        print(f"  WARNING: cache source not found ({cache_src}) — skipping")
+    else:
+        for version_dir in sorted(cache_src.iterdir()):
+            if not version_dir.is_dir():
+                continue
+            java_src = version_dir / "java"
+            if not java_src.is_dir():
+                continue
+            version = version_dir.name
+            ver_dashed = version.replace(".", "-")
+            java_dst = dst / "en-us" / "ebx-addons" / "javadocs" / ver_dashed
+            try:
+                java_dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(java_src, java_dst, dirs_exist_ok=True)
+                n = sum(1 for f in java_src.rglob("*") if f.is_file())
+                cj_copied += n
+                print(f"  {version} -> {java_dst.relative_to(dst)} ({n} files)")
+            except Exception as exc:
+                print(f"\n  Error copying {version}/java: {exc}")
+                cj_errors += 1
+    print(f"  Total: {cj_copied} files copied ({cj_errors} errors)")
+
     # ── Summary ───────────────────────────────────────────────────────────────
-    total_errors = errors + jd_errors
+    total_errors = errors + jd_errors + cj_errors
     print("\n=== Done ===")
     print(f"  Webhelp files copied : {len(mapping) - errors}")
     print(f"  Javadocs files copied: {len(javadocs_mapping) - jd_errors}")
+    print(f"  Component javadocs   : {cj_copied}")
     print(f"  Errors               : {total_errors}")
     if cross_links:
         print(f"  Cross-addon          : {len(cross_links)} links need manual review")
