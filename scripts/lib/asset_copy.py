@@ -16,10 +16,10 @@ import yaml
 
 SLUG_MAPPINGS_FILE = Path("config/pdf_slug_mappings.yaml")
 
-# Cleans mojibake artifacts that appear when UTF-8 ® (0xC2 0xAE) is decoded as Latin-1,
-# producing the two-character sequence Â® (U+00C2 U+00AE). Strips both characters so
-# product names render cleanly in generated index.md and toc.yml files.
-_MOJIBAKE_TRADEMARK_RE = re.compile(r"[Â]?[®™©]")
+# Cleans the mojibake artifact that appears when UTF-8 ® (0xC2 0xAE) is decoded as Latin-1,
+# producing the two-character sequence Â® (U+00C2 U+00AE). Strips only the spurious Â
+# (U+00C2) prefix, preserving the ® / ™ symbol itself.
+_MOJIBAKE_TRADEMARK_RE = re.compile(r"Â([®™©])")
 
 # ---------------------------------------------------------------------------
 # Slug classification sets (used by tibco_restructure.py three-folder layout)
@@ -154,8 +154,8 @@ def resolve_display_name(
 
 
 def _clean_product_name(product_name: str) -> str:
-    """Strip mojibake trademark artifacts (Â®, Â™) and trailing whitespace."""
-    return _MOJIBAKE_TRADEMARK_RE.sub("", product_name).strip()
+    """Strip the mojibake Â prefix from ®/™ symbols (Â® → ®) and trim whitespace."""
+    return _MOJIBAKE_TRADEMARK_RE.sub(r"\1", product_name).strip()
 
 
 def write_index_md(
