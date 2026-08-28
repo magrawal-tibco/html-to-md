@@ -16,6 +16,11 @@ import yaml
 
 SLUG_MAPPINGS_FILE = Path("config/pdf_slug_mappings.yaml")
 
+# Cleans mojibake artifacts that appear when UTF-8 ® (0xC2 0xAE) is decoded as Latin-1,
+# producing the two-character sequence Â® (U+00C2 U+00AE). Strips both characters so
+# product names render cleanly in generated index.md and toc.yml files.
+_MOJIBAKE_TRADEMARK_RE = re.compile(r"[Â]?[®™©]")
+
 # ---------------------------------------------------------------------------
 # Slug classification sets (used by tibco_restructure.py three-folder layout)
 # ---------------------------------------------------------------------------
@@ -105,6 +110,7 @@ def resolve_display_name(
     product_version: str,
     slug_mappings: dict[str, str],
 ) -> str:
+    product_name = _clean_product_name(product_name)
     """Resolve a human-readable display name for a PDF/doc asset file.
 
     Resolution order:
@@ -147,6 +153,11 @@ def resolve_display_name(
     return filepath.name
 
 
+def _clean_product_name(product_name: str) -> str:
+    """Strip mojibake trademark artifacts (Â®, Â™) and trailing whitespace."""
+    return _MOJIBAKE_TRADEMARK_RE.sub("", product_name).strip()
+
+
 def write_index_md(
     dest_dir: Path,
     label: str,
@@ -161,6 +172,7 @@ def write_index_md(
     label: display label for this folder (e.g. 'User Guides (PDF)', 'Release Information').
     extra_files: list of (source_path, link_href) for cross-folder entries.
     """
+    product_name = _clean_product_name(product_name)
     title = f"{product_name} {product_version} {label}"
 
     # Serialize each frontmatter value via yaml.dump to safely quote special characters
@@ -190,6 +202,7 @@ def write_index_md(
 
 
 def write_toc_yml(dest_dir: Path, label: str, product_name: str, product_version: str) -> None:
+    product_name = _clean_product_name(product_name)
     title = f"{product_name} {product_version} {label}"
 
     def _ys(v: str) -> str:
