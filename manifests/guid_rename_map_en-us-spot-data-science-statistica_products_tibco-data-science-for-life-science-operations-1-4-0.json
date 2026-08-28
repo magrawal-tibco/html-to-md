@@ -1,0 +1,37 @@
+{
+  "html_root": "pub/dscls-operations/1.4.0/doc/html/",
+  "topics": {
+    "GUID-0F72F5D6-B0F7-4D58-8FCC-5A83D6ADA039.html": "documentation-and-support-services.html",
+    "GUID-2172396E-DBEC-4CC4-8B2B-08E3EE4EE256.html": "tibco-data-science-operations.html",
+    "GUID-22C13786-71B0-4AD4-A2B5-685C342C12E1.html": "team-studio-server.html",
+    "GUID-287DF49B-58E2-4206-ADE4-4FBCD7BE73AC.html": "in-analysis-workflow-authoring.html",
+    "GUID-34BF4DD5-6B0D-4939-B001-C8BE3056967E.html": "in-datasource-workflow-authoring.html",
+    "GUID-472F6557-D11C-48A9-9AD8-06703E949A03.html": "legal-and-third-party-notices.html",
+    "GUID-52BEAD1A-2205-4EF7-BED8-49C17E33A81E.html": "data-pipeline-management.html",
+    "GUID-55B5E0C3-58B7-471E-9C83-A950428FA9D0.html": "licensing.html",
+    "GUID-58F4286A-D96D-4241-91C7-50BEF6FE5FD1-homepage.html": "tibco-data-science-overview-and-planning-version.html",
+    "GUID-6D8541C8-74B4-4DA9-A94C-82372E0BAE9E.html": "tibco-data-science.html",
+    "GUID-7A0E0EAE-99B7-4260-B916-E0F3513D1A5C.html": "tibco-data-science-author.html",
+    "GUID-8C4767BE-6CFE-4B31-B796-9DB534F12EC9.html": "tibco-statistica-server.html",
+    "GUID-9170A8A2-9492-464F-B8CE-8A4165681309.html": "plan-a-tibco-data-science-deployment.html"
+  },
+  "images": {
+    "GUID-02FE8AC7-A0BA-484E-9DB1-153F9ED8685A-display.png": "overview-of-system.png",
+    "GUID-43BEF1AA-E1CF-4715-9D73-284E089C4F61-display.png": "tibco-data-science-author.png",
+    "GUID-65CDC638-2067-4DE8-926E-DAC947F0070F-display.png": "operations-overview.png"
+  },
+  "toc_paths": {
+    "GUID-6D8541C8-74B4-4DA9-A94C-82372E0BAE9E.html": "TIBCO Data Science",
+    "GUID-7A0E0EAE-99B7-4260-B916-E0F3513D1A5C.html": "TIBCO Data Science|TIBCO Data Science - Author",
+    "GUID-52BEAD1A-2205-4EF7-BED8-49C17E33A81E.html": "TIBCO Data Science|TIBCO Data Science - Author|Data Pipeline Management",
+    "GUID-34BF4DD5-6B0D-4939-B001-C8BE3056967E.html": "TIBCO Data Science|TIBCO Data Science - Author|Data Pipeline Management|In-Datasource Workflow Authoring",
+    "GUID-287DF49B-58E2-4206-ADE4-4FBCD7BE73AC.html": "TIBCO Data Science|TIBCO Data Science - Author|Data Pipeline Management|In-Analysis Workflow Authoring",
+    "GUID-2172396E-DBEC-4CC4-8B2B-08E3EE4EE256.html": "TIBCO Data Science|TIBCO Data Science - Operations",
+    "GUID-8C4767BE-6CFE-4B31-B796-9DB534F12EC9.html": "TIBCO Data Science|TIBCO Data Science - Operations|TIBCO Statistica\r\n\t Server",
+    "GUID-22C13786-71B0-4AD4-A2B5-685C342C12E1.html": "TIBCO Data Science|TIBCO Data Science - Operations|Team Studio Server",
+    "GUID-9170A8A2-9492-464F-B8CE-8A4165681309.html": "Plan a TIBCO Data Science Deployment",
+    "GUID-55B5E0C3-58B7-471E-9C83-A950428FA9D0.html": "Licensing",
+    "GUID-0F72F5D6-B0F7-4D58-8FCC-5A83D6ADA039.html": "Documentation and support services",
+    "GUID-472F6557-D11C-48A9-9AD8-06703E949A03.html": "Legal and Third-Party Notices"
+  }
+}

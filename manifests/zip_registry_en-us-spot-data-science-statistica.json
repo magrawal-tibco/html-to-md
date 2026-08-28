@@ -1,0 +1,65 @@
+{
+  "https://docs.tibco.com/products/spotfire-statistica-14-4-0": {
+    "zip_url": "https://docs.tibco.com/pub/stat/14.4.0/spotfire-statistica-14-4-0_documentation.zip",
+    "html_root": "pub/stat/14.4.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:09",
+    "file_count": 25451,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/products/spotfire-statistica-integration-14-5-0": {
+    "zip_url": "https://docs.tibco.com/pub/stat-ext/14.5.0/spotfire-statistica-integration-14-5-0_documentation.zip",
+    "html_root": "pub/stat-ext/14.5.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:14",
+    "file_count": 543,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/spotfire-data-science-author-2-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/dsc-author/2.2.0/spotfire-data-science-author-2-2-0_documentation.zip",
+    "html_root": "pub/dsc-author/2.2.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:17",
+    "file_count": 279,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/spotfire-data-science-operations-2-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/dsc-operations/2.2.0/spotfire-data-science-operations-2-2-0_documentation.zip",
+    "html_root": "pub/dsc-operations/2.2.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:20",
+    "file_count": 279,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/spotfire-data-science-for-life-science-author-2-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/dscls-author/2.2.0/spotfire-data-science-for-life-science-author-2-2-0_documentation.zip",
+    "html_root": "pub/dscls-author/2.2.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:24",
+    "file_count": 279,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/spotfire-data-science-for-life-science-operations-2-2-0": {
+    "zip_url": "https://docs.tibco.com/pub/dscls-operations/2.2.0/spotfire-data-science-for-life-science-operations-2-2-0_documentation.zip",
+    "html_root": "pub/dscls-operations/2.2.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:27",
+    "file_count": 279,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-data-science-for-life-science-operations-1-4-0": {
+    "zip_url": "https://docs.tibco.com/pub/dscls-operations/1.4.0/tibco-data-science-for-life-science-operations-1-4-0_documentation.zip",
+    "html_root": "pub/dscls-operations/1.4.0/doc/html/",
+    "extracted_at": "2026-08-28T16:19:28",
+    "file_count": 42,
+    "format": "sdl_dita"
+  },
+  "https://docs.tibco.com/products/tibco-data-science-team-studio-7-1-0": {
+    "zip_url": "https://docs.tibco.com/pub/sfire-dsc/7.1.0/tibco-data-science-team-studio-7-1-0_documentation.zip",
+    "html_root": "pub/sfire-dsc/7.1.0/doc/html/",
+    "extracted_at": "2026-08-28T16:20:02",
+    "file_count": 6920,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/tibco-data-science-team-studio-6-5-0": {
+    "zip_url": "https://docs.tibco.com/pub/sfire-dsc/6.5.0/tibco-data-science-team-studio-6-5-0_documentation.zip",
+    "html_root": "pub/sfire-dsc/6.5.0/doc/html/",
+    "extracted_at": "2026-08-28T16:20:13",
+    "file_count": 2163,
+    "format": "unknown"
+  }
+}

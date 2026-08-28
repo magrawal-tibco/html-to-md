@@ -12,21 +12,30 @@ advanced_documentation: Advanced Documentation
 com-tutorial: COM Tutorial
 concepts: ''
 container_edition: Container Edition Guide
+data: ''
 dev-guide: Developer Guide
+install-admin: ''
 installation: Installation Guide
+installation_instructions: ''
 introduction: Introduction
 license: License Agreement
 licensedetails: License Details
+logistic_regression: ''
 pdriver-tutorial: Process Driver Tutorial
+quick_ref: ''
+r_integration: ''
 readme: Readme
 relnotes: Release Notes
 security: ''
 security-guide: Security Guide
 service-tutorial: Service Tutorial
 speedlink-guide: SpeedLink Guide
+stability_analysis: ''
+stepwise_modelbuilder: ''
 upgrade-guide: Upgrade Guide
 user-guide: User Guide
 user_guide: ''
 users_guide: ''
 versioning_and_packaging_guide: Versioning and Packaging Guide
 vpat: VPAT (Accessibility)
+weight_of_evidence: ''

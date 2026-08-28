@@ -1,0 +1,60 @@
+{
+  "phase": "en-us-spot-data-science-statistica",
+  "crawled_at": "2026-08-28T10:47:36Z",
+  "versions": {
+    "https://docs.tibco.com/products/spotfire-statistica-14-4-0": {
+      "zip_url": "https://docs.tibco.com/pub/stat/14.4.0/spotfire-statistica-14-4-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "Spotfire Statistica® 14.4.0",
+      "product_version": "14.4.0"
+    },
+    "https://docs.tibco.com/products/spotfire-statistica-integration-14-5-0": {
+      "zip_url": "https://docs.tibco.com/pub/stat-ext/14.5.0/spotfire-statistica-integration-14-5-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "Spotfire Statistica® Integration 14.5.0",
+      "product_version": "14.5.0"
+    },
+    "https://docs.tibco.com/products/spotfire-data-science-author-2-2-0": {
+      "zip_url": "https://docs.tibco.com/pub/dsc-author/2.2.0/spotfire-data-science-author-2-2-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "Spotfire® Data Science - Author 2.2.0",
+      "product_version": "2.2.0"
+    },
+    "https://docs.tibco.com/products/spotfire-data-science-operations-2-2-0": {
+      "zip_url": "https://docs.tibco.com/pub/dsc-operations/2.2.0/spotfire-data-science-operations-2-2-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "Spotfire® Data Science - Operations 2.2.0",
+      "product_version": "2.2.0"
+    },
+    "https://docs.tibco.com/products/spotfire-data-science-for-life-science-author-2-2-0": {
+      "zip_url": "https://docs.tibco.com/pub/dscls-author/2.2.0/spotfire-data-science-for-life-science-author-2-2-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "Spotfire® Data Science for Life Science - Author 2.2.0",
+      "product_version": "2.2.0"
+    },
+    "https://docs.tibco.com/products/spotfire-data-science-for-life-science-operations-2-2-0": {
+      "zip_url": "https://docs.tibco.com/pub/dscls-operations/2.2.0/spotfire-data-science-for-life-science-operations-2-2-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "Spotfire® Data Science for Life Science - Operations 2.2.0",
+      "product_version": "2.2.0"
+    },
+    "https://docs.tibco.com/products/tibco-data-science-for-life-science-operations-1-4-0": {
+      "zip_url": "https://docs.tibco.com/pub/dscls-operations/1.4.0/tibco-data-science-for-life-science-operations-1-4-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "TIBCO® Data Science for Life Science - Operations 1.4.0",
+      "product_version": "1.4.0"
+    },
+    "https://docs.tibco.com/products/tibco-data-science-team-studio-7-1-0": {
+      "zip_url": "https://docs.tibco.com/pub/sfire-dsc/7.1.0/tibco-data-science-team-studio-7-1-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "TIBCO® Data Science - Team Studio 7.1.0",
+      "product_version": "7.1.0"
+    },
+    "https://docs.tibco.com/products/tibco-data-science-team-studio-6-5-0": {
+      "zip_url": "https://docs.tibco.com/pub/sfire-dsc/6.5.0/tibco-data-science-team-studio-6-5-0_documentation.zip",
+      "zip_last_modified": "",
+      "product_name": "TIBCO® Data Science - Team Studio 6.5.0",
+      "product_version": "6.5.0"
+    }
+  }
+}

@@ -81,6 +81,31 @@ except ImportError:
 # Products to skip — already reorganized by scripts 07 / 08
 SKIP_PRODUCTS = {"ebx", "ebx-addon", "ebx-addon-reorg", "ebx-reorg"}
 
+# Regex helpers for _product_folder_name()
+# Strip trademark/copyright symbols including mojibake variants (Â® = U+00C2 U+00AE from UTF-8
+# decoded as Latin-1) that sometimes appear in manifest product_name fields.
+_BRAND_PREFIX_RE = re.compile(
+    r"^(tibco|spotfire)\s*[Â®®™�]*\s*[-–]?\s*", re.IGNORECASE
+)
+# Strip any non-ASCII "word" chars that aren't hyphens (catches Â, ®, ™, etc. mid-string)
+_SPECIAL_CHARS_RE = re.compile(r"[^\x00-\x7f\s-]|[^\w\s-]")
+_WHITESPACE_RE = re.compile(r"[\s_]+")
+
+
+def _product_folder_name(product_name: str) -> str:
+    """Convert a human-readable product name to a short, readable folder slug.
+
+    'Spotfire® Data Science - Author'     -> 'data-science-author'
+    'TIBCO® Data Science - Team Studio'   -> 'data-science-team-studio'
+    'Spotfire Statistica® Integration'    -> 'statistica-integration'
+    """
+    name = _BRAND_PREFIX_RE.sub("", product_name).strip()
+    name = _SPECIAL_CHARS_RE.sub("", name)
+    name = _WHITESPACE_RE.sub("-", name).strip("-").lower()
+    # Collapse consecutive hyphens (e.g. from " - ")
+    name = re.sub(r"-{2,}", "-", name)
+    return name or product_name.lower().replace(" ", "-")
+
 # Subdirectory names under doc/ that are API references (copied verbatim)
 API_REF_SUBDIRS = {"c", "java", "golang", "tibdg"}
 
@@ -154,24 +179,27 @@ def build_path_mapping(
     webhelp_dst: Path,
     products: list[str],
     lang: str,
+    slug_to_folder: dict[str, str] | None = None,
 ) -> dict[Path, Path]:
     """Build {old_path: new_path} for all webhelp files across all products.
 
     With phase grouping (webhelp_dst = output/<phase>):
-      src/<P>/<V>/doc/html/<rest> -> webhelp_dst/<lang>/<P>/online-help/<V-dashed>/<rest>
+      src/<P>/<V>/doc/html/<rest> -> webhelp_dst/<lang>/<folder>/online-help/<V-dashed>/<rest>
 
     Without phase grouping (webhelp_dst = output, legacy):
       src/<P>/<V>/doc/html/<rest> -> webhelp_dst/<P>/<lang>/<P>/online-help/<V-dashed>/<rest>
     """
     mapping: dict[Path, Path] = {}
+    s2f = slug_to_folder or {}
     for product in products:
+        folder = s2f.get(product, product)
         for version, html_dir in discover_versions(src, product):
             if html_dir:
                 for f in html_dir.rglob("*"):
                     if f.is_file():
                         rel = f.relative_to(html_dir)
                         mapping[f] = (
-                            webhelp_dst / lang / product
+                            webhelp_dst / lang / folder
                             / "online-help" / version.replace(".", "-") / rel
                         )
     return mapping
@@ -464,13 +492,15 @@ def main() -> int:
     manifest_mode, archive_only_slugs = _read_phase_mode(args.phase)
     phase_mode = args.mode or manifest_mode
 
-    # Derive webhelp and resources roots
+    # Derive webhelp, assets, and resources roots
     if args.phase_group:
         webhelp_dst   = dst / args.phase_group
-        resources_dst = dst / f"{args.phase_group}-resources"
+        assets_dst    = dst / args.phase_group           # user-guides/relnotes/ref-docs land here
+        resources_dst = dst / f"{args.phase_group}-resources"  # api-refs + archives only
     else:
         # Legacy: no grouping — each product gets its own top-level folder
         webhelp_dst   = dst
+        assets_dst    = dst
         resources_dst = dst  # product-resources computed per-product below
 
     if not src.exists() and phase_mode != "archives-only":
@@ -482,7 +512,7 @@ def main() -> int:
     print(f"Lang   : {args.lang}")
     print(f"Mode   : {phase_mode}" + (" [DRY RUN]" if args.dry_run else ""))
     if args.phase_group:
-        print(f"Group  : {args.phase_group}  (webhelp -> {webhelp_dst.name}/, resources -> {resources_dst.name}/)")
+        print(f"Group  : {args.phase_group}  (webhelp+assets -> {webhelp_dst.name}/, api-refs+archives -> {resources_dst.name}/)")
     print()
 
     # ── Phase 0: discover & preflight ────────────────────────────────────────
@@ -510,10 +540,22 @@ def main() -> int:
             print("  No products found (check --src and --products).", file=sys.stderr)
             return 1
 
+    # Build slug -> intuitive folder name from product_name in manifests
+    slug_to_folder: dict[str, str] = {}
+    for product in products:
+        if phase_mode != "archives-only":
+            _vers = discover_versions(src, product)
+            _first_ver = _vers[0][0] if _vers else None
+        else:
+            _first_ver = None
+        _raw_name = (_lookup_product_name(product, _first_ver) if _first_ver else None) or product
+        slug_to_folder[product] = _product_folder_name(_raw_name)
+
     print(f"  Products to restructure: {len(products)}")
     for product in products:
+        folder = slug_to_folder[product]
         if phase_mode == "archives-only":
-            print(f"    {product:<30} (archives-only)")
+            print(f"    {product:<30} -> {folder}  (archives-only)")
         else:
             versions = discover_versions(src, product)
             webhelp_files = sum(
@@ -521,7 +563,7 @@ def main() -> int:
                 for v in versions
             )
             ver_names = [v[0] for v in versions]
-            print(f"    {product:<30} versions={ver_names}  webhelp={webhelp_files}")
+            print(f"    {product:<30} -> {folder:<35} versions={ver_names}  webhelp={webhelp_files}")
 
     if phase_mode != "archives-only":
         cross_links = preflight_scan(src, products)
@@ -542,7 +584,7 @@ def main() -> int:
     if phase_mode != "archives-only":
         # ── Phase 1: build path mapping ───────────────────────────────────────
         print("\n=== Phase 1: Building path mapping ===")
-        mapping = build_path_mapping(src, webhelp_dst, products, args.lang)
+        mapping = build_path_mapping(src, webhelp_dst, products, args.lang, slug_to_folder)
         print(f"  {len(mapping)} files mapped")
 
         if args.dry_run:
@@ -582,16 +624,17 @@ def main() -> int:
         patched = 0
         toc_candidates = 0
         for product in products:
+            folder = slug_to_folder.get(product, product)
             for version, html_dir in discover_versions(src, product):
                 if not html_dir:
                     continue
                 folder_ver = version.replace(".", "-")
-                toc_file = (webhelp_dst / args.lang / product
+                toc_file = (webhelp_dst / args.lang / folder
                             / "online-help" / folder_ver / "_toc.json")
                 if toc_file.exists():
                     toc_candidates += 1
                     old_root = f"{src_prefix}/{product}/{version}/doc/html/"
-                    new_root = f"{args.lang}/{product}/online-help/{folder_ver}/"
+                    new_root = f"{args.lang}/{folder}/online-help/{folder_ver}/"
                     if patch_toc_json(toc_file, old_root, new_root):
                         patched += 1
 
@@ -617,7 +660,7 @@ def main() -> int:
                     asset_versions = discover_asset_versions(cache_src)
                     if not asset_versions:
                         continue
-                    dest_base = resources_dst / args.lang / product
+                    dest_base = assets_dst / args.lang / slug_to_folder.get(product, product)
                     product_total = 0
                     for version, version_dashed in asset_versions:
                         product_name = _lookup_product_name(product, version) or product
@@ -657,10 +700,11 @@ def main() -> int:
                 print(f"  Cache root not found: {cache_root} — skipping")
             else:
                 for product in products:
+                    folder = slug_to_folder.get(product, product)
                     cache_src = cache_root / product
                     if not cache_src.is_dir():
                         continue
-                    resources_base = resources_dst / args.lang / product / "api-references"
+                    resources_base = resources_dst / args.lang / folder / "api-references"
                     product_api_files = 0
                     for version_dir in sorted(cache_src.iterdir()):
                         if not version_dir.is_dir():
@@ -678,12 +722,12 @@ def main() -> int:
                             product_api_files += count
 
                         # Rewrite API ref links and remove the api/ mirror from online-help
-                        online_help_dir = (webhelp_dst / args.lang / product
+                        online_help_dir = (webhelp_dst / args.lang / folder
                                            / "online-help" / version_dashed)
                         if online_help_dir.is_dir():
                             for md_file in online_help_dir.rglob("*.md"):
                                 rewrites = rewrite_api_ref_links(
-                                    md_file, product, version_dashed,
+                                    md_file, folder, version_dashed,
                                     webhelp_dst, resources_dst, args.lang,
                                 )
                                 total_api_link_rewrites += rewrites
@@ -694,7 +738,7 @@ def main() -> int:
                                     shutil.rmtree(api_mirror)
 
                     if product_api_files:
-                        print(f"  {product}: {product_api_files} API reference files copied")
+                        print(f"  {product} ({folder}): {product_api_files} API reference files copied")
                     total_api_files += product_api_files
 
             if total_api_files:
@@ -722,7 +766,8 @@ def main() -> int:
                 continue
 
             # All ZIPs go into a single flat archives/ folder under resources_dst
-            archives_dir = resources_dst / args.lang / product / "archives"
+            folder = slug_to_folder.get(product, product)
+            archives_dir = resources_dst / args.lang / folder / "archives"
             archives_dir.mkdir(parents=True, exist_ok=True)
 
             downloaded_entries: list[dict] = []
@@ -797,7 +842,9 @@ def main() -> int:
     if phase_mode != "archives-only" and cross_links:
         print(f"  Cross-link: {len(cross_links)} links need manual review")
     print(f"  Webhelp   : {webhelp_dst.resolve()}")
-    print(f"  Resources : {resources_dst.resolve()}")
+    if assets_dst != resources_dst:
+        print(f"  Assets    : {assets_dst.resolve()}  (user-guides, release-info, reference-docs)")
+    print(f"  Resources : {resources_dst.resolve()}  (api-references, archives)")
 
     return 0 if errors == 0 else 1
 

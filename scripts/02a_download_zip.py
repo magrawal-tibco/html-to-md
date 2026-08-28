@@ -443,6 +443,7 @@ def _scan_ebx_from_nav(
                                 "version_sitemap": version_url,
                                 "alias_xml_url":   alias_xml_url,
                                 "zip_url":         zip_url,
+                                "pub_slug":        entry.get("pub_slug", ""),
                                 "version_format":  version_format,
                             })
 
@@ -509,6 +510,7 @@ def scan_extracted_pages(
                 "version_sitemap": version_url,
                 "alias_xml_url":   alias_xml_url,
                 "zip_url":         zip_url,
+                "pub_slug":        entry.get("pub_slug", ""),
                 "version_format":  version_format,
             })
     return page_entries
