@@ -337,6 +337,8 @@ def main() -> int:
                         help=f"Attempts per endpoint before giving up (default: {DEFAULT_RETRIES})")
     parser.add_argument("--strict",      action="store_true",
                         help="Exit 2 if any endpoint failed (CSV is still written)")
+    parser.add_argument("--preserve-from", default=None, metavar="PATH",
+                        help="CSV to carry extra columns forward from (default: --out if it exists)")
     args = parser.parse_args()
 
     client = _client()
@@ -427,17 +429,37 @@ def main() -> int:
         tuple(-(int(p) if p.isdigit() else 0) for p in r["version"].split(".")),
     ))
 
-    # Write CSV
+    # Write CSV — preserving any extra columns from an existing file
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    preserve_path = Path(args.preserve_from) if args.preserve_from else (
+        out_path if out_path.exists() else None
+    )
+    extra_cols: list[str] = []
+    if preserve_path and preserve_path.exists():
+        with preserve_path.open(encoding="utf-8-sig", newline="") as f:
+            old_reader = csv.DictReader(f)
+            old_fields = list(old_reader.fieldnames or [])
+            old_lookup = {r["doc_url"]: r for r in old_reader if r.get("doc_url")}
+        extra_cols = [c for c in old_fields if c and c not in FIELDS]
+        for row in all_rows:
+            old_row = old_lookup.get(row["doc_url"], {})
+            for col in extra_cols:
+                row[col] = old_row.get(col, "")
+        if extra_cols:
+            print(f"\nPreserving {len(extra_cols)} extra column(s) from {preserve_path.name}: "
+                  f"{', '.join(extra_cols)}")
+
+    all_fields = list(FIELDS) + extra_cols
     with out_path.open("w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDS)
+        writer = csv.DictWriter(f, fieldnames=all_fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(all_rows)
 
     print(f"\nCSV written: {out_path.resolve()}")
     print(f"  Rows:    {len(all_rows)}")
-    print(f"  Columns: {', '.join(FIELDS)}")
+    print(f"  Columns: {', '.join(all_fields)}")
 
     cat_products: dict[str, set[str]] = {}
     for r in all_rows:
