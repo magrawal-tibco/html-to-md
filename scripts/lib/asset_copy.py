@@ -202,14 +202,11 @@ def write_index_md(
 
 
 def write_toc_yml(dest_dir: Path, label: str, product_name: str, product_version: str) -> None:
-    product_name = _clean_product_name(product_name)
-    title = f"{product_name} {product_version} {label}"
-
     def _ys(v: str) -> str:
         return yaml.dump(v, allow_unicode=True, default_flow_style=True).split("\n")[0]
 
     content = (
-        f"docs_list_title: {_ys(title)}\n"
+        f"docs_list_title: {_ys(label)}\n"
         "docs:\n"
         f"- title: {_ys(label)}\n"
         "  url: index.md\n"
