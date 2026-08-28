@@ -251,11 +251,14 @@ def copy_asset_folder(
         label = "PDF Downloads" if subfolder == "pdf" else "Release Documents"
 
     dest_dir = dest_base / out_folder / version_dashed
-    dest_dir.mkdir(parents=True, exist_ok=True)
 
     # Only copy files that are not excluded — excluded slugs belong in other folders
     excluded = exclude_slugs or set()
     copy_files = [f for f in files if extract_slug(f.stem) not in excluded]
+    if not copy_files and not extra_files:
+        return 0
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
     for f in copy_files:
         shutil.copy2(f, dest_dir / f.name)
 
