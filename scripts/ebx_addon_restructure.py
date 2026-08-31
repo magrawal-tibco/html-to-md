@@ -61,7 +61,7 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
     mapping: dict[Path, Path] = {}
 
     for path in src.rglob("*"):
-        if not path.is_file():
+        if not path.is_file() or path.name == "_toc.json":
             continue
         parts = path.relative_to(src).parts
 
@@ -72,7 +72,6 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
                 continue  # Java API is handled separately by build_javadocs_mapping()
             new_rel = Path("en-us") / "ebx-addon" / addon / ver.replace(".", "-") / rest
         else:
-            # Version-level aggregate files (e.g. doc/_toc.json) — skip
             continue
 
         mapping[path] = dst / new_rel

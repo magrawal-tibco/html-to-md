@@ -141,12 +141,12 @@ def build_path_mapping(src: Path, dst: Path) -> dict[Path, Path]:
     mapping: dict[Path, Path] = {}
 
     for path in src.rglob("*"):
-        if not path.is_file():
+        if not path.is_file() or path.name == "_toc.json":
             continue
         parts = path.relative_to(src).parts
 
         # Webhelp: <ver>/doc/html/<lang>/<rest…>  — at least 5 parts
-        if len(parts) >= 5 and parts[1] == "doc" and parts[2] == "html" and parts[3] != "_toc.json":
+        if len(parts) >= 5 and parts[1] == "doc" and parts[2] == "html":
             if len(parts) >= 6 and parts[4] == "Java_API":
                 continue  # Java API is hosted externally
             ver, lang = parts[0], parts[3]

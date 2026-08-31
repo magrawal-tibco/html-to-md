@@ -196,7 +196,7 @@ def build_path_mapping(
         for version, html_dir in discover_versions(src, product):
             if html_dir:
                 for f in html_dir.rglob("*"):
-                    if f.is_file():
+                    if f.is_file() and f.name != "_toc.json":
                         rel = f.relative_to(html_dir)
                         mapping[f] = (
                             webhelp_dst / lang / folder
