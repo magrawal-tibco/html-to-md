@@ -831,6 +831,14 @@ def classify_tables(content: Tag, block_tags: set[str] | None = None) -> dict[st
 
 # ── Transform 10: normalize whitespace in text nodes ─────────────────────────
 
+_INLINE_TAGS = frozenset({
+    "a", "abbr", "acronym", "b", "bdo", "big", "br", "cite", "code", "dfn",
+    "em", "i", "img", "input", "kbd", "label", "map", "object", "output",
+    "q", "samp", "select", "small", "span", "strong", "sub", "sup",
+    "textarea", "time", "tt", "u", "var",
+})
+
+
 def normalize_whitespace(content: Tag) -> int:
     """
     Collapse newline/tab whitespace in text nodes to match browser HTML rendering.
@@ -843,6 +851,13 @@ def normalize_whitespace(content: Tag) -> int:
     line becomes a separate blockquote line. This transform applies the same
     rule: any run of whitespace that contains a newline is replaced with a
     single space. Text nodes inside <pre> are excluded.
+
+    Also repairs missing inter-sibling spaces that lxml drops when parsing
+    CDATA whitespace nodes (e.g. <![CDATA[ ]]> between text and a <span>).
+    When a text node ends without whitespace and its next sibling is an inline
+    element, a trailing space is appended; conversely, when an inline element
+    is followed by a text node that starts without whitespace, a leading space
+    is prepended.
     """
     normalized = 0
     _ws_with_newline = re.compile(r'[ \t]*\r?\n[ \t]*')
@@ -854,6 +869,32 @@ def normalize_whitespace(content: Tag) -> int:
         if collapsed != original:
             text_node.replace_with(NavigableString(collapsed))
             normalized += 1
+
+    # Repair missing spaces at text↔inline-element boundaries dropped by lxml
+    # when it silently discards whitespace-only CDATA nodes.
+    for text_node in list(content.find_all(string=True)):
+        if text_node.find_parent("pre") or text_node.find_parent("code"):
+            continue
+        s = str(text_node)
+        if not s:
+            continue
+        changed = False
+        # If this text ends without a space and next sibling is an inline tag → append space
+        nxt = text_node.next_sibling
+        if nxt and isinstance(nxt, Tag) and nxt.name in _INLINE_TAGS and not s[-1].isspace():
+            s = s + " "
+            changed = True
+        # If this text starts without a space and prev sibling is an inline tag → prepend space
+        # But don't add a space before punctuation (., ,, ), !, ?, :, ;)
+        prv = text_node.previous_sibling
+        if (prv and isinstance(prv, Tag) and prv.name in _INLINE_TAGS
+                and not s[0].isspace() and s[0] not in ".,;:!?)"):
+            s = " " + s
+            changed = True
+        if changed:
+            text_node.replace_with(NavigableString(s))
+            normalized += 1
+
     return normalized
 
 
