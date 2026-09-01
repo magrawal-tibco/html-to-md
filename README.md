@@ -175,30 +175,34 @@ Skip with `--skip-webworks` if you want to run the WebWorks pipeline separately.
 
 | Flag | Applies to | Description |
 |------|-----------|-------------|
+| `--config PATH` | All stages | Path to settings.yaml (default: `config/settings.yaml`) |
 | `--from-step N` | Main pipeline | Start from step N |
 | `--to-step N` | Main pipeline | Stop after step N |
 | `--dry-run` | All stages | Parse and plan but write no files |
 | `--force-rerun` | All stages | Re-process already-done files |
 | `--force-refresh` | Step 2 only | Re-download cached HTML |
-| `--ignore-registry` | Step 1 only | Include already-converted versions |
+| `--ignore-registry` | Step 1 only | Include already-converted versions (overrides `converted_versions.json`) |
+| `--delta` | Step 1 only | Skip versions whose ZIP Last-Modified is unchanged since last run |
 | `--scan-cache` | Step 3 only | Drive conversion from cached files instead of sitemap manifest (use when ZIP paths differ from sitemap URLs) |
 | `--skip-dita` | DITA stage | Skip DITA sub-pipeline |
 | `--skip-pdf` | PDF stage | Skip PDF sub-pipeline |
 | `--skip-webworks` | WebWorks stage | Skip WebWorks ePublisher sub-pipeline |
+| `--skip-restructure` | Post-pipeline | Skip the `tibco_restructure.py` sub-pipeline |
 
 ## Folder Structure
 
 ```
 html-to-md/
-├── run.py                          # Orchestrator (--phase, --from-step, --to-step, --dry-run)
+├── run.py                          # Orchestrator (see CLI flags table for all options)
 ├── requirements.txt
 ├── config/
 │   ├── settings.yaml               # All tunable settings
+│   ├── pdf_slug_mappings.yaml      # Filename slug → human-readable guide label
 │   └── phases/
 │       ├── phase_template.yaml     # Annotated template — copy to create a new phase
 │       └── <name>.yaml             # Product version page URLs (one per phase)
 ├── scripts/
-│   ├── 01_build_manifest.py        # Sitemap crawl → manifests/manifest_<phase>.json
+│   ├── 01_build_manifest.py        # Sitemap/API crawl → manifests/manifest_<phase>.json
 │   ├── 02a_download_zip.py         # Download + extract per-version documentation ZIPs
 │   ├── 02_download.py              # HTML + images + alias.xml → cache/ (fallback)
 │   ├── 03_convert.py               # HTML → Markdown with preprocessor transforms
@@ -206,9 +210,25 @@ html-to-md/
 │   ├── 05_postprocess.py           # Rewrite .htm links → .md, strip variable tokens
 │   ├── 06_build_toc.py             # Build _toc.json (prefers ZIP TOC JS, falls back to breadcrumbs)
 │   ├── 07_generate_report.py       # Write phase_report.csv and update conversion_log.csv
+│   ├── tibco_restructure.py        # TIBCO/DataSynapse: version-first → language-first AEM layout
 │   ├── compare_toc.py              # Compare _toc.json against authoritative MadCap TOC JS files
+│   ├── list_converted.py           # View/manage converted-versions registry
+│   ├── fix_missing_images.py       # Find and heal broken image refs in restructured output
+│   ├── qa_check.py                 # Post-conversion quality checks (per-file or batch)
+│   ├── audit_tables.py             # Migration planning: classify all <table> elements in HTML source
+│   ├── cache_sitemaps.py           # Download and cache all L2+L3 sitemaps from a product sitemapindex
+│   ├── compare_html_md.py          # Compare HTML source in cache/ against converted .md in output/
+│   ├── count_html_pages.py         # Count HTML files per version (from cache or ZIPs) → CSV
+│   ├── download_zips.py            # Download ZIPs from a plain URL list
+│   ├── estimate_corpus.py          # Crawl full sitemap → page-count and time-estimate CSV
+│   ├── list_products.py            # Enumerate all docs.tibco.com products → CSV
+│   ├── preview_html.py             # Build/serve MkDocs preview site from converted output/
 │   ├── catalog/
-│   │   └── fetch_versions.py       # Fetch all product versions from docs.tibco.com → tibco_versions.csv
+│   │   ├── fetch_versions.py       # Fetch all product versions from docs.tibco.com → tibco_versions.csv
+│   │   ├── fetch_products.py       # Fetch product catalog via /api/a_to_z → CSV
+│   │   ├── fetch_eos.py            # Enrich tibco_versions.csv with End of Support `retired` column
+│   │   ├── run_phase_from_csv.py   # Generate phase YAML from `phase` column in CSV, then run pipeline
+│   │   └── diff_versions.py        # Diff two catalog snapshots → added/removed/changed versions
 │   ├── dita/                       # DITA WebHelp Responsive sub-pipeline
 │   │   └── run.py                  # DITA orchestrator
 │   ├── pdf/
@@ -220,14 +240,18 @@ html-to-md/
 │   │   ├── run.py                  # WebWorks orchestrator
 │   │   └── utils.py                # Shared discovery + file-reading helpers
 │   └── lib/
-│       ├── manifest_utils.py       # Shared URL/path helpers (skip logic, alias.xml URL, output path)
+│       ├── io_utils.py             # load_settings, load_manifest, read/write_frontmatter
+│       ├── manifest_utils.py       # URL/path helpers (skip logic, alias.xml URL, output path)
 │       ├── sitemap_parser.py       # 3-level sitemap crawl functions
 │       ├── toc_parser.py           # MadCap WebHelp2 TOC JS parsing (shared by steps 6 + compare_toc)
 │       ├── preprocessor.py         # 13 BeautifulSoup transform passes
 │       ├── table_classifier.py     # Tier 1/2/3 table classification
-│       └── reporter.py             # Structured logging + JSON report writing
+│       ├── reporter.py             # Structured logging + JSON report writing
+│       ├── asset_copy.py           # PDF/doc asset copy + slug resolution
+│       └── version_registry.py     # Track already-converted versions across runs
 ├── manifests/                      # Generated JSON manifests — committed to git
-│   └── conversion_log.csv          # Persistent cross-phase conversion log
+│   ├── conversion_log.csv          # Persistent cross-phase conversion log
+│   └── catalog/                    # Dated tibco_versions.csv snapshots for delta runs
 ├── cache/                          # Downloaded HTML + images — gitignored
 ├── output/                         # Converted Markdown files — gitignored
 └── logs/                           # Per-run logs and reports — gitignored
@@ -290,6 +314,24 @@ https://docs.tibco.com/pub/<folder_path>/<versioned-slug>_documentation.zip
 Step 2a downloads and extracts the ZIP, then scans the HTML files to produce per-page manifest entries. No sitemap crawl is needed.
 
 **Finding version URLs:** Run `scripts/catalog/fetch_versions.py` to generate `tibco_versions.csv` — a full catalog of all 736 products and their versions with `doc_url` column ready to paste into a phase file. You can also find version URLs on [docs.tibco.com](https://docs.tibco.com) product pages.
+
+### CSV-driven workflow (recommended for bulk phases)
+
+If your `tibco_versions.csv` has a `phase` column, you can generate the phase YAML and immediately kick off the pipeline in a single command:
+
+```bash
+# Generate config/phases/en-us-ibi-ibi.yaml from rows where phase="en-us-ibi-ibi", then run pipeline
+python scripts/catalog/run_phase_from_csv.py en-us-ibi-ibi
+
+# Preview what would be generated and run — no files written
+python scripts/catalog/run_phase_from_csv.py en-us-ibi-ibi --dry-run
+
+# Pass any run.py flags through
+python scripts/catalog/run_phase_from_csv.py en-us-ibi-ibi --from-step 3 --force-rerun
+python scripts/catalog/run_phase_from_csv.py en-us-ibi-ibi --skip-pdf --delta
+```
+
+All standard `run.py` flags are accepted and forwarded (`--from-step`, `--to-step`, `--dry-run`, `--force-rerun`, `--force-refresh`, `--ignore-registry`, `--delta`, `--skip-dita`, `--skip-pdf`, `--skip-webworks`, `--skip-restructure`, `--config`).
 
 ### Legacy format — sitemap URLs (backward-compatible)
 

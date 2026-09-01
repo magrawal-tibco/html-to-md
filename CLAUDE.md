@@ -21,7 +21,7 @@ See `README-EBX.md` for EBX-specific end-to-end run guide.
 
 ```
 html-to-md/
-├── run.py                          # Orchestrator (--phase, --from-step, --to-step, --dry-run)
+├── run.py                          # Orchestrator (see CLI flags table for all options)
 ├── pyrightconfig.json              # Pylance config — excludes cache/output/logs from indexing
 ├── requirements.txt
 ├── CLAUDE.md
@@ -52,8 +52,19 @@ html-to-md/
 │   ├── fix_missing_images.py       # Find and heal broken image refs in restructured output
 │   ├── qa_check.py                 # Post-conversion quality checks (9 check types, per-file or batch)
 │   ├── create_ebx_export.py        # Package EBX pipeline scripts as a portable zip for the EBX team
+│   ├── cache_sitemaps.py           # Download and cache all L2+L3 sitemaps from a product sitemapindex
+│   ├── compare_html_md.py          # Compare HTML source in cache/ against converted .md in output/
+│   ├── count_html_pages.py         # Count HTML files per version (from cache or ZIPs) → CSV
+│   ├── download_zips.py            # Download ZIPs from a plain URL list; optionally copy to archives/
+│   ├── estimate_corpus.py          # Crawl full sitemap hierarchy → page-count + time estimate CSV
+│   ├── list_products.py            # Enumerate all docs.tibco.com products → CSV (with --versions)
+│   ├── patch_missing_counts.py     # Patch tibco_versions_with_counts.csv for manually-supplied ZIP URLs
+│   ├── preview_html.py             # Build/serve MkDocs preview site from converted output/
 │   ├── catalog/
 │   │   ├── fetch_versions.py       # Query docs.tibco.com API → tibco_versions.csv (all products)
+│   │   ├── fetch_eos.py            # Enrich tibco_versions.csv with `retired` column (EOS page)
+│   │   ├── fetch_products.py       # Fetch product catalog via /api/a_to_z → CSV
+│   │   ├── run_phase_from_csv.py   # Generate phase YAML from `phase` column in tibco_versions.csv, then run pipeline
 │   │   └── diff_versions.py        # Diff two catalog snapshots → added/removed/changed versions
 │   ├── dita/                       # DITA WebHelp Responsive sub-pipeline (SDL Trisoft)
 │   │   └── run.py                  # DITA orchestrator
@@ -123,15 +134,19 @@ Must be run after the pipeline completes, and re-run after any step 3/5/6 rerun:
 
 | Flag | Applies to | Description |
 |------|-----------|-------------|
+| `--config` | All stages | Path to settings.yaml (default: `config/settings.yaml`) |
 | `--from-step N` | Main pipeline | Start from step N |
 | `--to-step N` | Main pipeline | Stop after step N |
 | `--dry-run` | All stages | Parse and plan but write no files |
 | `--force-rerun` | All stages | Re-process already-done files |
 | `--force-refresh` | Step 2 only | Re-download cached HTML |
 | `--scan-cache` | Step 3 only | Drive conversion from cached files (use when ZIP paths differ from sitemap URLs) |
+| `--ignore-registry` | Step 1 only | Include versions already in `converted_versions.json` |
+| `--delta` | Step 1 only | Skip versions whose ZIP Last-Modified is unchanged since last checkpoint |
 | `--skip-dita` | DITA stage | Skip DITA sub-pipeline |
 | `--skip-pdf` | PDF stage | Skip PDF sub-pipeline |
 | `--skip-webworks` | WebWorks stage | Skip WebWorks ePublisher sub-pipeline |
+| `--skip-restructure` | Post-pipeline | Skip the `tibco_restructure.py` sub-pipeline |
 
 ---
 
@@ -561,12 +576,13 @@ python scripts/ebx_addon_restructure.py [--src output/pub/ebx-addon] \
 ### tibco_restructure.py
 
 Transforms TIBCO/DataSynapse intermediate output → language-first AEM layout with three-folder
-asset structure. Runs 7 phases:
+asset structure. Runs 8 phases (0–7):
 
+- Phase 0: Discovery & pre-flight scan
 - Phase 1: Build file path mapping (`output/pub/<product>/` → `output/<product>/en-us/<product>/online-help/<ver-dashed>/`)
-- Phase 2: Patch `_toc.json` root paths to reflect new locations
-- Phase 3: Copy webhelp Markdown + images to `online-help/<ver-dashed>/`
-- Phase 4: Patch `toc.yml` `docs_list_title` = `"Online Help"`
+- Phase 2: Copy webhelp Markdown + images to `online-help/<ver-dashed>/`
+- Phase 3: Cross-product link rewriting scan (informational — reports affected files)
+- Phase 4: Patch `_toc.json` root paths to reflect new locations
 - Phase 5: Copy PDF/doc assets into three named folders:
   - `user-guides/<ver>/` — PDFs excluding relnotes/vpat/license (`User Guides (PDF)`)
   - `release-information/<ver>/` — relnotes PDF + readme TXT (`Release Information`)
