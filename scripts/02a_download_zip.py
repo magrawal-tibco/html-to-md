@@ -559,8 +559,17 @@ def main():
         manifests_dir.mkdir(parents=True, exist_ok=True)
 
         reg_path = manifests_dir / f"zip_registry_{args.phase}.json"
+        # Merge with existing registry so entries from previous runs (e.g. PDF-only products
+        # extracted before a --force-rerun) are preserved rather than overwritten.
+        merged_registry: dict = {}
+        if reg_path.exists():
+            try:
+                merged_registry = json.loads(reg_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        merged_registry.update(zip_registry)  # current run takes precedence
         reg_path.write_text(
-            json.dumps(zip_registry, indent=2, ensure_ascii=False), encoding="utf-8"
+            json.dumps(merged_registry, indent=2, ensure_ascii=False), encoding="utf-8"
         )
         reporter.info(f"ZIP registry written to {reg_path}")
 

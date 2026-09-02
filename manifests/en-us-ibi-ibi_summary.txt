@@ -1,0 +1,24 @@
+Conversion Status Report — phase: en-us-ibi-ibi
+Generated: 2026-09-01 17:36:38
+============================================================
+
+HTML CONVERTED (1 version(s)):
+------------------------------------------------------------
+  ibi-di       2.0.0    484 pages  
+                           TOTAL    484 pages
+
+PDF-ONLY (no HTML pages) (5 version(s)):
+------------------------------------------------------------
+  dsmlce      3 PDF(s)  https://docs.tibco.com/products/ibi-webfocus-dsml-services-container-edition-9-3-7
+  odh-mf-cnct      3 PDF(s)  https://docs.tibco.com/products/ibi-open-data-hub-for-mainframe-connectors-1-3-7
+  sm-edi      3 PDF(s)  https://docs.tibco.com/products/ibi-iway-service-manager-edi-add-on-9-1-1
+  tdq      3 PDF(s)  https://docs.tibco.com/products/ibi-data-quality-5-2-2
+  wfce      3 PDF(s)  https://docs.tibco.com/products/ibi-webfocus-container-edition-9-3-7
+
+PREVIOUSLY EXTRACTED: none
+
+============================================================
+  HTML versions:       1
+  PDF-only versions:   5
+  Skipped (prev run):  0
+  Total versions:      6

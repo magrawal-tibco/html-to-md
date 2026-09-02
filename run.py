@@ -214,28 +214,77 @@ def run_webworks_pipeline(phase: str, config: str, dry_run: bool, force_rerun: b
 
 
 def get_zip_pub_slugs(phase: str, settings: dict) -> list[str]:
-    """Return unique pub_slugs for zip-based (new-format) manifest entries in this phase.
+    """Return unique pub_slugs for zip-based (new-format) products in this phase.
 
+    Includes both products with converted HTML pages AND PDF-only products (whose ZIPs
+    had no HTML — they still need restructure Phase 5 to copy PDF assets).
     EBX-family products are excluded — they have their own restructure scripts (07/08).
-    Used to decide which products to pass to 09_restructure_tibco.py.
     """
     EBX_SLUGS = {"ebx", "ebx-addon", "ebx-addon-reorg"}
     manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    seen: set[str] = set()
+    slugs: list[str] = []
+
+    # Slugs from expanded manifest entries (HTML-bearing products)
     manifest_path = manifests_dir / f"manifest_{phase}.json"
-    if not manifest_path.exists():
-        return []
+    if manifest_path.exists():
+        try:
+            for e in json.loads(manifest_path.read_text(encoding="utf-8")):
+                slug = e.get("pub_slug", "")
+                if slug and slug not in seen and slug not in EBX_SLUGS:
+                    seen.add(slug)
+                    slugs.append(slug)
+        except Exception:
+            pass
+
+    # Also include PDF-only products: in zip_registry but absent from manifest
+    # (step 2a extracted them but found 0 HTML pages, so manifest has no entries)
+    zip_registry_path = manifests_dir / f"zip_registry_{phase}.json"
+    if zip_registry_path.exists():
+        try:
+            registry = json.loads(zip_registry_path.read_text(encoding="utf-8"))
+            for info in registry.values():
+                html_root = info.get("html_root", "")
+                # html_root is "pub/<slug>/<version>/doc/html/" — extract slug
+                parts = html_root.strip("/").split("/")
+                if len(parts) >= 2 and parts[0] == "pub":
+                    slug = parts[1]
+                    if slug and slug not in seen and slug not in EBX_SLUGS:
+                        seen.add(slug)
+                        slugs.append(slug)
+        except Exception:
+            pass
+
+    return slugs
+
+
+def warn_previously_extracted(phase: str, settings: dict) -> None:
+    """Print a warning for versions that were skipped in step 2a because they were
+    already extracted from a prior run. These may be stale if source content changed."""
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    zip_registry_path = manifests_dir / f"zip_registry_{phase}.json"
+    if not zip_registry_path.exists():
+        return
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        seen: set[str] = set()
-        slugs: list[str] = []
-        for e in manifest:
-            slug = e.get("pub_slug", "")
-            if slug and slug not in seen and slug not in EBX_SLUGS:
-                seen.add(slug)
-                slugs.append(slug)
-        return slugs
+        registry = json.loads(zip_registry_path.read_text(encoding="utf-8"))
     except Exception:
-        return []
+        return
+
+    stale = [
+        (version_url, info)
+        for version_url, info in registry.items()
+        if info.get("extracted_at") == "previously"
+    ]
+    if not stale:
+        return
+
+    print(f"\n  [!] {len(stale)} version(s) were already extracted from a previous run and skipped:")
+    for version_url, info in stale:
+        html_root = info.get("html_root", "")
+        fmt = info.get("format", "unknown")
+        print(f"      {html_root}  (format={fmt})")
+    print(f"\n  If source content has changed, re-run with --force-rerun to re-extract.")
+    print(f"  To re-run step 2a only:  python run.py --phase {phase} --from-step 2a --to-step 2a --force-rerun")
 
 
 def run_restructure_pipeline(
@@ -331,6 +380,134 @@ def run_pdf_pipeline(phase: str, config: str, dry_run: bool, force_rerun: bool) 
     status = "OK" if result.returncode == 0 else f"FAILED (exit {result.returncode})"
     print(f"\n  PDF sub-pipeline {status} in {elapsed}s")
     return result.returncode, elapsed
+
+
+def write_phase_summary(phase: str, settings: dict) -> None:
+    """Write a human-readable conversion status report to manifests/<phase>_summary.txt."""
+    manifests_dir = Path(settings.get("manifests_dir", "manifests"))
+    logs_dir = Path(settings.get("logs_dir", "logs"))
+    summary_path = manifests_dir / f"{phase}_summary.txt"
+
+    # Load manifest (HTML-bearing products)
+    manifest_path = manifests_dir / f"manifest_{phase}.json"
+    manifest_entries: list[dict] = []
+    if manifest_path.exists():
+        try:
+            manifest_entries = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # Load zip registry
+    zip_registry_path = manifests_dir / f"zip_registry_{phase}.json"
+    registry: dict = {}
+    if zip_registry_path.exists():
+        try:
+            registry = json.loads(zip_registry_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    EBX_SLUGS = {"ebx", "ebx-addon", "ebx-addon-reorg"}
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Group manifest entries by pub_slug+version to count pages
+    # Page-level entries have no version_url, so key by slug+version instead.
+    html_versions: dict[str, dict] = {}  # "slug@version" -> {slug, pages, product_name, product_version}
+    for e in manifest_entries:
+        slug = e.get("pub_slug", "")
+        if not slug or slug in EBX_SLUGS:
+            continue
+        version = e.get("product_version", "")
+        key = f"{slug}@{version}"
+        if key not in html_versions:
+            html_versions[key] = {
+                "slug": slug,
+                "product_name": e.get("product_name", slug),
+                "product_version": version,
+                "pages": 0,
+            }
+        html_versions[key]["pages"] += 1
+
+    # Identify PDF-only products (in registry but no manifest entries for that slug)
+    manifest_slugs = {v["slug"] for v in html_versions.values()}
+    pdf_only_versions: list[dict] = []
+    previously_extracted: list[dict] = []
+
+    for version_url, info in registry.items():
+        html_root = info.get("html_root", "")
+        parts = html_root.strip("/").split("/")
+        slug = parts[1] if len(parts) >= 2 and parts[0] == "pub" else ""
+        if not slug or slug in EBX_SLUGS:
+            continue
+
+        if info.get("extracted_at") == "previously":
+            previously_extracted.append({"version_url": version_url, "html_root": html_root,
+                                          "format": info.get("format", "unknown"), "slug": slug})
+        elif slug not in manifest_slugs:
+            # Extracted this run but no HTML pages found → PDF-only
+            file_count = info.get("file_count", 0)
+            # Count PDFs in cache
+            cache_dir = Path(settings.get("cache_dir", "cache"))
+            pdf_dir = cache_dir / html_root.replace("doc/html/", "doc/pdf/").strip("/")
+            pdf_count = len(list(pdf_dir.glob("*.pdf"))) if pdf_dir.exists() else 0
+            pdf_only_versions.append({
+                "slug": slug, "version_url": version_url,
+                "html_root": html_root, "file_count": file_count, "pdf_count": pdf_count,
+            })
+
+    lines = [
+        f"Conversion Status Report — phase: {phase}",
+        f"Generated: {now}",
+        "=" * 60,
+        "",
+    ]
+
+    # HTML-converted products
+    if html_versions:
+        lines.append(f"HTML CONVERTED ({len(html_versions)} version(s)):")
+        lines.append("-" * 60)
+        for _key, v in sorted(html_versions.items(), key=lambda x: x[1]["slug"]):
+            lines.append(f"  {v['slug']}  {v['product_version']:>10}  {v['pages']:>5} pages")
+        total_pages = sum(v["pages"] for v in html_versions.values())
+        lines.append(f"  {'TOTAL':>30}  {total_pages:>5} pages")
+        lines.append("")
+    else:
+        lines.append("HTML CONVERTED: none")
+        lines.append("")
+
+    # PDF-only products
+    if pdf_only_versions:
+        lines.append(f"PDF-ONLY (no HTML pages) ({len(pdf_only_versions)} version(s)):")
+        lines.append("-" * 60)
+        for v in sorted(pdf_only_versions, key=lambda x: x["slug"]):
+            lines.append(f"  {v['slug']}  {v['pdf_count']:>5} PDF(s)  {v['version_url']}")
+        lines.append("")
+    else:
+        lines.append("PDF-ONLY: none")
+        lines.append("")
+
+    # Previously extracted (skipped this run)
+    if previously_extracted:
+        lines.append(f"PREVIOUSLY EXTRACTED — SKIPPED ({len(previously_extracted)} version(s)):")
+        lines.append("-" * 60)
+        for v in sorted(previously_extracted, key=lambda x: x["slug"]):
+            lines.append(f"  {v['slug']}  {v['html_root']}  (format={v['format']})")
+        lines.append(f"  To re-extract: python run.py --phase {phase} --from-step 2a --to-step 2a --force-rerun")
+        lines.append("")
+    else:
+        lines.append("PREVIOUSLY EXTRACTED: none")
+        lines.append("")
+
+    lines.append("=" * 60)
+    lines.append(f"  HTML versions:       {len(html_versions)}")
+    lines.append(f"  PDF-only versions:   {len(pdf_only_versions)}")
+    lines.append(f"  Skipped (prev run):  {len(previously_extracted)}")
+    lines.append(f"  Total versions:      {len(html_versions) + len(pdf_only_versions) + len(previously_extracted)}")
+    lines.append("")
+
+    summary_text = "\n".join(lines)
+    summary_path.write_text(summary_text, encoding="utf-8")
+    print(f"\n  Conversion summary written to: {summary_path}")
+    print(summary_text)
 
 
 def main():
@@ -453,6 +630,13 @@ def main():
             print(f"\nRestructure sub-pipeline failed.")
     elif not args.skip_restructure:
         print(f"\nNo zip-based products found for phase '{args.phase}' — skipping restructure.")
+
+    # ── Already-extracted warning ─────────────────────────────────────────────
+    warn_previously_extracted(args.phase, settings)
+
+    # ── End-of-run conversion status report ──────────────────────────────────
+    if not args.dry_run:
+        write_phase_summary(args.phase, settings)
 
     return 0 if (dita_ok and pdf_ok and webworks_ok and restructure_ok) else 1
 

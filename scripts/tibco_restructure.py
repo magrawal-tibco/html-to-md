@@ -123,25 +123,58 @@ _API_REF_LINK_RE = re.compile(
 )
 
 
-def _lookup_product_name(product_slug: str, version: str) -> str | None:
-    """Search manifest_*.json files for a product_name matching product_slug + version."""
+def _lookup_product_name(
+    product_slug: str,
+    version: str | None,
+    version_url: str | None = None,
+) -> str | None:
+    """Return the human-readable product name for a given pub-slug.
+
+    Search order:
+    1. manifest_*.json — populated for HTML-converted products.
+    2. tibco_versions.csv — matched by zip_url pub-slug pattern, then by doc_url (version_url).
+    """
     manifests_dir = Path("manifests")
-    if not manifests_dir.is_dir():
-        return None
-    for mf in manifests_dir.glob("manifest_*.json"):
+    if manifests_dir.is_dir() and version:
+        for mf in manifests_dir.glob("manifest_*.json"):
+            try:
+                entries = json.loads(mf.read_text(encoding="utf-8"))
+                for e in entries:
+                    if (e.get("product_version") == version
+                            and e.get("pub_slug") == product_slug):
+                        name = e.get("product_name", "").strip()
+                        version_suffix = " " + version
+                        if name.endswith(version_suffix):
+                            name = name[: -len(version_suffix)].rstrip()
+                        if name:
+                            return name
+            except Exception:
+                continue
+
+    # Fallback: look up in tibco_versions.csv
+    csv_path = Path("tibco_versions.csv")
+    if csv_path.is_file():
+        import csv as _csv
+        slug_pattern = f"/pub/{product_slug}/"
+        slug_pattern_alt = f"/pub/{product_slug}_"
         try:
-            entries = json.loads(mf.read_text(encoding="utf-8"))
-            for e in entries:
-                if (e.get("product_version") == version
-                        and product_slug in (e.get("output_path") or e.get("url") or "")):
-                    name = e.get("product_name", "").strip()
-                    version_suffix = " " + version
-                    if name.endswith(version_suffix):
-                        name = name[: -len(version_suffix)].rstrip()
-                    if name:
-                        return name
+            with csv_path.open(encoding="utf-8-sig", newline="") as fh:
+                for row in _csv.DictReader(fh):
+                    zip_url = (row.get("zip_url") or "").strip()
+                    doc_url = (row.get("doc_url") or "").strip()
+                    # Match by zip_url pub-slug pattern (primary)
+                    if slug_pattern in zip_url or slug_pattern_alt in zip_url:
+                        name = (row.get("product_name") or "").strip()
+                        if name:
+                            return name
+                    # Match by doc_url == version_url (handles products with no zip_url)
+                    if version_url and doc_url and doc_url == version_url:
+                        name = (row.get("product_name") or "").strip()
+                        if name:
+                            return name
         except Exception:
-            continue
+            pass
+
     return None
 
 
@@ -527,6 +560,7 @@ def main() -> int:
         print(f"  Archives-only mode: {len(ao_products)} product(s) — skipping Phases 1–6")
         # Jump directly to Phase 7 below; set products for the archive loop
         products = ao_products
+        asset_products = ao_products
         mapping: dict[Path, Path] = {}
         cross_links: list[dict] = []
         errors = 0
@@ -536,19 +570,63 @@ def main() -> int:
         total_api_link_rewrites = 0
     else:
         products = discover_products(src, args.products or [])
-        if not products:
+        # PDF-only products have no output/pub/ directory but still need Phase 5 (PDF asset copy).
+        # Build a superset that adds any requested slugs absent from the discovered list.
+        requested_slugs = [s for s in (args.products or []) if s not in SKIP_PRODUCTS]
+        asset_products = list(products) + [s for s in requested_slugs if s not in products]
+        if not asset_products:
             print("  No products found (check --src and --products).", file=sys.stderr)
             return 1
 
+    # Build pub-slug -> version_url (used for name lookup of PDF-only products).
+    # Sources: zip_registry (has html_root -> slug mapping) then phase YAML product URLs.
+    slug_to_version_url: dict[str, str] = {}
+    if args.phase:
+        _zr_path = Path("manifests") / f"zip_registry_{args.phase}.json"
+        if _zr_path.exists():
+            try:
+                _zr = json.loads(_zr_path.read_text(encoding="utf-8"))
+                for _ver_url, _info in _zr.items():
+                    _hr = _info.get("html_root", "")
+                    _parts = _hr.strip("/").split("/")
+                    if len(_parts) >= 2 and _parts[0] == "pub":
+                        slug_to_version_url.setdefault(_parts[1], _ver_url)
+            except Exception:
+                pass
+        # Also scan tibco_versions.csv for phase YAML product URLs that have a zip_url
+        # (covers PDF-only products like oin/og/ohd that have zip_urls but were not in
+        # the registry because they were extracted in a prior run before registry merging).
+        _phase_yaml = Path("config") / "phases" / f"{args.phase}.yaml"
+        if _phase_yaml.exists():
+            try:
+                import yaml as _yaml
+                import csv as _csv2
+                _phase = _yaml.safe_load(_phase_yaml.read_text(encoding="utf-8"))
+                _prod_urls = {u.strip().rstrip("/") for u in (_phase.get("products") or [])}
+                _csv_path = Path("tibco_versions.csv")
+                if _csv_path.is_file():
+                    with _csv_path.open(encoding="utf-8-sig", newline="") as _fh:
+                        for _row in _csv2.DictReader(_fh):
+                            _doc_url = (_row.get("doc_url") or "").strip()
+                            if _doc_url not in _prod_urls:
+                                continue
+                            _zip = (_row.get("zip_url") or "").strip()
+                            if "/pub/" in _zip:
+                                _slug = _zip.split("/pub/")[1].split("/")[0]
+                                slug_to_version_url.setdefault(_slug, _doc_url)
+            except Exception:
+                pass
+
     # Build slug -> intuitive folder name from product_name in manifests
     slug_to_folder: dict[str, str] = {}
-    for product in products:
+    for product in asset_products if phase_mode != "archives-only" else products:
         if phase_mode != "archives-only":
             _vers = discover_versions(src, product)
             _first_ver = _vers[0][0] if _vers else None
         else:
             _first_ver = None
-        _raw_name = (_lookup_product_name(product, _first_ver) if _first_ver else None) or product
+        _ver_url = slug_to_version_url.get(product)
+        _raw_name = _lookup_product_name(product, _first_ver, version_url=_ver_url) or product
         slug_to_folder[product] = _product_folder_name(_raw_name)
 
     print(f"  Products to restructure: {len(products)}")
@@ -653,7 +731,7 @@ def main() -> int:
                 print(f"  Cache root not found: {cache_root} — skipping")
             else:
                 slug_mappings = load_slug_mappings(SLUG_MAPPINGS_FILE)
-                for product in products:
+                for product in asset_products:
                     cache_src = cache_root / product
                     if not cache_src.is_dir():
                         continue

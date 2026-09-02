@@ -6,6 +6,7 @@
 # Slugs with an empty value ("") were discovered but not yet resolved — fill them in.
 
 ReminderNotice: Reminder Notice
+UserGuide: ''
 admin-guide: Administration Guide
 administration: ''
 advanced_documentation: Advanced Documentation
@@ -15,7 +16,10 @@ container_edition: Container Edition Guide
 data: ''
 dev-guide: Developer Guide
 install-admin: ''
+install-user-guide: ''
 installation: Installation Guide
+installation_and_user_guide: ''
+installation_deployment_guide: ''
 installation_instructions: ''
 introduction: Introduction
 license: License Agreement
@@ -25,6 +29,7 @@ pdriver-tutorial: Process Driver Tutorial
 quick_ref: ''
 r_integration: ''
 readme: Readme
+release_notes: ''
 relnotes: Release Notes
 security: ''
 security-guide: Security Guide
@@ -32,6 +37,7 @@ service-tutorial: Service Tutorial
 speedlink-guide: SpeedLink Guide
 stability_analysis: ''
 stepwise_modelbuilder: ''
+tpm_installation_user_guide: ''
 upgrade-guide: Upgrade Guide
 user-guide: User Guide
 user_guide: ''

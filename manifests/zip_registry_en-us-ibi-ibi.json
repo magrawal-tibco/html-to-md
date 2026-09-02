@@ -1,0 +1,86 @@
+{
+  "https://docs.tibco.com/products/ibi-data-intelligence-2-0-0": {
+    "zip_url": "https://docs.tibco.com/pub/ibi-di/2.0.0/ibi-data-intelligence-2-0-0_documentation.zip",
+    "html_root": "pub/ibi-di/2.0.0/doc/html/",
+    "extracted_at": "2026-09-01T17:23:55",
+    "file_count": 1181,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/ibi-data-quality-5-2-2": {
+    "zip_url": "https://docs.tibco.com/pub/tdq/5.2.2/ibi-data-quality-5-2-2_documentation.zip",
+    "html_root": "pub/tdq/5.2.2/doc/html/",
+    "extracted_at": "2026-09-01T17:23:58",
+    "file_count": 663,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/ibi-iway-service-manager-edi-add-on-9-1-1": {
+    "zip_url": "https://docs.tibco.com/pub/sm-edi/9.1.1/ibi-iway-service-manager-edi-add-on-9-1-1_documentation.zip",
+    "html_root": "pub/sm-edi/9.1.1/doc/html/",
+    "extracted_at": "2026-09-01T17:24:02",
+    "file_count": 888,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/ibi-open-data-hub-for-mainframe-connectors-1-3-7": {
+    "zip_url": "https://docs.tibco.com/pub/odh-mf-cnct/1.3.7/ibi-open-data-hub-for-mainframe-connectors-1-3-7_documentation.zip",
+    "html_root": "pub/odh-mf-cnct/1.3.7/doc/html/",
+    "extracted_at": "2026-09-01T17:24:07",
+    "file_count": 842,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/ibi-webfocus-container-edition-9-3-7": {
+    "zip_url": "https://docs.tibco.com/pub/wfce/9.3.7/ibi-webfocus-container-edition-9-3-7_documentation.zip",
+    "html_root": "pub/wfce/9.3.7/doc/html/",
+    "extracted_at": "2026-09-01T17:24:08",
+    "file_count": 409,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/ibi-webfocus-dsml-services-container-edition-9-3-7": {
+    "zip_url": "https://docs.tibco.com/pub/dsmlce/9.3.7/ibi-webfocus-dsml-services-container-edition-9-3-7_documentation.zip",
+    "html_root": "pub/dsmlce/9.3.7/doc/html/",
+    "extracted_at": "2026-09-01T17:24:10",
+    "file_count": 322,
+    "format": "madcap"
+  },
+  "https://docs.tibco.com/products/ibi-web-query-for-ibm-i-8207-28-14": {
+    "zip_url": "https://docs.tibco.com/pub/wq/8207.28.14/ibi-web-query-for-ibm-i-8207-28-14_documentation.zip",
+    "html_root": "pub/wq/8207.28.14/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/products/tibco-webfocus-dsml-services-8207-28-0": {
+    "zip_url": "https://docs.tibco.com/pub/dsml/8207.28.0/tibco-webfocus-dsml-services-8207-28-0_documentation.zip",
+    "html_root": "pub/dsml/8207.28.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/products/ibi-omni-insurance-4-3-0": {
+    "zip_url": "https://docs.tibco.com/pub/oin/4.3.0/ibi-omni-insurance-4-3-0_documentation.zip",
+    "html_root": "pub/oin/4.3.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/products/ibi-omni-gen-4-3-0": {
+    "zip_url": "https://docs.tibco.com/pub/og/4.3.0/ibi-omni-gen-4-3-0_documentation.zip",
+    "html_root": "pub/og/4.3.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/products/ibi-omni-healthdata-4-3-0": {
+    "zip_url": "https://docs.tibco.com/pub/ohd/4.3.0/ibi-omni-healthdata-4-3-0_documentation.zip",
+    "html_root": "pub/ohd/4.3.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "unknown"
+  },
+  "https://docs.tibco.com/products/ibi-mdm-add-on-for-global-data-synchronization-4-0-0": {
+    "zip_url": "https://docs.tibco.com/pub/cim-gdsn/4.0.0/ibi-mdm-add-on-for-global-data-synchronization-4-0-0_documentation.zip",
+    "html_root": "pub/cim-gdsn/4.0.0/doc/html/",
+    "extracted_at": "previously",
+    "file_count": -1,
+    "format": "madcap"
+  }
+}

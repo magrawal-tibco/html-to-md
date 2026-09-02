@@ -1,4 +1,52 @@
 {
+  "https://docs.tibco.com/products/ibi-data-intelligence-2-0-0": {
+    "product_name": "ibi™ Data Intelligence 2.0.0",
+    "product_version": "2.0.0",
+    "doc_name": "",
+    "phase": "en-us-ibi-ibi",
+    "converted_at": "2026-09-01T12:05:17Z",
+    "page_count": 138
+  },
+  "https://docs.tibco.com/products/ibi-data-quality-5-2-2": {
+    "product_name": "ibi™ Data Quality 5.2.2",
+    "product_version": "5.2.2",
+    "doc_name": "",
+    "phase": "en-us-ibi-ibi",
+    "converted_at": "2026-09-01T12:05:17Z",
+    "page_count": 33
+  },
+  "https://docs.tibco.com/products/ibi-iway-service-manager-edi-add-on-9-1-1": {
+    "product_name": "ibi™ iWay® Service Manager EDI Add-on 9.1.1",
+    "product_version": "9.1.1",
+    "doc_name": "",
+    "phase": "en-us-ibi-ibi",
+    "converted_at": "2026-09-01T12:05:17Z",
+    "page_count": 17
+  },
+  "https://docs.tibco.com/products/ibi-open-data-hub-for-mainframe-connectors-1-3-7": {
+    "product_name": "ibi™ Open Data Hub for Mainframe Connectors 1.3.7",
+    "product_version": "1.3.7",
+    "doc_name": "",
+    "phase": "en-us-ibi-ibi",
+    "converted_at": "2026-09-01T12:05:17Z",
+    "page_count": 217
+  },
+  "https://docs.tibco.com/products/ibi-webfocus-container-edition-9-3-7": {
+    "product_name": "ibi™ WebFOCUS® - Container Edition 9.3.7",
+    "product_version": "9.3.7",
+    "doc_name": "",
+    "phase": "en-us-ibi-ibi",
+    "converted_at": "2026-09-01T12:05:17Z",
+    "page_count": 60
+  },
+  "https://docs.tibco.com/products/ibi-webfocus-dsml-services-container-edition-9-3-7": {
+    "product_name": "ibi™ WebFOCUS® DSML Services - Container Edition 9.3.7",
+    "product_version": "9.3.7",
+    "doc_name": "",
+    "phase": "en-us-ibi-ibi",
+    "converted_at": "2026-09-01T12:05:17Z",
+    "page_count": 19
+  },
   "https://docs.tibco.com/products/spotfire-data-science-author-2-2-0": {
     "product_name": "Spotfire® Data Science - Author 2.2.0",
     "product_version": "2.2.0",
